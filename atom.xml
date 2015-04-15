@@ -16,8 +16,8 @@
   
   <entry>
     <title><![CDATA[fieldAverage 使用说明]]></title>
-    <link href="http://yoursite.com/2015/04/12/fieldAverage%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E/"/>
-    <id>http://yoursite.com/2015/04/12/fieldAverage使用说明/</id>
+    <link href="http://yoursite.com/2015/04/12/fieldAverage/"/>
+    <id>http://yoursite.com/2015/04/12/fieldAverage/</id>
     <published>2015-04-12T09:00:54.000Z</published>
     <updated>2015-04-12T12:24:18.640Z</updated>
     <content type="html"><![CDATA[<p><code>fieldAverage</code>是 OpenFOAM 中的一种 functionObject，用来计算时均值。其基本用法是作为一个 function object 放在 controlDict 文件中，运行 solver 的同时计算指定场的时均值，以下是一个示例：</p>
