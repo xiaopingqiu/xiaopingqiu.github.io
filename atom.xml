@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <title><![CDATA[Giskard's CFD Learning Note]]></title>
+  <title><![CDATA[Giskard's CFD Learning Tricks]]></title>
   <subtitle><![CDATA[CFD and Scientic Computing]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://yoursite.com/"/>
@@ -84,6 +84,7 @@
 <h4 id="Test_code">Test code</h4><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="preprocessor">#<span class="keyword">include</span>&lt;iostream&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span>* argv[])</span></span><br><span class="line"></span>&#123;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span>&lt;&lt;<span class="string">"hello world!"</span> &lt;&lt; <span class="built_in">std</span>:endl;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h4 id="中文支持测试">中文支持测试</h4><p>看看是否支持中文。</p>
 <h4 id="数学公式">数学公式</h4><p>$$ x=\frac{-b\pm \sqrt{b^2-4ac}}{2a} $$</p>
+<h4 id="本地图片测试">本地图片测试</h4><p><img src="/image/juperter_impact.jpg" alt="Jupiter"></p>
 ]]></content>
     <summary type="html">
     <![CDATA[<p>Welcome to <a href="http://hexo.io/" target="_blank" rel="external">Hexo</a>! This is your very first post. Check <a href="http://hexo.io]]>
