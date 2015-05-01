@@ -3,9 +3,9 @@
   <title><![CDATA[Giskard's CFD Learning Tricks]]></title>
   <subtitle><![CDATA[CFD and Scientic Computing]]></subtitle>
   <link href="/atom.xml" rel="self"/>
-  <link href="http://yoursite.com/"/>
+  <link href="http://xiaopingqiu.github.io/"/>
   <updated>2015-04-12T12:24:18.640Z</updated>
-  <id>http://yoursite.com/</id>
+  <id>http://xiaopingqiu.github.io/</id>
   
   <author>
     <name><![CDATA[Giskard Q.]]></name>
@@ -16,8 +16,8 @@
   
   <entry>
     <title><![CDATA[fieldAverage 使用说明]]></title>
-    <link href="http://yoursite.com/2015/04/12/fieldAverage/"/>
-    <id>http://yoursite.com/2015/04/12/fieldAverage/</id>
+    <link href="http://xiaopingqiu.github.io/2015/04/12/fieldAverage/"/>
+    <id>http://xiaopingqiu.github.io/2015/04/12/fieldAverage/</id>
     <published>2015-04-12T09:00:54.000Z</published>
     <updated>2015-04-12T12:24:18.640Z</updated>
     <content type="html"><![CDATA[<p><code>fieldAverage</code>是 OpenFOAM 中的一种 functionObject，用来计算时均值。其基本用法是作为一个 function object 放在 controlDict 文件中，运行 solver 的同时计算指定场的时均值，以下是一个示例：</p>
@@ -58,18 +58,18 @@
     
     </summary>
     
-      <category term="OpenFOAM" scheme="http://yoursite.com/tags/OpenFOAM/"/>
+      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/tags/OpenFOAM/"/>
     
-      <category term="postprocess" scheme="http://yoursite.com/tags/postprocess/"/>
+      <category term="postprocess" scheme="http://xiaopingqiu.github.io/tags/postprocess/"/>
     
-      <category term="OpenFOAM" scheme="http://yoursite.com/categories/OpenFOAM/"/>
+      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/categories/OpenFOAM/"/>
     
   </entry>
   
   <entry>
     <title><![CDATA[Hello World]]></title>
-    <link href="http://yoursite.com/2015/04/04/hello-world/"/>
-    <id>http://yoursite.com/2015/04/04/hello-world/</id>
+    <link href="http://xiaopingqiu.github.io/2015/04/04/hello-world/"/>
+    <id>http://xiaopingqiu.github.io/2015/04/04/hello-world/</id>
     <published>2015-04-04T02:00:00.000Z</published>
     <updated>2015-04-10T14:57:00.000Z</updated>
     <content type="html"><![CDATA[<p>Welcome to <a href="http://hexo.io/" target="_blank" rel="external">Hexo</a>! This is your very first post. Check <a href="http://hexo.io/docs/" target="_blank" rel="external">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="http://hexo.io/docs/troubleshooting.html" target="_blank" rel="external">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="external">GitHub</a>.</p>
@@ -90,9 +90,9 @@
     <![CDATA[<p>Welcome to <a href="http://hexo.io/" target="_blank" rel="external">Hexo</a>! This is your very first post. Check <a href="http://hexo.io]]>
     </summary>
     
-      <category term="test" scheme="http://yoursite.com/tags/test/"/>
+      <category term="test" scheme="http://xiaopingqiu.github.io/tags/test/"/>
     
-      <category term="test" scheme="http://yoursite.com/categories/test/"/>
+      <category term="test" scheme="http://xiaopingqiu.github.io/categories/test/"/>
     
   </entry>
   
