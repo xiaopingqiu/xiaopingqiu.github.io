@@ -85,6 +85,7 @@
 <h4 id="中文支持测试">中文支持测试</h4><p>看看是否支持中文。</p>
 <h4 id="数学公式">数学公式</h4><p>$$ x=\frac{-b\pm \sqrt{b^2-4ac}}{2a} $$</p>
 <h4 id="本地图片测试">本地图片测试</h4><p><img src="/image/juperter_impact.jpg" alt="Jupiter"></p>
+<p><span id="busuanzi_container_page_pv"><br>  本文总阅读量<span id="busuanzi_value_page_pv"></span>次<br></span></p>
 ]]></content>
     <summary type="html">
     <![CDATA[<p>Welcome to <a href="http://hexo.io/" target="_blank" rel="external">Hexo</a>! This is your very first post. Check <a href="http://hexo.io]]>
