@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>ParaView 的远程模式 | Giskard&#39;s CFD Learning Tricks</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="OpenFOAM 用户肯定都用过ParaView可视化软件，这款软件可以方便地读取 OpenFOAM 的数据进行种类丰富的可视化操作。用 ParaView 可视化 OpenFOAM数据很简单，只需要在算例目录下运行paraFoam即可(注一)。但是，如果你不是在本地机器上运行 OpenFOAM，而是在远程机器上运行，这时候想在本地直接用 ParaView 来可视化远程机器上的数据，该怎么办呢？这个">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ParaView 的远程模式">
+<meta property="og:url" content="http://xiaopingqiu.github.io/2015/05/03/paraview-remote/index.html">
+<meta property="og:site_name" content="Giskard's CFD Learning Tricks">
+<meta property="og:description" content="OpenFOAM 用户肯定都用过ParaView可视化软件，这款软件可以方便地读取 OpenFOAM 的数据进行种类丰富的可视化操作。用 ParaView 可视化 OpenFOAM数据很简单，只需要在算例目录下运行paraFoam即可(注一)。但是，如果你不是在本地机器上运行 OpenFOAM，而是在远程机器上运行，这时候想在本地直接用 ParaView 来可视化远程机器上的数据，该怎么办呢？这个">
+<meta property="og:image" content="/image/paraview_remote/cs1.png">
+<meta property="og:image" content="/image/paraview_remote/cs2.png">
+<meta property="og:image" content="/image/paraview_remote/cs3.png">
+<meta property="og:image" content="/image/paraview_remote/rc1.png">
+<meta property="og:image" content="/image/paraview_remote/rc2.png">
+<meta property="og:image" content="/image/paraview_remote/rc3.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ParaView 的远程模式">
+<meta name="twitter:description" content="OpenFOAM 用户肯定都用过ParaView可视化软件，这款软件可以方便地读取 OpenFOAM 的数据进行种类丰富的可视化操作。用 ParaView 可视化 OpenFOAM数据很简单，只需要在算例目录下运行paraFoam即可(注一)。但是，如果你不是在本地机器上运行 OpenFOAM，而是在远程机器上运行，这时候想在本地直接用 ParaView 来可视化远程机器上的数据，该怎么办呢？这个">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css" type="text/css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', '[object Object]', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Giskard&#39;s CFD Learning Tricks</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">CFD and Scientic Computing</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="q" value="site:http://xiaopingqiu.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script src="//cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+<script src="//http://lib.sinaapp.com/js/jquery/1.7.2/jquery.min.js"></script> 
+<script src="//dn-lbstatics.qbox.me/jquery/1.11.2/jquery.min.js"></script> 
+<script src="//ajax.aspnetcdn.com/ajax/jquery/jquery-1.7.2.min.js"></script>
+<script src="//code.jquery.com/jquery-1.7.2.min.js"></script>
+
+      <div class="outer">
+        <section id="main"><article id="post-paraview-remote" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2015/05/03/paraview-remote/" class="article-date">
+  <time datetime="2015-05-03T12:49:02.000Z" itemprop="datePublished">2015-05-03</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/Paraview/">Paraview</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      ParaView 的远程模式
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>OpenFOAM 用户肯定都用过<a href="http://www.paraview.org/" target="_blank" rel="external">ParaView</a>可视化软件，这款软件可以方便地读取 OpenFOAM 的数据进行种类丰富的可视化操作。用 ParaView 可视化 OpenFOAM数据很简单，只需要在算例目录下运行<code>paraFoam</code>即可(注一)。但是，如果你不是在本地机器上运行 OpenFOAM，而是在远程机器上运行，这时候想在本地直接用 ParaView 来可视化远程机器上的数据，该怎么办呢？这个问题要分情况讨论：</p>
+<ol>
+<li>远程机器没有禁止远程开启GUI<ul>
+<li>本地机器安装的是Linux系统，那么可以这样做：<code>ssh -X your_remote_machine</code> 登录到远程机器，注意这里加了<code>-X</code>选项，正常的话，应该直接在终端里运行<code>paraFoam</code>就可以远程启动 ParaView。</li>
+<li>本地机器安装的是 Windows，这种情况下可以通过安装一个 Xserver，比如<a href="http://sourceforge.net/projects/xming/" target="_blank" rel="external">Xming</a>，然后用一个支持 X11 Forwarding 的 SSH 客户端（比如 putty）用<code>ssh -X</code>登录到远程机器，正常的话，直接运行<code>paraFoam</code>可以远程启动 ParaView。但根据我的使用经验，这种方法稳定性很差，容易崩溃。</li>
+</ul>
+</li>
+<li>远程机器设置了禁止远程开启GUI程序<br>这种情况下上面提到的两种方法就都不奏效了。这时，下面要介绍的 ParaView 远程模式就能派上用场了。</li>
+</ol>
+<p>ParaView 远程模式基本的使用方法是，在远程机器上启动一个<code>pvserver</code>，然后用本地机器安装的 ParaView 连接到这个 server上(Client/Server 模式)，或者反过来，本地机器开启一个 server，然后让远程机器连接到本地的 server(Client/Server(reverse connection) 模式),以下将一一介绍。</p>
+<a id="more"></a>
+<h4 id="Client/Server_模式">Client/Server 模式</h4><p>建立方法如下：</p>
+<ol>
+<li>在远程机器上运行pvserver；</li>
+<li>运行本地机器上的 ParaView，点击菜单栏左上角的“Connect”，出来如下界面：<br><img src="/image/paraview_remote/cs1.png" alt=""></li>
+<li>选择 “Add server”，然后在如下界面中设置 server：<br><img src="/image/paraview_remote/cs2.png" alt=""><br>“Server Type”选择”Client/Server”，”Host”填写远程的机器的 IP，”Port”默认即可。点”configure”，便添加了一个 server，这个设置会自动保存下来，下次再打开 “Connect”时，默认就会看到保存的 server 列表。<br><img src="/image/paraview_remote/cs3.png" alt=""></li>
+<li>双击列表中需要连接的 server，正常地话便连接到远程机器了，这时候点打开文件，看到的便是远程机器上的文件了！</li>
+</ol>
+<p><strong>注意事项</strong>：本地机器和远程机器的必须安装同一个版本的ParaView，否则会报错。此外，这种连接方式不能使用”PointSprite_Plugin”插件来显示颗粒。</p>
+<h4 id="Client/Server(reverse_connection)_模式">Client/Server(reverse connection) 模式</h4><p>有时候，远程机器上无法正常运行<code>pvserver</code>, 比如报如下错误：<br><figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Waiting <span class="keyword">for</span> client… </span><br><span class="line">Connection <span class="string">URL:</span> <span class="string">cs:</span><span class="comment">//A402:11111 </span></span><br><span class="line"><span class="string">ERROR:</span> In <span class="regexp">/home/</span>utkarsh<span class="regexp">/Dashboards/</span>MyTests<span class="regexp">/NightlyMaster/</span>ParaViewSuperbuild-Release<span class="regexp">/paraview/</span>src<span class="regexp">/paraview/</span>VTK<span class="regexp">/Common/</span>System/vtkSocket.cxx, line <span class="number">206</span> </span><br><span class="line">vtkServerSocket (<span class="number">0x1a1206e0</span>): Socket error <span class="keyword">in</span> call to bind. Address already <span class="keyword">in</span> use.</span><br><span class="line"><span class="string">ERROR:</span> In <span class="regexp">/home/</span>utkarsh<span class="regexp">/Dashboards/</span>MyTests<span class="regexp">/NightlyMaster/</span>ParaViewSuperbuild-Release<span class="regexp">/paraview/</span>src<span class="regexp">/paraview/</span>ParaViewCore<span class="regexp">/ClientServerCore/</span>Core/vtkTCPNetworkAccessManager.cxx, line <span class="number">355</span> </span><br><span class="line">vtkTCPNetworkAccessManager (<span class="number">0x1983fa00</span>): Failed to set up server socket.</span><br><span class="line"> Exiting…</span><br></pre></td></tr></table></figure></p>
+<p>这时，可以采用Client/Server(reverse connection) 模式，这种模式是在本地机器上开启一个 server，然后让远程机器连上它，具体做法如下：</p>
+<ol>
+<li>先在本地机器上启动 ParaView，并按照上面所述的方法建立一个server，注意这里”Server Type” 要选择 “Client/Server(reverse connection)”，如下图：<br><img src="/image/paraview_remote/rc1.png" alt=""></li>
+<li>连接上这个新建的 server：<br><img src="/image/paraview_remote/rc2.png" alt=""><br>连上以后，显示”waiting for server to connect”，如下<br><img src="/image/paraview_remote/rc3.png" alt=""></li>
+<li><p>在远程机器上运行 </p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">pvserver</span> -rc -ch=<span class="number">192.168.1.34</span></span><br></pre></td></tr></table></figure>
+<p>注意这里用选项-rc开启reverse connection 模式，-ch选项指定本地机器的 IP。这样就建立了从远程机器到本地机器的连接。 </p>
+</li>
+<li>连接建立以后，点打开文件，看到的便是远程机器上的文件了，跟 Client/Server 模式一样。</li>
+</ol>
+<p><strong>一个细节值得注意</strong>：当用 Client/Server 模式或Client/Server(reverse connection) 模式建立起本地机器与远程机器的连接以后，”Save Screenshot”, “Save Animation”, “Export Scene” 以及”Save state”会输出到本地机器，而”Save Data”和”Save Geometry”将仍然输出到远程机器。</p>
+<p>注一：<code>paraFoam</code>的正常运行依赖于 libPV3reader.so 等几个库，有时候这几个库不能正常编译生成。ParaView 自从 4.0 版本以后，不需要使用<code>paraFoam</code>直接就能读取 OpenFOAM的数据，用户只需要在算例下新建一个<code>.foam</code>结尾的空文件，然后用 ParaView打开这个空文件即可。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://xiaopingqiu.github.io/2015/05/03/paraview-remote/" data-id="ci98hdb1u0007eombinqg7mag" class="article-share-link">Share</a>
+      
+      
+	  <span id="busuanzi_container_page_pv">
+	      <span id="busuanzi_value_page_pv"></span> views
+	      </span>
+	      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Postprocessing/">Postprocessing</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/paraview/">paraview</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2015/04/12/fieldAverage/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">fieldAverage 使用说明</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+<section id="comments">
+  <!-- 多说评论框 start -->
+  <div class="ds-thread" data-thread-key="post-paraview-remote" data-title="ParaView 的远程模式" data-url="http://xiaopingqiu.github.io/2015/05/03/paraview-remote/"></div>
+  <!-- 多说评论框 end -->
+  <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+  <script type="text/javascript">
+  var duoshuoQuery = {short_name:"xiaopingqiu"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+  <!-- 多说公共JS代码 end -->
+</section>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/">OpenFOAM</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Paraview/">Paraview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/test/">test</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Postprocessing/">Postprocessing</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/paraview/">paraview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/test/">test</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/OpenFOAM/" style="font-size: 10px;">OpenFOAM</a><a href="/tags/Postprocessing/" style="font-size: 20px;">Postprocessing</a><a href="/tags/paraview/" style="font-size: 10px;">paraview</a><a href="/tags/test/" style="font-size: 10px;">test</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a><span class="archive-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recents</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2015/05/03/paraview-remote/">ParaView 的远程模式</a>
+          </li>
+        
+          <li>
+            <a href="/2015/04/12/fieldAverage/">fieldAverage 使用说明</a>
+          </li>
+        
+          <li>
+            <a href="/2015/04/04/hello-world/">Hello World</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2015 Giskard Q.<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+<script src="//dn-lbstatics.qbox.me/lbservice/busuanzi/2.0/busuanzi.mini.js"/></script>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css" type="text/css">
+  <script src="/fancybox/jquery.fancybox.pack.js" type="text/javascript"></script>
+
+
+<script src="/js/script.js" type="text/javascript"></script>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-62501686-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+  </div>
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+</body>
+</html>

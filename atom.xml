@@ -4,7 +4,7 @@
   <subtitle><![CDATA[CFD and Scientic Computing]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://xiaopingqiu.github.io/"/>
-  <updated>2015-04-12T12:24:18.640Z</updated>
+  <updated>2015-05-03T14:58:20.758Z</updated>
   <id>http://xiaopingqiu.github.io/</id>
   
   <author>
@@ -15,11 +15,72 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
+    <title><![CDATA[ParaView 的远程模式]]></title>
+    <link href="http://xiaopingqiu.github.io/2015/05/03/paraview-remote/"/>
+    <id>http://xiaopingqiu.github.io/2015/05/03/paraview-remote/</id>
+    <published>2015-05-03T12:49:02.000Z</published>
+    <updated>2015-05-03T14:58:20.758Z</updated>
+    <content type="html"><![CDATA[<p>OpenFOAM 用户肯定都用过<a href="http://www.paraview.org/" target="_blank" rel="external">ParaView</a>可视化软件，这款软件可以方便地读取 OpenFOAM 的数据进行种类丰富的可视化操作。用 ParaView 可视化 OpenFOAM数据很简单，只需要在算例目录下运行<code>paraFoam</code>即可(注一)。但是，如果你不是在本地机器上运行 OpenFOAM，而是在远程机器上运行，这时候想在本地直接用 ParaView 来可视化远程机器上的数据，该怎么办呢？这个问题要分情况讨论：</p>
+<ol>
+<li>远程机器没有禁止远程开启GUI<ul>
+<li>本地机器安装的是Linux系统，那么可以这样做：<code>ssh -X your_remote_machine</code> 登录到远程机器，注意这里加了<code>-X</code>选项，正常的话，应该直接在终端里运行<code>paraFoam</code>就可以远程启动 ParaView。</li>
+<li>本地机器安装的是 Windows，这种情况下可以通过安装一个 Xserver，比如<a href="http://sourceforge.net/projects/xming/" target="_blank" rel="external">Xming</a>，然后用一个支持 X11 Forwarding 的 SSH 客户端（比如 putty）用<code>ssh -X</code>登录到远程机器，正常的话，直接运行<code>paraFoam</code>可以远程启动 ParaView。但根据我的使用经验，这种方法稳定性很差，容易崩溃。</li>
+</ul>
+</li>
+<li>远程机器设置了禁止远程开启GUI程序<br>这种情况下上面提到的两种方法就都不奏效了。这时，下面要介绍的 ParaView 远程模式就能派上用场了。</li>
+</ol>
+<p>ParaView 远程模式基本的使用方法是，在远程机器上启动一个<code>pvserver</code>，然后用本地机器安装的 ParaView 连接到这个 server上(Client/Server 模式)，或者反过来，本地机器开启一个 server，然后让远程机器连接到本地的 server(Client/Server(reverse connection) 模式),以下将一一介绍。</p>
+<a id="more"></a>
+<h4 id="Client/Server_模式">Client/Server 模式</h4><p>建立方法如下：</p>
+<ol>
+<li>在远程机器上运行pvserver；</li>
+<li>运行本地机器上的 ParaView，点击菜单栏左上角的“Connect”，出来如下界面：<br><img src="/image/paraview_remote/cs1.png" alt=""></li>
+<li>选择 “Add server”，然后在如下界面中设置 server：<br><img src="/image/paraview_remote/cs2.png" alt=""><br>“Server Type”选择”Client/Server”，”Host”填写远程的机器的 IP，”Port”默认即可。点”configure”，便添加了一个 server，这个设置会自动保存下来，下次再打开 “Connect”时，默认就会看到保存的 server 列表。<br><img src="/image/paraview_remote/cs3.png" alt=""></li>
+<li>双击列表中需要连接的 server，正常地话便连接到远程机器了，这时候点打开文件，看到的便是远程机器上的文件了！</li>
+</ol>
+<p><strong>注意事项</strong>：本地机器和远程机器的必须安装同一个版本的ParaView，否则会报错。此外，这种连接方式不能使用”PointSprite_Plugin”插件来显示颗粒。</p>
+<h4 id="Client/Server(reverse_connection)_模式">Client/Server(reverse connection) 模式</h4><p>有时候，远程机器上无法正常运行<code>pvserver</code>, 比如报如下错误：<br><figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Waiting <span class="keyword">for</span> client… </span><br><span class="line">Connection <span class="string">URL:</span> <span class="string">cs:</span><span class="comment">//A402:11111 </span></span><br><span class="line"><span class="string">ERROR:</span> In <span class="regexp">/home/</span>utkarsh<span class="regexp">/Dashboards/</span>MyTests<span class="regexp">/NightlyMaster/</span>ParaViewSuperbuild-Release<span class="regexp">/paraview/</span>src<span class="regexp">/paraview/</span>VTK<span class="regexp">/Common/</span>System/vtkSocket.cxx, line <span class="number">206</span> </span><br><span class="line">vtkServerSocket (<span class="number">0x1a1206e0</span>): Socket error <span class="keyword">in</span> call to bind. Address already <span class="keyword">in</span> use.</span><br><span class="line"><span class="string">ERROR:</span> In <span class="regexp">/home/</span>utkarsh<span class="regexp">/Dashboards/</span>MyTests<span class="regexp">/NightlyMaster/</span>ParaViewSuperbuild-Release<span class="regexp">/paraview/</span>src<span class="regexp">/paraview/</span>ParaViewCore<span class="regexp">/ClientServerCore/</span>Core/vtkTCPNetworkAccessManager.cxx, line <span class="number">355</span> </span><br><span class="line">vtkTCPNetworkAccessManager (<span class="number">0x1983fa00</span>): Failed to set up server socket.</span><br><span class="line"> Exiting…</span><br></pre></td></tr></table></figure></p>
+<p>这时，可以采用Client/Server(reverse connection) 模式，这种模式是在本地机器上开启一个 server，然后让远程机器连上它，具体做法如下：</p>
+<ol>
+<li>先在本地机器上启动 ParaView，并按照上面所述的方法建立一个server，注意这里”Server Type” 要选择 “Client/Server(reverse connection)”，如下图：<br><img src="/image/paraview_remote/rc1.png" alt=""></li>
+<li>连接上这个新建的 server：<br><img src="/image/paraview_remote/rc2.png" alt=""><br>连上以后，显示”waiting for server to connect”，如下<br><img src="/image/paraview_remote/rc3.png" alt=""></li>
+<li><p>在远程机器上运行 </p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">pvserver</span> -rc -ch=<span class="number">192.168.1.34</span></span><br></pre></td></tr></table></figure>
+<p>注意这里用选项-rc开启reverse connection 模式，-ch选项指定本地机器的 IP。这样就建立了从远程机器到本地机器的连接。 </p>
+</li>
+<li>连接建立以后，点打开文件，看到的便是远程机器上的文件了，跟 Client/Server 模式一样。</li>
+</ol>
+<p><strong>一个细节值得注意</strong>：当用 Client/Server 模式或Client/Server(reverse connection) 模式建立起本地机器与远程机器的连接以后，”Save Screenshot”, “Save Animation”, “Export Scene” 以及”Save state”会输出到本地机器，而”Save Data”和”Save Geometry”将仍然输出到远程机器。</p>
+<p>注一：<code>paraFoam</code>的正常运行依赖于 libPV3reader.so 等几个库，有时候这几个库不能正常编译生成。ParaView 自从 4.0 版本以后，不需要使用<code>paraFoam</code>直接就能读取 OpenFOAM的数据，用户只需要在算例下新建一个<code>.foam</code>结尾的空文件，然后用 ParaView打开这个空文件即可。</p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<p>OpenFOAM 用户肯定都用过<a href="http://www.paraview.org/">ParaView</a>可视化软件，这款软件可以方便地读取 OpenFOAM 的数据进行种类丰富的可视化操作。用 ParaView 可视化 OpenFOAM数据很简单，只需要在算例目录下运行<code>paraFoam</code>即可(注一)。但是，如果你不是在本地机器上运行 OpenFOAM，而是在远程机器上运行，这时候想在本地直接用 ParaView 来可视化远程机器上的数据，该怎么办呢？这个问题要分情况讨论：</p>
+<ol>
+<li>远程机器没有禁止远程开启GUI<ul>
+<li>本地机器安装的是Linux系统，那么可以这样做：<code>ssh -X your_remote_machine</code> 登录到远程机器，注意这里加了<code>-X</code>选项，正常的话，应该直接在终端里运行<code>paraFoam</code>就可以远程启动 ParaView。</li>
+<li>本地机器安装的是 Windows，这种情况下可以通过安装一个 Xserver，比如<a href="http://sourceforge.net/projects/xming/">Xming</a>，然后用一个支持 X11 Forwarding 的 SSH 客户端（比如 putty）用<code>ssh -X</code>登录到远程机器，正常的话，直接运行<code>paraFoam</code>可以远程启动 ParaView。但根据我的使用经验，这种方法稳定性很差，容易崩溃。</li>
+</ul>
+</li>
+<li>远程机器设置了禁止远程开启GUI程序<br>这种情况下上面提到的两种方法就都不奏效了。这时，下面要介绍的 ParaView 远程模式就能派上用场了。</li>
+</ol>
+<p>ParaView 远程模式基本的使用方法是，在远程机器上启动一个<code>pvserver</code>，然后用本地机器安装的 ParaView 连接到这个 server上(Client/Server 模式)，或者反过来，本地机器开启一个 server，然后让远程机器连接到本地的 server(Client/Server(reverse connection) 模式),以下将一一介绍。</p>]]>
+    
+    </summary>
+    
+      <category term="Postprocessing" scheme="http://xiaopingqiu.github.io/tags/Postprocessing/"/>
+    
+      <category term="paraview" scheme="http://xiaopingqiu.github.io/tags/paraview/"/>
+    
+      <category term="Paraview" scheme="http://xiaopingqiu.github.io/categories/Paraview/"/>
+    
+  </entry>
+  
+  <entry>
     <title><![CDATA[fieldAverage 使用说明]]></title>
     <link href="http://xiaopingqiu.github.io/2015/04/12/fieldAverage/"/>
     <id>http://xiaopingqiu.github.io/2015/04/12/fieldAverage/</id>
     <published>2015-04-12T09:00:54.000Z</published>
-    <updated>2015-04-12T12:24:18.640Z</updated>
+    <updated>2015-05-03T13:14:36.653Z</updated>
     <content type="html"><![CDATA[<p><code>fieldAverage</code>是 OpenFOAM 中的一种 functionObject，用来计算时均值。其基本用法是作为一个 function object 放在 controlDict 文件中，运行 solver 的同时计算指定场的时均值，以下是一个示例：</p>
 <figure class="highlight applescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">functions</span><br><span class="line">&#123;</span><br><span class="line">    fieldAverage1</span><br><span class="line">    &#123;</span><br><span class="line">        type            fieldAverage;</span><br><span class="line">        functionObjectLibs ( <span class="string">"libfieldFunctionObjects.so"</span> );</span><br><span class="line">        outputControl   outputTime;</span><br><span class="line">        fields</span><br><span class="line">        (</span><br><span class="line">            Ua</span><br><span class="line">            &#123;</span><br><span class="line">                 mean        <span class="function_start"><span class="keyword">on</span></span>;</span><br><span class="line">                 prime2Mean  off;</span><br><span class="line">                 base        <span class="property">time</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            Ub</span><br><span class="line">            &#123;</span><br><span class="line">                 mean        <span class="function_start"><span class="keyword">on</span></span>;</span><br><span class="line">                 prime2Mean  off;</span><br><span class="line">                 base        <span class="property">time</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        );</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <a id="more"></a>
@@ -60,7 +121,7 @@
     
       <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/tags/OpenFOAM/"/>
     
-      <category term="postprocess" scheme="http://xiaopingqiu.github.io/tags/postprocess/"/>
+      <category term="Postprocessing" scheme="http://xiaopingqiu.github.io/tags/Postprocessing/"/>
     
       <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/categories/OpenFOAM/"/>
     
