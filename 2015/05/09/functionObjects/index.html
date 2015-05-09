@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>利用functionObjects对指定区域内进行后处理 | Giskard&#39;s CFD Learning Tricks</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="CFD中很重要的一个环节是模拟结果的后处理。而后处理过程中，常常涉及到对某个指定区域的某个物理量进行操作，比如，求指定截面上的流率，或者求某个区域内的平均空隙率，等等。这里介绍一种利用 OpenFOAM 中的 functionObjects 来对指定区域进行后处理的方法。本方法一共分三步：1). 将指定区域内的网格(或者面)提取到 cellZone（或faceZone）; 2). 在 contro">
+<meta property="og:type" content="article">
+<meta property="og:title" content="利用functionObjects对指定区域内进行后处理">
+<meta property="og:url" content="http://xiaopingqiu.github.io/2015/05/09/functionObjects/index.html">
+<meta property="og:site_name" content="Giskard's CFD Learning Tricks">
+<meta property="og:description" content="CFD中很重要的一个环节是模拟结果的后处理。而后处理过程中，常常涉及到对某个指定区域的某个物理量进行操作，比如，求指定截面上的流率，或者求某个区域内的平均空隙率，等等。这里介绍一种利用 OpenFOAM 中的 functionObjects 来对指定区域进行后处理的方法。本方法一共分三步：1). 将指定区域内的网格(或者面)提取到 cellZone（或faceZone）; 2). 在 contro">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="利用functionObjects对指定区域内进行后处理">
+<meta name="twitter:description" content="CFD中很重要的一个环节是模拟结果的后处理。而后处理过程中，常常涉及到对某个指定区域的某个物理量进行操作，比如，求指定截面上的流率，或者求某个区域内的平均空隙率，等等。这里介绍一种利用 OpenFOAM 中的 functionObjects 来对指定区域进行后处理的方法。本方法一共分三步：1). 将指定区域内的网格(或者面)提取到 cellZone（或faceZone）; 2). 在 contro">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css" type="text/css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', '[object Object]', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Giskard&#39;s CFD Learning Tricks</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">CFD and Scientic Computing</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="q" value="site:http://xiaopingqiu.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script src="//cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+<script src="//http://lib.sinaapp.com/js/jquery/1.7.2/jquery.min.js"></script> 
+<script src="//dn-lbstatics.qbox.me/jquery/1.11.2/jquery.min.js"></script> 
+<script src="//ajax.aspnetcdn.com/ajax/jquery/jquery-1.7.2.min.js"></script>
+<script src="//code.jquery.com/jquery-1.7.2.min.js"></script>
+
+      <div class="outer">
+        <section id="main"><article id="post-functionObjects" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2015/05/09/functionObjects/" class="article-date">
+  <time datetime="2015-05-09T07:24:56.000Z" itemprop="datePublished">2015-05-09</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      利用functionObjects对指定区域内进行后处理
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>CFD中很重要的一个环节是模拟结果的后处理。而后处理过程中，常常涉及到对某个指定区域的某个物理量进行操作，比如，求指定截面上的流率，或者求某个区域内的平均空隙率，等等。这里介绍一种利用 OpenFOAM 中的 <code>functionObjects</code> 来对指定区域进行后处理的方法。本方法一共分三步：1). 将指定区域内的网格(或者面)提取到 cellZone（或faceZone）; 2). 在 controlDict 里写后处理 functions；3). 运行后处理。<br><a id="more"></a></p>
+<h3 id="1-_将指定区域的网格(或面)提取到_cellZone_(或faceZone)">1. 将指定区域的网格(或面)提取到 cellZone (或faceZone)</h3><p>这一步有很多方法可以实现，这里介绍用<code>setSet</code>结合<code>setsToZones</code>的方法。</p>
+<h4 id="1-1_setSet的基本用法">1.1 <code>setSet</code>的基本用法</h4><p><code>setSet</code>是 OpenFOAM 提供的一个用于生成网格集合(cellSet)、面集合（faceSet）以及点集合（pointSet）的交互式工具，终端里运行<code>setSet</code>，便进入交互模式：<br><figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">$ setSet</span><br><span class="line"></span><br><span class="line"><span class="comment">/*---------------------------------------------------------------------------*\</span><br><span class="line">| =========                 |                                                 |</span><br><span class="line">| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |</span><br><span class="line">|  \\    /   O peration     | Version:  2.3.1                                 |</span><br><span class="line">|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |</span><br><span class="line">|    \\/     M anipulation  |                                                 |</span><br><span class="line">\*---------------------------------------------------------------------------*/</span></span><br><span class="line"><span class="string">Build  :</span> <span class="number">2.3</span>.1-bcfaaa7b8660</span><br><span class="line"><span class="string">Exec   :</span> setSet</span><br><span class="line"><span class="string">Date   :</span> May <span class="number">09</span> <span class="number">2015</span></span><br><span class="line"><span class="string">Time   :</span> <span class="number">13</span>:<span class="number">50</span>:<span class="number">44</span></span><br><span class="line"><span class="string">Host   :</span> <span class="string">"xxxxx"</span></span><br><span class="line"><span class="string">PID    :</span> <span class="number">11255</span></span><br><span class="line"><span class="string">Case   :</span> <span class="regexp">/home/</span>xxxxx<span class="regexp">/OpenFOAM/</span>xxxx-<span class="number">2.3</span>.1<span class="regexp">/run/</span>volField/cavity</span><br><span class="line"><span class="string">nProcs :</span> <span class="number">1</span></span><br><span class="line"><span class="string">sigFpe :</span> Enabling floating point exception trapping (FOAM_SIGFPE).</span><br><span class="line"><span class="string">fileModificationChecking :</span> Monitoring run-time modified files using timeStampMaster</span><br><span class="line"><span class="string">allowSystemOperations :</span> Allowing user-supplied system call operations</span><br><span class="line"></span><br><span class="line"><span class="comment">// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //</span></span><br><span class="line">Create time</span><br><span class="line"></span><br><span class="line">Create polyMesh <span class="keyword">for</span> time = <span class="number">0</span></span><br><span class="line"><span class="label"></span><br><span class="line">Time:</span><span class="number">0</span>  <span class="string">cells:</span><span class="number">9</span>  <span class="string">faces:</span><span class="number">42</span>  <span class="string">points:</span><span class="number">32</span>  <span class="string">patches:</span><span class="number">3</span>  <span class="string">bb:</span>(<span class="number">0</span> <span class="number">0</span> <span class="number">0</span>) (<span class="number">0.1</span> <span class="number">0.1</span> <span class="number">0.01</span>)</span><br><span class="line"></span><br><span class="line">Successfully read history from .setSet</span><br><span class="line">Time = <span class="number">0</span></span><br><span class="line">    mesh not changed.</span><br><span class="line">Please type <span class="string">'help'</span>, <span class="string">'quit'</span> or a set command after prompt.</span><br><span class="line">readline&gt;</span><br></pre></td></tr></table></figure></p>
+<p><code>setSet</code>的基本语法是：<code>cellSet|faceSet|pointSet &lt;setName&gt; &lt;action&gt; &lt;source&gt;</code>。第一个字段，是选择需要建立的是哪一类集合(cellSet|faceSet|pointSet)，第二个字段是<code>setName</code>，顾名思义，给集合取个名字，第三个字段是<code>action</code>，即具体的操作，比如<code>new</code>(新建)，<code>add</code>(增加）等，最后一个字段是<code>source</code>，即指定cell(face,point)的来源，比如有一种是<code>boxToCell</code>，这种来源要求定义一个box，并将中心在这个box里的网格当作操作的对象。下面举几个例子：</p>
+<ul>
+<li><code>faceSet f0 new boxToFace (0 0 0) (1 1 1)</code>: 建立一个新的面集f0，并将面心落在对角线顶点分别为(0 0 0)和(1 1 1)的立方体中的面提取出来放到该集合中;</li>
+<li><code>cellSet f0 new boxToCell (0 0 0) (1 1 1)</code>:建立一个新的网格集f0，并将面心落在对角线顶点分别为(0 0 0)和(1 1 1)的立方体中的网格提取出来放到该集合中;</li>
+<li><code>faceSet f0 new patchToFace movingWall</code>:新建一个面集f0，并将边界<code>movingWall</code>的所有面放到该集合中；</li>
+<li><code>cellSet c0 new faceToCell f0 any</code>: 新建一个网格集合c0，并将面集f0中所有的面对应的网格放到网格集合c0中；</li>
+<li><code>cellSet c0 add pointToCell p0 any</code>，将点集p0中所有的点对应的网格添加到<strong>已经存在</strong>的网格集c0中。</li>
+</ul>
+<p>如果要一次建立很多个集合，那么可以将建立规则写在一个文本文件里，每个规则一行，写好后的文件大致是这样<br><figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">faceSet f0 <span class="keyword">new</span> boxToFace (<span class="number">0</span> <span class="number">0</span> <span class="number">0</span>) (<span class="number">1</span> <span class="number">1</span> <span class="number">1</span>)</span><br><span class="line">faceSet f1 <span class="keyword">new</span> boxToFace (<span class="number">1</span> <span class="number">1</span> <span class="number">1</span>) (<span class="number">2</span> <span class="number">2</span> <span class="number">2</span>)</span><br><span class="line">cellSet c0 <span class="keyword">new</span> faceToCell f0 <span class="keyword">any</span></span><br><span class="line">cellSet c1 <span class="keyword">new</span> faceToCell f1 <span class="keyword">any</span></span><br></pre></td></tr></table></figure></p>
+<p>然后运行命令<br><figure class="highlight pf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">set</span>Set -batch <span class="variable">&lt;filename&gt;</span></span><br></pre></td></tr></table></figure></p>
+<p>进行批处理。但是这样会针对每一个时间步都运行一次，如果只想运行一次，可以指定时间<br><figure class="highlight pf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">set</span>Set -batch <span class="variable">&lt;filename&gt;</span> -time <span class="number">0</span></span><br><span class="line">或者</span><br><span class="line"><span class="built_in">set</span>Set -batch <span class="variable">&lt;filename&gt;</span> -latestTime</span><br></pre></td></tr></table></figure></p>
+<p>运行结束以后，程序会将sets信息放在<code>polyMesh/sets</code>目录下，同时生成相应的vtk文件在算例根目录下的VTK目录里，方便在paraview中查看。<br>关于<code>setSet</code>更详细的信息可以参考<code>setSet</code>提供的 help（终端里运行<code>setSet</code>进入交互模式以后输入<code>help</code>）。</p>
+<h4 id="1-2_setsToZones">1.2 setsToZones</h4><p>这一步非常简单，只需要在终端里运行<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">setsToZones</span><br></pre></td></tr></table></figure></p>
+<p>就可以将前面建立好的 cellSet(faceSet,pointSet)转换成 cellZone(faceZone,pointZone)。</p>
+<p>其实除了<code>setSet</code>和<code>setsToZones</code>结合的方法，还可以用<code>topoSet</code>来生成cellZone，本篇不详述了，可以参考 <a href="https://openfoamwiki.net/index.php/TopoSet" target="_blank" rel="external">OpenFOAMWiki</a>。</p>
+<h3 id="2-_在_controlDict_里写_functions">2. 在 controlDict 里写 functions</h3><p>有了前面建立好的cellZone (faceZone,pointZone) 以后，就可以在 controlDict 写 functions 来对指定的区域进行后处理了。funtions 的基本写法是在 controlDict 文件的最后，添加类似如下的信息：<br><figure class="highlight lasso"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">functions</span><br><span class="line">(</span><br><span class="line">   cell0</span><br><span class="line">   &#123;</span><br><span class="line">     <span class="keyword">type</span> cellSource; <span class="comment">// 指定操作区域的类型，cellsource 表示是操作区域是一个基于网格(cell)的，比如cellZone。</span></span><br><span class="line">     functionObjectLibs <span class="comment">// 指定需要加载的动态库</span></span><br><span class="line">     (</span><br><span class="line">         <span class="comment">//"libsimpleFunctionObjects.so" // swak4Foam 提供的一个函数库</span></span><br><span class="line">         <span class="string">"libfieldFunctionObjects.so"</span>  <span class="comment">// OpenFOAM自带的一个函数库</span></span><br><span class="line">     );</span><br><span class="line">     verbose <span class="literal">true</span>; <span class="comment">//是否要在终端里输出程序运行过程</span></span><br><span class="line">     <span class="comment">//outputControl timeStep; // 每一个时间步都运行</span></span><br><span class="line">     outputControl outputTime; <span class="comment">// 只在需要输出的时间步才运行，参考controlDict的 writeControl和writeInterval</span></span><br><span class="line">     <span class="keyword">log</span>           <span class="literal">true</span>; <span class="comment">// 是否生成 log</span></span><br><span class="line">     valueOutput   <span class="literal">true</span>; <span class="comment">// 是否需要在每一个时间步对应的数据文件夹里(0.1 0.2 之类的) 将指定 source 的值输出来。</span></span><br><span class="line">     source        cellZone; <span class="comment">//指定操作区域的具体的组成，这里cellZone表示操作区域是由一个cellZone组成的。</span></span><br><span class="line">     sourceName    f0; <span class="comment">// cellZone 的名字</span></span><br><span class="line">     operation     volAverage; <span class="comment">//操作方法，这里是体积平均</span></span><br><span class="line">     fields <span class="comment">// 需要进行操作的物理量</span></span><br><span class="line">     (</span><br><span class="line">         T</span><br><span class="line">     );</span><br><span class="line">   &#125;</span><br><span class="line">);</span><br></pre></td></tr></table></figure></p>
+<p>注意这里的结构，<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">functions</span></span><br><span class="line">(</span><br><span class="line">  ...</span><br><span class="line">);</span><br></pre></td></tr></table></figure></p>
+<p>是最外一层，包括在其中的就是各种功能的 <code>functionObjects</code>了。<br><figure class="highlight less"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">cell0</span></span><br><span class="line">&#123;</span><br><span class="line"> ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>代表的是一个<code>functionObject</code>，其中<code>cell0</code>是该<code>functionObject</code>的名字。里面内容的含义参照上面示例中的注释。如果需要写多个<code>functionObjects</code>，那只需要依次都写下来就好了，注意<code>functionObjects</code>的名字不能重复，结构如下<br><figure class="highlight less"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">functions</span></span><br><span class="line">(</span><br><span class="line">   cell0</span><br><span class="line">   &#123;</span><br><span class="line">   ...</span><br><span class="line">   &#125;</span><br><span class="line">   </span><br><span class="line">   cell1</span><br><span class="line">   &#123;</span><br><span class="line">    ...</span><br><span class="line">   &#125;</span><br><span class="line">);</span><br></pre></td></tr></table></figure></p>
+<h3 id="3-_运行后处理">3. 运行后处理</h3><p>写好<code>functions</code>以后，就可以运行后处理了。在终端里运行<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">exec</span>FlowFunctionObjects</span><br></pre></td></tr></table></figure></p>
+<p>就能执行定义在controlDict里的后处理函数了。<br>有时候，可能会报错，说找不到<code>phi</code>，那这时可以加上<code>-noFlow</code>选项<br><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">execFlowFunctionObjects</span>  -<span class="built_in">no</span>Flow</span><br></pre></td></tr></table></figure></p>
+<p>当然，时间相关的选项也是可以用的<br><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">execFlowFunctionObjects</span>  -<span class="built_in">no</span>Flow -time <span class="number">3</span></span><br><span class="line">execFlowFunctionObjects  -<span class="built_in">no</span>Flow -latestTime</span><br></pre></td></tr></table></figure></p>
+<p>注意，本篇强调的是后处理，即算例运行完以后对数据进行的处理。实际上，熟悉OpenFOAM都知道，写在 controlDict 的functions是会随着算例的运行而同时运行的，所以，如果是运行一个新算例，那么你也完全可以事先规划好后处理相关的操作，然后在controlDict写好functions，这样等算例运行结束，所需要的后处理结果也同时生成了。</p>
+<p>有人会问，我怎么知道那些 type，source，operation 等有哪些选项可用呢？这里介绍一种的方法，即所谓的<a href="https://openfoamwiki.net/index.php/OpenFOAM_guide/Use_bananas" target="_blank" rel="external">香蕉大法</a>。比如对于 type，你不知道有哪些可用，那么将type设置为 banana  (将上面第2节示例的中 <code>type cellSource</code>改成<code>type banana</code>)，然后运行<code>execFlowFunctionObjects</code>，这时，会得到如下信息：<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">--&gt; FOAM FATAL ERROR: </span><br><span class="line">Unknown <span class="keyword">function</span> <span class="built_in">type</span> banana</span><br><span class="line">Valid <span class="built_in">functions</span> are : </span><br><span class="line"><span class="number">14</span></span><br><span class="line">(</span><br><span class="line">cellSource</span><br><span class="line">faceSource</span><br><span class="line">fieldAverage</span><br><span class="line">fieldCoordinateSystemTransform</span><br><span class="line">fieldM<span class="keyword">in</span>Max</span><br><span class="line">initSwakFunctionObject</span><br><span class="line">nearWallFields</span><br><span class="line">patchProbes</span><br><span class="line">probes</span><br><span class="line"><span class="built_in">read</span>Fields</span><br><span class="line">sets</span><br><span class="line">streamLine</span><br><span class="line">surfaceInterpolateFields</span><br><span class="line">surfaces</span><br><span class="line">)</span><br></pre></td></tr></table></figure></p>
+<p>这回就知道了所有可用选项了吧。对于 source 和 operation 也可以同样的方法得到所有可用的选项。注意，source和operation的可用选项，是随着type的不同而不同的，这里就不详述了。<br>P.S：banana不是OpenFOAM定义的特殊字符串，改成任意非有效的字符串，效果都一样。</p>
+<p>最后，上面只是介绍了一些一般性的原则，如果读者想参考一些实际的例子，可以去 OpenFOAM 的 tutorials 里挖掘，这里给一个找出 OpenFOAM 中有哪些算例运用了 functions 的方法，供大家参考。</p>
+<figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">find</span> $WM_PROJECT_DIR -name controlDict | xargs <span class="keyword">grep</span> <span class="string">"functions"</span></span><br></pre></td></tr></table></figure>
+<p>在我的电脑上，运行结果如下：<br><figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/src/</span>postProcessing<span class="regexp">/functionObjects/</span>systemCall/<span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/src/</span>postProcessing<span class="regexp">/functionObjects/</span>utilities<span class="regexp">/timeActivatedFileUpdate/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/src/</span>postProcessing<span class="regexp">/functionObjects/</span>field<span class="regexp">/fieldAverage/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/src/</span>postProcessing<span class="regexp">/functionObjects/</span>field<span class="regexp">/nearWallFields/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/src/</span>postProcessing<span class="regexp">/functionObjects/</span>field<span class="regexp">/fieldValues/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/src/</span>postProcessing<span class="regexp">/functionObjects/</span>field<span class="regexp">/streamLine/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/src/</span>postProcessing<span class="regexp">/functionObjects/</span>field<span class="regexp">/fieldMinMax/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/src/</span>postProcessing<span class="regexp">/functionObjects/</span>field<span class="regexp">/wallBoundedStreamLine/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/src/</span>postProcessing<span class="regexp">/functionObjects/</span>IO/<span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>incompressible<span class="regexp">/pimpleFoam/</span>TJunctionFan<span class="regexp">/system/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>incompressible<span class="regexp">/pimpleFoam/</span>channel395<span class="regexp">/system/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>incompressible<span class="regexp">/pimpleFoam/</span>TJunction<span class="regexp">/system/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>incompressible<span class="regexp">/pisoFoam/</span>les<span class="regexp">/pitzDailyMapped/</span>system/<span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>incompressible<span class="regexp">/pisoFoam/</span>les<span class="regexp">/pitzDaily/</span>system/<span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>incompressible<span class="regexp">/pisoFoam/</span>les<span class="regexp">/motorBike/</span>lesFiles/<span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>incompressible<span class="regexp">/pisoFoam/</span>les<span class="regexp">/motorBike/</span>motorBike<span class="regexp">/system/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>incompressible<span class="regexp">/pimpleDyMFoam/</span>wingMotion<span class="regexp">/wingMotion2D_simpleFoam/</span>system/<span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>incompressible<span class="regexp">/pimpleDyMFoam/</span>propeller<span class="regexp">/system/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>incompressible<span class="regexp">/pimpleDyMFoam/</span>movingCone<span class="regexp">/system/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>incompressible<span class="regexp">/simpleFoam/</span>pitzDaily<span class="regexp">/system/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>incompressible<span class="regexp">/simpleFoam/</span>pitzDailyExptInlet<span class="regexp">/system/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>incompressible<span class="regexp">/simpleFoam/</span>motorBike<span class="regexp">/system/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>lagrangian<span class="regexp">/reactingParcelFoam/</span>verticalChannel<span class="regexp">/system/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>lagrangian<span class="regexp">/LTSReactingParcelFoam/</span>verticalChannel<span class="regexp">/system/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>lagrangian<span class="regexp">/simpleReactingParcelFoam/</span>verticalChannel<span class="regexp">/system/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>multiphase<span class="regexp">/interFoam/</span>ras<span class="regexp">/waterChannel/</span>LTSInterFoam<span class="regexp">/system/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>multiphase<span class="regexp">/interFoam/</span>ras<span class="regexp">/waterChannel/</span>system/<span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>multiphase<span class="regexp">/interDyMFoam/</span>ras<span class="regexp">/sloshingTank3D3DoF/</span>system/<span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>multiphase<span class="regexp">/interDyMFoam/</span>ras<span class="regexp">/sloshingTank3D6DoF/</span>system/<span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>multiphase<span class="regexp">/interDyMFoam/</span>ras<span class="regexp">/sloshingTank2D3DoF/</span>system/<span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>multiphase<span class="regexp">/interDyMFoam/</span>ras<span class="regexp">/DTCHull/</span>system/<span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>multiphase<span class="regexp">/interDyMFoam/</span>ras<span class="regexp">/sloshingTank3D/</span>system/<span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>multiphase<span class="regexp">/interDyMFoam/</span>ras<span class="regexp">/sloshingTank2D/</span>system/<span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>multiphase<span class="regexp">/twoPhaseEulerFoam/</span>laminar<span class="regexp">/bubbleColumn/</span>system/<span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>multiphase<span class="regexp">/twoPhaseEulerFoam/</span>laminar<span class="regexp">/bubbleColumnIATE/</span>system/<span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>multiphase<span class="regexp">/twoPhaseEulerFoam/</span>laminar<span class="regexp">/fluidisedBed/</span>system/<span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>multiphase<span class="regexp">/twoPhaseEulerFoam/</span>LES<span class="regexp">/bubbleColumn/</span>system/<span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>multiphase<span class="regexp">/twoPhaseEulerFoam/</span>RAS<span class="regexp">/bubbleColumn/</span>system/<span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>multiphase<span class="regexp">/twoPhaseEulerFoam/</span>RAS<span class="regexp">/fluidisedBed/</span>system/<span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>multiphase<span class="regexp">/potentialFreeSurfaceDyMFoam/</span>oscillatingBox<span class="regexp">/system/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>multiphase<span class="regexp">/LTSInterFoam/</span>DTCHull<span class="regexp">/system/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>multiphase<span class="regexp">/cavitatingFoam/</span>les<span class="regexp">/throttle3D/</span>system/<span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>multiphase<span class="regexp">/cavitatingFoam/</span>les<span class="regexp">/throttle/</span>system/<span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>multiphase<span class="regexp">/compressibleInterDyMFoam/</span>ras<span class="regexp">/sloshingTank2D/</span>system/<span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>multiphase<span class="regexp">/potentialFreeSurfaceFoam/</span>oscillatingBox<span class="regexp">/system/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>multiphase<span class="regexp">/multiphaseEulerFoam/</span>bubbleColumn<span class="regexp">/system/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>discreteMethods<span class="regexp">/dsmcFoam/</span>freeSpaceStream<span class="regexp">/system/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>discreteMethods<span class="regexp">/dsmcFoam/</span>wedge15Ma5<span class="regexp">/system/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>discreteMethods<span class="regexp">/dsmcFoam/</span>supersonicCorner<span class="regexp">/system/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>discreteMethods<span class="regexp">/dsmcFoam/</span>freeSpacePeriodic<span class="regexp">/system/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>basic<span class="regexp">/potentialFoam/</span>cylinder<span class="regexp">/system/</span><span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>compressible<span class="regexp">/rhoPimpleFoam/</span>les<span class="regexp">/pitzDaily/</span>system/<span class="string">controlDict:</span>functions</span><br><span class="line"><span class="regexp">/opt/</span>openfoam231<span class="regexp">/tutorials/</span>compressible<span class="regexp">/sonicFoam/</span>ras<span class="regexp">/nacaAirfoil/</span>system/<span class="string">controlDict:</span>functions</span><br></pre></td></tr></table></figure></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://xiaopingqiu.github.io/2015/05/09/functionObjects/" data-id="ci9gplb4u000iwwmbhb1gflzk" class="article-share-link">Share</a>
+      
+      
+	  <span id="busuanzi_container_page_pv">
+	      <span id="busuanzi_value_page_pv"></span> views
+	      </span>
+	      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Postprocessing/">Postprocessing</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2015/05/03/paraview-remote/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">ParaView 的远程模式</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+<section id="comments">
+  <!-- 多说评论框 start -->
+  <div class="ds-thread" data-thread-key="post-functionObjects" data-title="利用functionObjects对指定区域内进行后处理" data-url="http://xiaopingqiu.github.io/2015/05/09/functionObjects/"></div>
+  <!-- 多说评论框 end -->
+  <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+  <script type="text/javascript">
+  var duoshuoQuery = {short_name:"xiaopingqiu"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+  <!-- 多说公共JS代码 end -->
+</section>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/">OpenFOAM</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Paraview/">Paraview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/test/">test</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Postprocessing/">Postprocessing</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/paraview/">paraview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/test/">test</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/OpenFOAM/" style="font-size: 15px;">OpenFOAM</a><a href="/tags/Postprocessing/" style="font-size: 20px;">Postprocessing</a><a href="/tags/paraview/" style="font-size: 10px;">paraview</a><a href="/tags/test/" style="font-size: 10px;">test</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a><span class="archive-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recents</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2015/05/09/functionObjects/">利用functionObjects对指定区域内进行后处理</a>
+          </li>
+        
+          <li>
+            <a href="/2015/05/03/paraview-remote/">ParaView 的远程模式</a>
+          </li>
+        
+          <li>
+            <a href="/2015/04/12/fieldAverage/">fieldAverage 使用说明</a>
+          </li>
+        
+          <li>
+            <a href="/2015/04/04/hello-world/">Hello World</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2015 Giskard Q.<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+<script src="//dn-lbstatics.qbox.me/lbservice/busuanzi/2.0/busuanzi.mini.js"/></script>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css" type="text/css">
+  <script src="/fancybox/jquery.fancybox.pack.js" type="text/javascript"></script>
+
+
+<script src="/js/script.js" type="text/javascript"></script>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-62501686-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+  </div>
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+</body>
+</html>
