@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>OpenFOAM 中的 div 与 snGrad 操作符 | Giskard&#39;s CFD Learning Tricks</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="OpenFOAM 的方便之处之一是利用C++的类模板和函数重载等技术定义了很多各种离散操作符，如div,laplacian,grad 等等。利用这些操作符，很容易就能对偏微分方程进行离散，并构建起线性方程组。但是，这些操作符真正执行的运算，却需要结合有限体积方法的本质来理解一番才能真正掌握。下面尝试着对 OpenFOAM 中的 div 和 snGrad 操作符进行一点解读。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenFOAM 中的 div 与 snGrad 操作符">
+<meta property="og:url" content="http://xiaopingqiu.github.io/2015/05/17/OpenFOAMcode1/index.html">
+<meta property="og:site_name" content="Giskard's CFD Learning Tricks">
+<meta property="og:description" content="OpenFOAM 的方便之处之一是利用C++的类模板和函数重载等技术定义了很多各种离散操作符，如div,laplacian,grad 等等。利用这些操作符，很容易就能对偏微分方程进行离散，并构建起线性方程组。但是，这些操作符真正执行的运算，却需要结合有限体积方法的本质来理解一番才能真正掌握。下面尝试着对 OpenFOAM 中的 div 和 snGrad 操作符进行一点解读。">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="OpenFOAM 中的 div 与 snGrad 操作符">
+<meta name="twitter:description" content="OpenFOAM 的方便之处之一是利用C++的类模板和函数重载等技术定义了很多各种离散操作符，如div,laplacian,grad 等等。利用这些操作符，很容易就能对偏微分方程进行离散，并构建起线性方程组。但是，这些操作符真正执行的运算，却需要结合有限体积方法的本质来理解一番才能真正掌握。下面尝试着对 OpenFOAM 中的 div 和 snGrad 操作符进行一点解读。">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css" type="text/css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', '[object Object]', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Giskard&#39;s CFD Learning Tricks</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">CFD and Scientic Computing</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="q" value="site:http://xiaopingqiu.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-OpenFOAMcode1" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2015/05/17/OpenFOAMcode1/" class="article-date">
+  <time datetime="2015-05-17T06:02:37.000Z" itemprop="datePublished">2015-05-17</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      OpenFOAM 中的 div 与 snGrad 操作符
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>OpenFOAM 的方便之处之一是利用<code>C++</code>的类模板和函数重载等技术定义了很多各种离散操作符，如<code>div</code>,<code>laplacian</code>,<code>grad</code> 等等。利用这些操作符，很容易就能对偏微分方程进行离散，并构建起线性方程组。但是，这些操作符真正执行的运算，却需要结合有限体积方法的本质来理解一番才能真正掌握。下面尝试着对 OpenFOAM 中的 <code>div</code> 和 <code>snGrad</code> 操作符进行一点解读。</p>
+<a id="more"></a>
+<h3 id="1-_div_操作符的本质">1. div 操作符的本质</h3><p> <code>div</code>操作符表面看，是计算散度的，实际上，在OpenFAOM中，div 操作符的作用是<strong>加和</strong>，比如说 $ \nabla \cdot (UU)$，在OpenFOAM中表示为<code>fvm::div(phi,U)</code>，这段代码真正执行的是$\sum_f U_f \phi_f$运算，即将每个网格包含的面上的流率与速度乘积，然后再加起来。再比如，<code>twoPhaseEulerFoam</code>的<code>UaEqn</code>方程有一项是<code>fvm::sp(fvc::div(phia),Ua)</code>，其对应的公式是 $U_a(\nabla \cdot U_a)$。为什么是这样呢？以下试图对背后的原理做一点解释：<br>单相流的动量守恒方程的微分形式如下：<br>$$\frac{\partial U}{\partial t}+\nabla\cdot (UU)+\nabla \cdot dev(-\nu_{eff} (\nabla U+(\nabla U)^T))=-\nabla p +Q$$<br>为了使用有限体积方法，需要将动量方程写成积分形式，即<br>$$\int_V\left [\frac{\partial U}{\partial t}+\nabla\cdot (UU)+\nabla \cdot dev(-\nu_{eff} (\nabla U+(\nabla U)^T))\right ]dV=\int_V\left [ -\nabla p +Q \right ]dV$$<br>这里只分析$\int_V \nabla\cdot (UU) dV$这一项，利用高斯定理，可以将这一个体积分，转化成对包围该体积微元的表面的面积分:$\oint_{\partial V} (UU)\cdot dS$，其中 $dS$ 是面积微元矢量。又因为实际操作中，一个体积微元总是由有限的几个面组成的，所以$$\oint_{\partial V} (UU)\cdot dS=\sum_f\int_{S_f}(UU)\cdot dS_f=\sum_f(UU)_f\cdot S_f$$，其中$$(UU)_f=\frac{1}{mag(S_f)}\int_{S_f}(UU)\cdot dS_f$$。<br>这里做一个近似：$$(UU)_f\approx(U_fU_f)$$<br>于是得到$$\sum_f(UU)_f\cdot S_f\approx \sum_f(U_fU_f)\cdot S_f$$<br>运用张量计算规则$[\mathbf{uv}\cdot\mathbf{w}]=\mathbf{u}(\mathbf{v} \cdot \mathbf{w})$，得到<br>$$\sum_f(U_fU_f)\cdot S_f=\sum_fU_f(U_f\cdot S_f)=\sum_fU_f\phi_f$$<br>综上，OpenFOAM中的代码<code>fvm::div(UU)</code>对应的公式其实是$\int_V \nabla\cdot (UU) dV$，而根据推导，在有限体积方法中 $\int_V \nabla\cdot (UU) dV=\sum_f(U_f\phi_f)$，所以，<code>fvm::div(UU)</code>实质上<strong>进行的运算是，把网格当作体积微元，将网格中心的速度 $U$ 插值到包围该网格的所有面上的面心上得到 $U_f$，并计算每个面上的速度通量 $\phi_f$，然后返回每一个面上的速度与通量乘积的加和</strong>。$U_f$的计算需要用到本网格与邻近网格的速度值，离散格式的作用就体现在如果利用本网格与邻近网格的速度得到面上的速度。</p>
+<p> 再来看上面提到的另一项$U_a(\nabla \cdot U_a)$，根据上面类似的推导<br>$$\int_V\left [ U_a(\nabla \cdot U_a)\right ]dV=U_a\int_V(\nabla \cdot U_a)dV$$<br>注意，这里之所以能这样变换，是因为在一个体积微元dV内，Ua是常数。根据高斯定理<br>$$\int_V(\nabla \cdot U_a)dV=\oint_{\partial V}U_a\cdot dS=\sum_f(U_a)_f\cdot S_f=\sum_f(\phi_a)_f$$<br>于是得到<br>$$\int_V\left [ U_a(\nabla \cdot U_a)\right ]dV=U_a\sum_f(\phi_a)_f$$<br>这一项在OpenFOAM中的表达是<code>fvm::sp(fvc::div(phia),Ua)</code>，含义就很明显了,这一项相当于是一个系数与需要求解的量$U_a$的乘积，所以被当作隐式的源项来处里。注意我先前以为把$(\nabla \cdot U_a)$当作显式处理是人为简化的结果，其实不然，这是自然而然的结果。而在这里也可以看出，$\sum_f(\phi_a)_f$对应的代码是<code>fvc::div(phia)</code>，也印证了上面的观点，即<code>div</code>操作符<strong>本质上是在作加和运算</strong>。</p>
+<h3 id="2-_grad_与_snGrad">2. grad 与 snGrad</h3><p>在<code>twoPhaseEulerFoam</code>中，$\frac{\nabla \alpha}{\alpha}$在两个不同的地方用了两种不同的表示。<br>$$<br>\nabla \cdot \left \{ [\nu_{eff,a} \frac{\nabla \alpha}{\alpha}][U_a] \right \}<br>$$<br>对应的代码是：<code>fvm::div(phiRa,Ua)</code>，其中<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">phiRa=-fvc::interpolate(nuEffa)*mesh.magSf()*fvc::snGrad(alpha)</span><br><span class="line">     /fvc::interpolate(alpha + scalar(0.001));</span><br></pre></td></tr></table></figure></p>
+<p>而另一项<br>$$[\frac{\nabla \alpha }{\alpha}]\cdot{Rca}$$<br>对应的代码是<code>fvc::grad(alpha)/fvc::average(alpha + scalar(0.001)) &amp; Rca</code></p>
+<p> <strong>下面是我对这个的理解</strong>：<br>对于<br>$$<br>\nabla \cdot \left \{ [\nu_{eff,a} \frac{\nabla \alpha}{\alpha}][U_a] \right \}<br>$$</p>
+<p>其处理方法跟$\nabla \cdot(U_aU_a)$是一样的，因为$ \frac{\nabla \alpha}{\alpha}$也是一个矢量。<code>phiRa</code>相当于是 $\left [\nu_{eff,a} \frac{\nabla \alpha}{\alpha} \right ]$这个矢量的界面通量，类比于<code>phia</code>。<code>phia</code>的定义是<code>linearInterpolate(Ua) &amp; mesh.Sf()</code>，而<code>phiRa</code>理论上应该也可以定义成类似于<code>linearInterpolate(gradalpha) &amp; mesh.Sf()</code>，前提是要先定义一个 <code>volVectorField gradalpha=-nuEffa*fvc::grad(alpha)/alpha</code>。但是考虑到界面通量本质上是先将一个<code>volVectorField</code>插值到面上，并乘以面积矢量，对于 $\frac{\nabla \alpha}{\alpha}$，完全可以直接求出每个面上的$\frac{\nabla \alpha}{\alpha}$，然后乘以面积矢量，而不需要先建立体中心的$\frac{\nabla \alpha}{\alpha}$再插值到面上。<code>snGrad</code>就是这样一个用来求面上的梯度量的函数，它求解面上的梯度时，采用如下公式：<br>$$(\nabla \phi)_f=\frac{\phi_N-\phi_P}{|\mathbf{d}|}$$<br>即用相邻网格的值减去面所属网格的值，再除以两个网格中心矢量的模。注意这个处理对于正交网格是精确的，对于非正交网格，只是一个近似处理。而且要注意，这样求得的面上的梯度值已经是一个标量了。再回到<code>phiRa</code>的定义，既然<code>fvc::snGrad(alpha)</code>已经是标量了，那只要再乘以面积矢量的模<code>mesh.magSf()</code>，便是界面上的通量了。<code>fvc::interpolate(nuEffa)</code>和<code>fvc::interpolate(alpha + scalar(0.001))</code>则分别是将volField插值到面。</p>
+<p> 再来看$$[\frac{\nabla \alpha }{\alpha}]\cdot{Rca}$$<br> 这一项是被当作显式的源项来处理，所以，我们需要得到的是一个volVcetorField。所以这里将$\nabla \alpha$处理成 volVectorField，再与作为 volTensorField 的 <code>Rca</code> 进行点乘，得到的就是 volVcetorField。因此，这里的$\frac{\nabla \alpha }{\alpha}$对应的代码是 <code>fvc::grad(alpha)/fvc::average(alpha + scalar(0.001))</code>。注意这里的 <code>fvc::average()</code> 函数的定义<a href="http://foam.sourceforge.net/docs/cpp/a05323_source.html#l00046" target="_blank" rel="external">如下</a>：<br><figure class="highlight nimrod"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br></pre></td><td class="code"><pre><span class="line"> <span class="number">43</span> <span class="keyword">template</span>&lt;class <span class="type">Type</span>&gt;</span><br><span class="line"> <span class="number">44</span> tmp&lt;<span class="type">GeometricField</span>&lt;<span class="type">Type</span>, fvPatchField, volMesh&gt; &gt;</span><br><span class="line"> <span class="number">45</span> average</span><br><span class="line"> <span class="number">46</span> (</span><br><span class="line"> <span class="number">47</span>     <span class="keyword">const</span> <span class="type">GeometricField</span>&lt;<span class="type">Type</span>, fvsPatchField, surfaceMesh&gt;&amp; ssf</span><br><span class="line"> <span class="number">48</span> )</span><br><span class="line"> <span class="number">49</span> &#123;</span><br><span class="line"> <span class="number">50</span>     <span class="keyword">const</span> fvMesh&amp; mesh = ssf.mesh();</span><br><span class="line"> <span class="number">51</span> </span><br><span class="line"> <span class="number">52</span>     tmp&lt;<span class="type">GeometricField</span>&lt;<span class="type">Type</span>, fvPatchField, volMesh&gt; &gt; taverage</span><br><span class="line"> <span class="number">53</span>     (</span><br><span class="line"> <span class="number">54</span>         new <span class="type">GeometricField</span>&lt;<span class="type">Type</span>, fvPatchField, volMesh&gt;</span><br><span class="line"> <span class="number">55</span>         (</span><br><span class="line"> <span class="number">56</span>             <span class="type">IOobject</span></span><br><span class="line"> <span class="number">57</span>             (</span><br><span class="line"> <span class="number">58</span>                 <span class="string">"average("</span>+ssf.name()+')',</span><br><span class="line"> <span class="number">59</span>                 ssf.instance(),</span><br><span class="line"> <span class="number">60</span>                 mesh,</span><br><span class="line"> <span class="number">61</span>                 <span class="type">IOobject</span>::<span class="type">NO</span>\_READ,</span><br><span class="line"> <span class="number">62</span>                 <span class="type">IOobject</span>::<span class="type">NO</span>\_WRITE</span><br><span class="line"> <span class="number">63</span>             ),</span><br><span class="line"> <span class="number">64</span>             mesh,</span><br><span class="line"> <span class="number">65</span>             ssf.dimensions()</span><br><span class="line"> <span class="number">66</span>         )</span><br><span class="line"> <span class="number">67</span>     );</span><br><span class="line"> <span class="number">68</span> </span><br><span class="line"> <span class="number">69</span>     <span class="type">GeometricField</span>&lt;<span class="type">Type</span>, fvPatchField, volMesh&gt;&amp; av = taverage();</span><br><span class="line"> <span class="number">70</span> </span><br><span class="line"> <span class="number">71</span>     av.internalField() =</span><br><span class="line"> <span class="number">72</span>     (</span><br><span class="line"> <span class="number">73</span>         surfaceSum(mesh.magSf()*ssf)/surfaceSum(mesh.magSf())</span><br><span class="line"> <span class="number">74</span>     )().internalField();</span><br><span class="line"> <span class="number">75</span> </span><br><span class="line"> <span class="number">76</span>     typename <span class="type">GeometricField</span>&lt;<span class="type">Type</span>, fvPatchField, volMesh&gt;::</span><br><span class="line"> <span class="number">77</span>     <span class="type">GeometricBoundaryField</span>&amp; bav = av.boundaryField();</span><br><span class="line"> <span class="number">78</span> </span><br><span class="line"> <span class="number">79</span>     forAll(bav, patchi)</span><br><span class="line"> <span class="number">80</span>     &#123;</span><br><span class="line"> <span class="number">81</span>         bav[patchi] = ssf.boundaryField()[patchi];</span><br><span class="line"> <span class="number">82</span>     &#125;</span><br><span class="line"> <span class="number">83</span> </span><br><span class="line"> <span class="number">84</span>     av.correctBoundaryConditions();</span><br><span class="line"> <span class="number">85</span> </span><br><span class="line"> <span class="number">86</span>     <span class="keyword">return</span> taverage;</span><br><span class="line"> <span class="number">87</span> &#125;</span><br><span class="line"> <span class="number">88</span> </span><br><span class="line"> <span class="number">89</span> </span><br><span class="line"> <span class="number">90</span> <span class="keyword">template</span>&lt;class <span class="type">Type</span>&gt;</span><br><span class="line"> <span class="number">91</span> tmp&lt;<span class="type">GeometricField</span>&lt;<span class="type">Type</span>, fvPatchField, volMesh&gt; &gt;</span><br><span class="line"> <span class="number">92</span> average</span><br><span class="line"> <span class="number">93</span> (</span><br><span class="line"> <span class="number">94</span>     <span class="keyword">const</span> tmp&lt;<span class="type">GeometricField</span>&lt;<span class="type">Type</span>, fvsPatchField, surfaceMesh&gt; &gt;&amp; tssf</span><br><span class="line"> <span class="number">95</span> )</span><br><span class="line"> <span class="number">96</span> &#123;</span><br><span class="line"> <span class="number">97</span>     tmp&lt;<span class="type">GeometricField</span>&lt;<span class="type">Type</span>, fvPatchField, volMesh&gt; &gt; taverage</span><br><span class="line"> <span class="number">98</span>     (</span><br><span class="line"> <span class="number">99</span>         fvc::average(tssf())</span><br><span class="line"><span class="number">100</span>     );</span><br><span class="line"><span class="number">101</span>     tssf.clear();</span><br><span class="line"><span class="number">102</span>     <span class="keyword">return</span> taverage;</span><br><span class="line"><span class="number">103</span> &#125;</span><br><span class="line"><span class="number">104</span> </span><br><span class="line"><span class="number">105</span> </span><br><span class="line"><span class="number">106</span> <span class="keyword">template</span>&lt;class <span class="type">Type</span>&gt;</span><br><span class="line"><span class="number">107</span> tmp&lt;<span class="type">GeometricField</span>&lt;<span class="type">Type</span>, fvPatchField, volMesh&gt; &gt;</span><br><span class="line"><span class="number">108</span> average</span><br><span class="line"><span class="number">109</span> (</span><br><span class="line"><span class="number">110</span>     <span class="keyword">const</span> <span class="type">GeometricField</span>&lt;<span class="type">Type</span>, fvPatchField, volMesh&gt;&amp; vtf</span><br><span class="line"><span class="number">111</span> )</span><br><span class="line"><span class="number">112</span> &#123;</span><br><span class="line"><span class="number">113</span>     <span class="keyword">return</span> fvc::average(linearInterpolate(vtf));</span><br><span class="line"><span class="number">114</span> &#125;</span><br><span class="line"><span class="number">115</span> </span><br><span class="line"><span class="number">116</span> </span><br><span class="line"><span class="number">117</span> <span class="keyword">template</span>&lt;class <span class="type">Type</span>&gt;</span><br><span class="line"><span class="number">118</span> tmp&lt;<span class="type">GeometricField</span>&lt;<span class="type">Type</span>, fvPatchField, volMesh&gt; &gt;</span><br><span class="line"><span class="number">119</span> average</span><br><span class="line"><span class="number">120</span> (</span><br><span class="line"><span class="number">121</span>     <span class="keyword">const</span> tmp&lt;<span class="type">GeometricField</span>&lt;<span class="type">Type</span>, fvPatchField, volMesh&gt; &gt;&amp; tvtf</span><br><span class="line"><span class="number">122</span> )</span><br><span class="line"><span class="number">123</span> &#123;</span><br><span class="line"><span class="number">124</span>     tmp&lt;<span class="type">GeometricField</span>&lt;<span class="type">Type</span>, fvPatchField, volMesh&gt; &gt; taverage</span><br><span class="line"><span class="number">125</span>     (</span><br><span class="line"><span class="number">126</span>         fvc::average(tvtf())</span><br><span class="line"><span class="number">127</span>     );</span><br><span class="line"><span class="number">128</span>     tvtf.clear();</span><br><span class="line"><span class="number">129</span>     <span class="keyword">return</span> taverage;</span><br><span class="line"><span class="number">130</span> &#125;</span><br></pre></td></tr></table></figure></p>
+<p>可以看出，<code>fvc::average()</code>函数的返回类型是<code>template&lt;class Type&gt;
+  118 tmp&lt;GeometricField&lt;Type, fvPatchField, volMesh&gt; &gt;</code>，对应<code>alpha</code>，返回类型就是<code>tmp&lt;GeometricField&lt;scalar, fvPatchField, volMesh&gt; &gt;</code>，即<code>tmp&lt;volScalarField&gt;</code>。<code>average</code>函数的核心定义见代码71-74行，可见<code>average</code>采用的是面积加权平均，即$$\overline{\phi}=\frac{\sum_f\phi_f*|S_f|}{\sum_f |S_f|}$$。如果给<code>average</code>的参数类型是surfaceFiled，那么直接计算平均值后返回volField，如果给的参数的volField，那就先将volField插值到面，计算平均值后再返回volField，见代码106-114行。</p>
+<h3 id="参考资料">参考资料</h3><ol>
+<li><a href="http://www.openfoam.org/docs/cpp/" target="_blank" rel="external">http://www.openfoam.org/docs/cpp/</a></li>
+<li>OpenFOAM: A little User-Manual, Gerhard Holzinger, <a href="https://github.com/ParticulateFlow/OSCCAR-doc" target="_blank" rel="external">https://github.com/ParticulateFlow/OSCCAR-doc</a></li>
+</ol>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://xiaopingqiu.github.io/2015/05/17/OpenFOAMcode1/" data-id="ci9s32l1v0000xkmbi7x59c1r" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2015/05/09/functionObjects/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">利用functionObjects对指定区域内进行后处理</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+<section id="comments">
+  <!-- 多说评论框 start -->
+  <div class="ds-thread" data-thread-key="post-OpenFOAMcode1" data-title="OpenFOAM 中的 div 与 snGrad 操作符" data-url="http://xiaopingqiu.github.io/2015/05/17/OpenFOAMcode1/"></div>
+  <!-- 多说评论框 end -->
+  <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+  <script type="text/javascript">
+  var duoshuoQuery = {short_name:"xiaopingqiu"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+  <!-- 多说公共JS代码 end -->
+</section>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/">OpenFOAM</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Paraview/">Paraview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/test/">test</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Explained/">Code Explained</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Postprocessing/">Postprocessing</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/paraview/">paraview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/test/">test</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Code-Explained/" style="font-size: 10px;">Code Explained</a><a href="/tags/OpenFOAM/" style="font-size: 20px;">OpenFOAM</a><a href="/tags/Postprocessing/" style="font-size: 20px;">Postprocessing</a><a href="/tags/paraview/" style="font-size: 10px;">paraview</a><a href="/tags/test/" style="font-size: 10px;">test</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a><span class="archive-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recents</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2015/05/17/OpenFOAMcode1/">OpenFOAM 中的 div 与 snGrad 操作符</a>
+          </li>
+        
+          <li>
+            <a href="/2015/05/09/functionObjects/">利用functionObjects对指定区域内进行后处理</a>
+          </li>
+        
+          <li>
+            <a href="/2015/05/03/paraview-remote/">ParaView 的远程模式</a>
+          </li>
+        
+          <li>
+            <a href="/2015/04/12/fieldAverage/">fieldAverage 使用说明</a>
+          </li>
+        
+          <li>
+            <a href="/2015/04/04/hello-world/">Hello World</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2015 Giskard Q.<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+<script src="//dn-lbstatics.qbox.me/lbservice/busuanzi/2.0/busuanzi.mini.js"/></script>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css" type="text/css">
+  <script src="/fancybox/jquery.fancybox.pack.js" type="text/javascript"></script>
+
+
+<script src="/js/script.js" type="text/javascript"></script>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-62501686-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+  </div>
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+</body>
+</html>
