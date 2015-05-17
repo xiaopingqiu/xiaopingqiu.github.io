@@ -4,7 +4,7 @@
   <subtitle><![CDATA[CFD and Scientic Computing]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://xiaopingqiu.github.io/"/>
-  <updated>2015-05-17T06:43:26.949Z</updated>
+  <updated>2015-05-17T07:16:05.037Z</updated>
   <id>http://xiaopingqiu.github.io/</id>
   
   <author>
@@ -13,6 +13,63 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title><![CDATA[twoPhaseEulerFoam 全解读之一]]></title>
+    <link href="http://xiaopingqiu.github.io/2015/05/17/twoPhaseEulerFoam1/"/>
+    <id>http://xiaopingqiu.github.io/2015/05/17/twoPhaseEulerFoam1/</id>
+    <published>2015-05-17T06:46:07.000Z</published>
+    <updated>2015-05-17T07:16:05.037Z</updated>
+    <content type="html"><![CDATA[<p>本系列将对OpenFOAM-2.1.1 中的 <code>twoPhaseEulerFoam</code> 求解器进行完全解读，共分三部分：方程推导，代码解读，补充说明。本篇进行方程推导，详细介绍如果从双流体模型出发得到 <code>twoPhaseEulerFoam</code> 中的 <code>UEqn.H</code> 对应的模型方程形式。</p>
+<a id="more"></a>
+<h2 id="1-_方程推导">1. 方程推导</h2><p>双流体模型方程可以表达成如下形式：</p>
+<p><strong>连续性方程</strong>：<br>$$\frac{\partial(\alpha_\phi\rho_\phi)}{\partial t}+\nabla\cdot(\alpha_\phi\rho_\phi U_\phi)=0$$<br><strong>动量守恒方程</strong>:<br>$$\frac{\partial(\alpha_\phi\rho_\phi U_\phi)}{\partial t}+\nabla\cdot(\alpha_\phi\rho_\phi U_\phi U_\phi)+\nabla\cdot(\alpha_\phi\tau_\phi)+\nabla\cdot(\alpha_\phi\rho_\phi R_\phi )=-\alpha_\phi\nabla p+\alpha_\phi\rho_\phi g+M_\phi$$<br>式中，下标$\phi=a,b$分别代表分散相和连续相，$\tau_\phi$表示粘性应力项，$R_\phi$表示雷诺应力项，$M_\phi$表示相间作用项。<br>上述方程是完全守恒形式的，但是注意到上述动量方程的瞬变项是$\frac{\partial(\alpha_\phi\rho_\phi U_\phi)}{\partial t}$，等于说解这个方程能得到的是每个时间步的动量，若要转化成速度，则需要用动量除以密度与体积分率的乘积，即$\frac{(\alpha_\phi\rho_\phi U_\phi)}{\alpha_\phi\rho_\phi}$。那么当离散相a的体积分率$\alpha_a\to0$时，这个除法就要出问题了。于是，Weller [1] 提出通过构造一种”phase-intensive”形式的动量方程来避开这个问题，见下面的详细推导。<br>Weller提出的方法的核心是将$\alpha_\phi\rho_\phi$从动量方程的瞬变项中剥离出来，以使动量方程直接对速度进行演化，而不是动量。<br>首先对动量方程的瞬变项和对流项进行如下转化：<br>$$\frac{\partial(\alpha_\phi\rho_\phi U_\phi)}{\partial t}=\alpha_\phi\rho_\phi\frac{\partial( U_\phi)}{\partial t}+U_\phi\frac{\partial(\alpha_\phi\rho_\phi )}{\partial t}$$</p>
+<p>$$\nabla\cdot(\alpha_\phi\rho_\phi U_\phi U_\phi)= \alpha_\phi\rho_\phi U_\phi\cdot \nabla( U_\phi) + U_\phi\nabla\cdot(\alpha_\phi\rho_\phi  U_\phi)$$<br>注：这里到了张量运算公式$[\nabla\cdot \mathbf{vw}]=[\mathbf{v}\cdot\nabla\mathbf{w}]+\mathbf{w}(\nabla\cdot\mathbf{v})$，具体可参考 Bird 的 Transport Phenomenon 的 Appendix A。</p>
+<p>于是，瞬变项和对流项的加和可以写成如下形式：<br>$$\frac{\partial(\alpha_\phi\rho_\phi U_\phi)}{\partial t}+\nabla\cdot(\alpha_\phi\rho_\phi U_\phi U_\phi)=\alpha_\phi\rho_\phi\left[\frac{\partial( U_\phi)}{\partial t}+U_\phi \cdot \nabla( U_\phi)\right]+U_\phi \left[ \frac{\partial(\alpha_\phi\rho_\phi )}{\partial t}+\nabla\cdot(\alpha_\phi\rho_\phi  U_\phi)\right]$$<br>注意右边第二项的括号里其实就是连续性方程的左边，其值为0，因此得到：<br>$$\frac{\partial(\alpha_\phi\rho_\phi U_\phi)}{\partial t}+\nabla\cdot(\alpha_\phi\rho_\phi U_\phi U_\phi) = \alpha_\phi\rho_\phi\left[\frac{\partial( U_\phi)}{\partial t}+U_\phi \cdot \nabla( U_\phi)\right]$$</p>
+<p>于是得到第一步转化之后的动量方程：<br>$$\alpha_\phi\rho_\phi\left[\frac{\partial( U_\phi)}{\partial t}+U_\phi\cdot\nabla( U_\phi)\right] + \nabla\cdot(\alpha_\phi\tau_\phi) + \nabla\cdot(\alpha_\phi\rho_\phi R_\phi ) = -\alpha_\phi\nabla p + \alpha_\phi\rho_\phi g + M_\phi$$</p>
+<p>下面处理粘性应力项和雷诺应力项。</p>
+<p>$$\nabla\cdot(\alpha_\phi\tau_\phi) + \nabla\cdot(\alpha_\phi\rho_\phi R_\phi )=\nabla\cdot\left[\alpha_\phi\rho_\phi(\frac{\tau_\phi}{\rho_\phi}+R_\phi)\right] = \nabla\cdot\left[\alpha_\phi\rho_\phi R_{eff,\phi}\right ]$$</p>
+<p>其中 $R_{eff,\phi}=\frac{\tau_\phi}{\rho_\phi}+R_\phi$。</p>
+<p>根据定义(此处参考<a href="https://openfoamwiki.net/index.php/BubbleFoam" target="_blank" rel="external">BubbleFoam的Wiki页面</a>)：<br>$$<br>\boldsymbol{\tau}_{\phi} = - \rho_{\phi} \nu_{\phi} \left[\nabla \mathbf{U}_{\phi} + \nabla^{\textrm{T}} \mathbf{U}_{\phi} \right] + \frac{2}{3}\rho_{\phi}\nu_{\phi} \left( \nabla \cdot \mathbf{U}_{\phi} \right) \mathbf{I}<br>$$<br>以及<br>$$<br>\mathbf{R}_{\phi} = -  \nu_{\phi,\textrm{t}} \left[ \nabla \mathbf{U}_{\phi} +\nabla^{\textrm{T}} \mathbf{U}_{\phi} \right] + \frac{2}{3}  \nu_{\phi,\textrm{t}} \left( \nabla \cdot \mathbf{U}_{\phi} \right) \mathbf{I} + \frac{2}{3} k_{\phi} \mathbf{I}<br>$$<br>代入到 $R_{eff,\phi}$中，得：<br>$$R_{eff,\phi}=-(\nu_\phi+\nu_{\phi , t})\left[ \nabla \mathbf{U}_{\phi} +\nabla^{\textrm{T}} \mathbf{U}_{\phi} \right]+\frac{2}{3}(\nu_\phi+\nu_{\phi , t}) \left (\nabla \cdot \mathbf{U}_{\phi}\right )  \mathbf{I} + \frac{2}{3} k_{\phi} \mathbf{I}$$<br>令 $\nu_{eff}=\nu_\phi+\nu_{\phi , t}$ ，则：<br>$$<br>R_{eff,\phi}=-\nu_{eff}\left[ \nabla \mathbf{U}_{\phi} +\nabla^{\textrm{T}} \mathbf{U}_{\phi} \right]+\frac{2}{3}\nu_{eff}<br>\left (\nabla \cdot \mathbf{U}_{\phi}\right )  \mathbf{I} + \frac{2}{3} k_{\phi} \mathbf{I} = -\nu_{eff}\nabla U_\phi + R_{c,\phi}<br>$$<br>其中$$R_{c,\phi}=-\nu_{eff} \nabla \mathbf{U}^\textrm{T}_{\phi}+\frac{2}{3}\nu_{eff}<br>\left (\nabla \cdot \mathbf{U}_{\phi}\right )  \mathbf{I} + \frac{2}{3} k_{\phi} \mathbf{I}$$</p>
+<p>于是得到：<br> $$\begin{aligned}<br>\nabla\cdot\left[\alpha_\phi\rho_\phi R_{eff,\phi}\right ] = &amp; \nabla(\alpha_\phi\rho_\phi)\cdot\left[ R_{eff,\phi}\right] + \alpha_\phi\rho_\phi\nabla\cdot \left [ R_{eff,\phi}\right ]\\<br>=&amp; \alpha_\phi\rho_\phi\nabla\cdot\left[ -\nu_{eff}\nabla U_\phi\right] + \alpha_\phi\rho_\phi\nabla\cdot\left[ R_{c,\phi}\right] + \nabla(\alpha_\phi\rho_\phi)\left[ -\nu_{eff}\nabla U_\phi + R_{c,\phi}\right]<br>\end{aligned}<br> $$</p>
+<p>代入到动量方程中，并且方程两边同时除以$\alpha_\phi\rho_\phi$，得到：<br> $$<br> \frac{\partial U_\phi}{\partial t} + U_\phi\cdot\nabla U_\phi -\nabla \cdot \left[ \nu_{eff} \nabla U_\phi \right ] + \nabla \cdot \left[ R_{c,\phi}\right] + \frac{\nabla(\alpha_\phi\rho_\phi)}{\alpha_\phi\rho_\phi}\cdot \left[ -\nu_{eff}\nabla U_\phi + R_{c,\phi}\right] = -\frac{\nabla p}{\rho_\phi} + g + \frac{M_\phi}{\alpha_\phi\rho_\phi}<br> $$</p>
+<p>如果假定两相流体均为不可压缩，密度恒为常数，于是可以得到不可压缩的双流体模型的方程组：</p>
+<p><strong>连续性方程</strong><br>$$\frac{\partial(\alpha_\phi)}{\partial t}+\nabla\cdot(\alpha_\phi U_\phi)=0$$</p>
+<p><strong>动量方程</strong><br> $$<br> \frac{\partial U_\phi}{\partial t} + U_\phi\cdot\nabla U_\phi -\nabla \cdot \left[ \nu_{eff} \nabla U_\phi \right ] + \nabla \cdot \left[ R_{c,\phi}\right] + \frac{\nabla(\alpha_\phi)}{\alpha_\phi} \cdot \left[ -\nu_{eff}\nabla U_\phi + R_{c,\phi}\right] = -\frac{\nabla p}{\rho_\phi} + g + \frac{M_\phi}{\alpha_\phi\rho_\phi}<br> $$</p>
+<p>方程中还剩下相间作用项没有处理，对于分散相和连续项形式，相间作用力是大小相等符号想反，这里只考虑分散相的形式，令$\phi=a$，则得到分散相的动量方程：<br>$$<br> \frac{\partial U_a}{\partial t} + U_a\cdot\nabla U_a -\nabla \cdot \left[ \nu_{eff} \nabla U_a \right ] + \nabla \cdot \left[ R_{c,a}\right] + \frac{\nabla(\alpha_a)}{\alpha_a} \cdot \left[ -\nu_{eff}\nabla U_a + R_{c,a}\right] = -\frac{\nabla p}{\rho_a} + g + \frac{M_a}{\alpha_a\rho_a}<br> $$</p>
+<p> 相间作用只考虑曳力，升力以及虚拟质量力，即$M,a=M_{drag}+M_{lift}+M_{vm}$，下面分别考虑每一种相间作用力。</p>
+<ul>
+<li>曳力<br>$M_{drag}=-\beta(U_a-U_b)$，其中$\beta$为曳力系数。</li>
+<li>升力<br>$M_{lift}=-\alpha_a\alpha_b C_l (\alpha_b \rho_b + \alpha_a \rho_a)U_r \times (\nabla \times U)$ ，其中 $U_r=U_a-U_b$，$U=\alpha_a U_a + \alpha_b U_b$</li>
+<li>虚拟质量力<br>$M_{vm}=\alpha_a\alpha_b C_{vm}\rho_b\left[ \frac{DU_b}{Dt}-\frac{DU_a}{Dt}\right]$，其中$\frac{D}{Dt}$表示物质导数，$\frac{DU_b}{Dt}=\frac{\partial U_b}{\partial t} + U_b \cdot \nabla U_b$，$\frac{DU_a}{Dt}=\frac{\partial U_a}{\partial t}+U_a \cdot \nabla U_a$</li>
+</ul>
+<p>考虑到形式的统一，令$K=\frac{\beta}{\alpha_a\alpha_b}$，则曳力可表示为$M_{drag}=-\alpha_a\alpha_b K(U_a-U_b)$</p>
+<p>代入到分散相a的动量方程中，得到：<br>$$\begin{aligned}<br>&amp;\frac{\partial U_a}{\partial t} + U_a\cdot \nabla U_a -\nabla \cdot \left[ \nu_{eff} \nabla U_a \right ] + \nabla \cdot \left[ R_{c,a}\right] + \frac{\nabla(\alpha_a)}{\alpha_a} \cdot \left[ -\nu_{eff}\nabla U_a + R_{c,a}\right] \\<br>= &amp; -\frac{\nabla p}{\rho_a} + g - \frac{\alpha_b}{\rho_a} K (U_a-U_b) - \frac{\alpha_b}{\rho_a}<br> C_l (\alpha_b \rho_b + \alpha_a \rho_a) U_r \times (\nabla \times U) \\<br> +&amp;  \frac{\alpha_b}{\rho_a} C_{vm}\rho_b\left[ \frac{\partial U_b}{\partial t} + U_b \cdot \nabla U_b - (\frac{\partial U_a}{\partial t}+U_a \cdot \nabla U_a)\right]<br> \end{aligned}$$</p>
+<p>将相关的项合并，并调整顺序，便得到与<code>twoPhaseEulerFoam</code>求解器的<code>UEqn.H</code>文件中相同形式的分散相动量方程：<br>$$<br>\begin{aligned}<br>&amp;(1+\frac{\alpha_b \rho_b}{\rho_a} C_{vm})(\frac{\partial U_a}{\partial t} + U_a\cdot \nabla U_a ) -\nabla \cdot \left[ \nu_{eff} \nabla U_a \right ] + \nabla \cdot \left[ R_{c,a}\right] + \frac{\nabla(\alpha_a)}{\alpha_a} \cdot \left[ -\nu_{eff}\nabla U_a + R_{c,a}\right] \\<br>= &amp; -\frac{\alpha_b}{\rho_a} K U_a - \frac{\alpha_b}{\rho_a} \left\{ {C_l (\alpha_b \rho_b + \alpha_a \rho_a) U_r \times (\nabla \times U) -  C_{vm}\rho_b\left[ {\frac{\partial U_b}{\partial t} + U_b \cdot \nabla U_b }\right] } \right\} \\<br>- &amp; \frac{\nabla p}{\rho_a} + g + \frac{\alpha_b}{\rho_a} K U_b<br>\end{aligned}<br>$$</p>
+<p>连续相b的动量方程形式相仿，这里就不再重复了。这里有几点<strong>注意事项</strong>：</p>
+<ol>
+<li>此处的双流体模型在推导的过程中，是把a当作分散相，b当作连续相的。分散相的体积分率$\alpha_a$可以等于0，但是连续项体积分率$\alpha_b$不能等于0 ，否则会出问题。</li>
+<li>曳力系数 $\beta$ 的形式就是文献中常见的形式，比如，WenYu 曳力系数 $\beta=\frac{3}{4}\frac{(1-\alpha_b)\alpha_b}{d_{p,a}}|U_b-U_a|C_{D0}\alpha_b^{-2.7}$，Ergun 曳力系数 $\beta=150\frac{(1-\alpha_b)^2\mu_b}{\alpha_b d_a^2}+1.75\frac{(1-\alpha_b)\rho_b{U_b-U_a}}{d_a}$。而程序中定义的$K=\frac{\beta}{\alpha_a\alpha_b}$，所以，当$\alpha_b\to 0$时，如果用WenYu曳力那还不会出错，因为曳力系数中的分子里同时含有$\alpha_a\alpha_b$，运算$K=\frac{\beta}{\alpha_a\alpha_b}$不会出现除以0的问题；但如果用Ergun曳力，那就要出问题了，因为Ergun曳力系数中两项的分子都没有$\alpha_b$，所以运算$K=\frac{\beta}{\alpha_a\alpha_b}$就要出问题了。</li>
+</ol>
+<h2 id="参考资料">参考资料</h2><ol>
+<li>Henrik Rusche， PHD Thesis， Computational Fluid Dynamics of Dispersed Two-Phase Flows at High Phase Fractions， Imperial College of Science, Technology &amp; Medicine, Department of Mechanical Engineering, 2002</li>
+<li><a href="https://openfoamwiki.net/index.php/BubbleFoam" target="_blank" rel="external">https://openfoamwiki.net/index.php/BubbleFoam</a></li>
+<li><a href="http://dyfluid.com/pdf/%E5%8F%8C%E6%B5%81%E4%BD%93%E6%A8%A1%E5%9E%8B%E5%9C%A8OpenFOAM%E4%B8%AD%E7%9A%84%E4%BB%A3%E7%A0%81%E5%88%86%E6%9E%90.pdf" target="_blank" rel="external">http://dyfluid.com/pdf/%E5%8F%8C%E6%B5%81%E4%BD%93%E6%A8%A1%E5%9E%8B%E5%9C%A8OpenFOAM%E4%B8%AD%E7%9A%84%E4%BB%A3%E7%A0%81%E5%88%86%E6%9E%90.pdf</a></li>
+<li><a href="http://www.cfd-online.com/Forums/openfoam-solving/71141-rewriting-twophaseeulerfoam-conservative-form.html" target="_blank" rel="external">http://www.cfd-online.com/Forums/openfoam-solving/71141-rewriting-twophaseeulerfoam-conservative-form.html</a></li>
+</ol>
+]]></content>
+    <summary type="html">
+    <![CDATA[<p>本系列将对OpenFOAM-2.1.1 中的 <code>twoPhaseEulerFoam</code> 求解器进行完全解读，共分三部分：方程推导，代码解读，补充说明。本篇进行方程推导，详细介绍如果从双流体模型出发得到 <code>twoPhaseEulerFoam</code> 中的 <code>UEqn.H</code> 对应的模型方程形式。</p>]]>
+    
+    </summary>
+    
+      <category term="Code Explained" scheme="http://xiaopingqiu.github.io/tags/Code-Explained/"/>
+    
+      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/tags/OpenFOAM/"/>
+    
+      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/categories/OpenFOAM/"/>
+    
+  </entry>
   
   <entry>
     <title><![CDATA[OpenFOAM 中的 div 与 snGrad 操作符]]></title>
