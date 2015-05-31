@@ -2,6 +2,11 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://xiaopingqiu.github.io/2015/05/31/foamTimeAverage/</loc>
+    <lastmod>2015-05-31T10:10:08.038Z</lastmod>
+  </url>
+  
+  <url>
     <loc>http://xiaopingqiu.github.io/2015/05/17/twoPhaseEulerFoam2/</loc>
     <lastmod>2015-05-20T07:34:36.336Z</lastmod>
   </url>
