@@ -4,7 +4,7 @@
   <subtitle><![CDATA[CFD and Scientific Computing]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://xiaopingqiu.github.io/"/>
-  <updated>2015-06-04T01:26:12.056Z</updated>
+  <updated>2015-06-04T01:27:01.949Z</updated>
   <id>http://xiaopingqiu.github.io/</id>
   
   <author>
@@ -19,8 +19,8 @@
     <link href="http://xiaopingqiu.github.io/2015/05/31/foamTimeAverage/"/>
     <id>http://xiaopingqiu.github.io/2015/05/31/foamTimeAverage/</id>
     <published>2015-05-31T09:11:00.000Z</published>
-    <updated>2015-06-04T01:26:12.056Z</updated>
-    <content type="html"><![CDATA[<p> 在我<a href="http://xiaopingqiu.github.io/2015/04/12/fieldAverage/" target="_blank" rel="external">以前的一篇博文</a>中，我介绍了<code>fieldAverage</code>这个<code>functionObject</code>的用法，其中提到， 可以用<code>window</code>这个参数来控制所计算的时均值的时间范围。如果 <code>base = time</code>且<code>window = 10</code>，那从第10s以后，每个时刻 t 输出的时均值其实相当于从 t-10 到 t 这个时间段内的时均值。但是，根据分析可以发现，这个时均值并不严格等价于从 t-10 时刻到 t 时刻某个场的时均值。有时候，需要从某个时刻才开始计算时均值，而<code>fieldAverage</code>没有参数可以控制从某个时刻才开始计算时间平均。于是我参照<code>OpenFOAM</code>的<code>patchAverage.C</code>的代码写了一个后处理程序，用来计算指定时间段内的某个场的时均值。</p>
+    <updated>2015-06-04T01:27:01.949Z</updated>
+    <content type="html"><![CDATA[<p> 在<a href="http://xiaopingqiu.github.io/2015/04/12/fieldAverage/" target="_blank" rel="external">前面的一篇博文</a>中，我介绍了<code>fieldAverage</code>这个<code>functionObject</code>的用法，其中提到， 可以用<code>window</code>这个参数来控制所计算的时均值的时间范围。如果 <code>base = time</code>且<code>window = 10</code>，那从第10s以后，每个时刻 t 输出的时均值其实相当于从 t-10 到 t 这个时间段内的时均值。但是，根据分析可以发现，这个时均值并不严格等价于从 t-10 时刻到 t 时刻某个场的时均值。有时候，需要从某个时刻才开始计算时均值，而<code>fieldAverage</code>没有参数可以控制从某个时刻才开始计算时间平均。于是我参照<code>OpenFOAM</code>的<code>patchAverage.C</code>的代码写了一个后处理程序，用来计算指定时间段内的某个场的时均值。</p>
  <a id="more"></a>
 <h3 id="foamTimeAverage_简介">foamTimeAverage 简介</h3><p> <code>foamTimeAverage</code> 是一段简单的后处理程序，其功能是在算例运行结束以后，根据指定的时间段，从数据文件夹里循环读入指定时间段内指定场的数据，并计算该段时间的该指定场的时均值，结果将会输出到该时间段最后一个时刻的数据文件夹内。举例说：<br> <figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">foamTimeAverage <span class="tag">p</span> -<span class="tag">time</span> <span class="number">0.4</span>:<span class="number">0.5</span></span><br></pre></td></tr></table></figure></p>
 <p> 将会计算<code>0.4 s-0.5 s</code>时间段内<code>p</code>的时均值，结果将输出到<code>0.5</code>内，时均值文件名为<code>p_mean</code>。这个程序只支持计算<code>volField</code>的时均值，不支持<code>surfaceField</code>。目前，这个程序只在<code>OpenFOAM-2.1.1</code>和<code>OpenFOAM-2.3.1</code>下通过可编译测试，运行的结果目前只在<code>OpenFOAM-2.1.1</code>下对<code>volScalarField</code>和<code>volVectorField</code>进行了测试。理论上讲，应该在其他版本的<code>OpenFOAM</code>下也可以正常编译和运行。</p>
@@ -36,7 +36,7 @@
 </ol>
 ]]></content>
     <summary type="html">
-    <![CDATA[<p> 在我<a href="http://xiaopingqiu.github.io/2015/04/12/fieldAverage/">以前的一篇博文</a>中，我介绍了<code>fieldAverage</code>这个<code>functionObject</code>的用法，其中提到， 可以用<code>window</code>这个参数来控制所计算的时均值的时间范围。如果 <code>base = time</code>且<code>window = 10</code>，那从第10s以后，每个时刻 t 输出的时均值其实相当于从 t-10 到 t 这个时间段内的时均值。但是，根据分析可以发现，这个时均值并不严格等价于从 t-10 时刻到 t 时刻某个场的时均值。有时候，需要从某个时刻才开始计算时均值，而<code>fieldAverage</code>没有参数可以控制从某个时刻才开始计算时间平均。于是我参照<code>OpenFOAM</code>的<code>patchAverage.C</code>的代码写了一个后处理程序，用来计算指定时间段内的某个场的时均值。</p>]]>
+    <![CDATA[<p> 在<a href="http://xiaopingqiu.github.io/2015/04/12/fieldAverage/">前面的一篇博文</a>中，我介绍了<code>fieldAverage</code>这个<code>functionObject</code>的用法，其中提到， 可以用<code>window</code>这个参数来控制所计算的时均值的时间范围。如果 <code>base = time</code>且<code>window = 10</code>，那从第10s以后，每个时刻 t 输出的时均值其实相当于从 t-10 到 t 这个时间段内的时均值。但是，根据分析可以发现，这个时均值并不严格等价于从 t-10 时刻到 t 时刻某个场的时均值。有时候，需要从某个时刻才开始计算时均值，而<code>fieldAverage</code>没有参数可以控制从某个时刻才开始计算时间平均。于是我参照<code>OpenFOAM</code>的<code>patchAverage.C</code>的代码写了一个后处理程序，用来计算指定时间段内的某个场的时均值。</p>]]>
     
     </summary>
     

@@ -102,7 +102,7 @@ ga('send', 'pageview');
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p> 在我<a href="http://xiaopingqiu.github.io/2015/04/12/fieldAverage/">以前的一篇博文</a>中，我介绍了<code>fieldAverage</code>这个<code>functionObject</code>的用法，其中提到， 可以用<code>window</code>这个参数来控制所计算的时均值的时间范围。如果 <code>base = time</code>且<code>window = 10</code>，那从第10s以后，每个时刻 t 输出的时均值其实相当于从 t-10 到 t 这个时间段内的时均值。但是，根据分析可以发现，这个时均值并不严格等价于从 t-10 时刻到 t 时刻某个场的时均值。有时候，需要从某个时刻才开始计算时均值，而<code>fieldAverage</code>没有参数可以控制从某个时刻才开始计算时间平均。于是我参照<code>OpenFOAM</code>的<code>patchAverage.C</code>的代码写了一个后处理程序，用来计算指定时间段内的某个场的时均值。</p>
+        <p> 在<a href="http://xiaopingqiu.github.io/2015/04/12/fieldAverage/">前面的一篇博文</a>中，我介绍了<code>fieldAverage</code>这个<code>functionObject</code>的用法，其中提到， 可以用<code>window</code>这个参数来控制所计算的时均值的时间范围。如果 <code>base = time</code>且<code>window = 10</code>，那从第10s以后，每个时刻 t 输出的时均值其实相当于从 t-10 到 t 这个时间段内的时均值。但是，根据分析可以发现，这个时均值并不严格等价于从 t-10 时刻到 t 时刻某个场的时均值。有时候，需要从某个时刻才开始计算时均值，而<code>fieldAverage</code>没有参数可以控制从某个时刻才开始计算时间平均。于是我参照<code>OpenFOAM</code>的<code>patchAverage.C</code>的代码写了一个后处理程序，用来计算指定时间段内的某个场的时均值。</p>
         
           <p class="article-more-link">
             <a href="/2015/05/31/foamTimeAverage/#more">Read More</a>
