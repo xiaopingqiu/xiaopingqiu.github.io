@@ -4,7 +4,7 @@
   <subtitle><![CDATA[CFD and Scientific Computing]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://xiaopingqiu.github.io/"/>
-  <updated>2015-06-17T06:16:37.554Z</updated>
+  <updated>2015-06-17T06:18:56.828Z</updated>
   <id>http://xiaopingqiu.github.io/</id>
   
   <author>
@@ -19,12 +19,12 @@
     <link href="http://xiaopingqiu.github.io/2015/06/14/OpenFOAM-on-win/"/>
     <id>http://xiaopingqiu.github.io/2015/06/14/OpenFOAM-on-win/</id>
     <published>2015-06-14T13:06:32.000Z</published>
-    <updated>2015-06-17T06:16:37.554Z</updated>
+    <updated>2015-06-17T06:18:56.828Z</updated>
     <content type="html"><![CDATA[<p>本篇介绍如何在 Windows 7 64 bit 下配置 OpenFOAM 的编译及运行环境。我并不打算在 windows 下进行 OpenFOAM 的开发，这里的折腾仅仅是作为一种测试，想看看目前的 OpenFOAM for windows 安装能做到什么程度。我使用的是<a href="http://www.c-fields.com/" target="_blank" rel="external">Creative Fields</a>提供的安装包，编译环境是基于 Mingw-64 来搭建的，linux模拟环境采用的是 MSYS，终端使用的是 <a href="https://code.google.com/p/mintty/" target="_blank" rel="external">mintty</a>。经过一番折腾，我成功在 Windows 下安装了OpenFOAM-2.3.0，程序可以串行或并行运行，也可以用 wmake 编译新的代码。本篇博文不会一步一步详细介绍我的搭建过程，仅介绍一些基本的原则以及我遇到的坑。尤其注意的是，以下很多步骤其实对于安装 OpenFOAM for Windows 不是必需的，仅仅是因为我的特殊要求而徒增折腾而已。</p>
 <a id="more"></a>
 <h2 id="1-_安装">1. 安装</h2><p>安装步骤其实很简单，从<a href="http://www.c-fields.com/technical-area/downloads" target="_blank" rel="external">Creative Fields</a>下载 OpenFOAM for Windows，然后运行安装程序，选择需要的安装的 OpenFOAM 版本（OpenFOAM-2.3.0 或者 FOAM-extend-3.1，这里我安装的是前者），此外 Mingw compiler 也需要选上，不然无法编译新的 OpenFOAM 代码。选好以后，就开始安装过程，安装过程其实是将预编译好的 OpenFOAM 解压到你指定的目录。安装结束以后，从<code>install_dir/OpenFOAM\OpenFOAM-2.3.0</code>运行<code>of23.bat</code>,便会开启一个 Windows 的 cmd 窗口，从这个窗口里便可以运行 OpenFOAM 了。经测试，串行运行 <code>cavity</code> 和并行运行 <code>dambreak</code> 算例都能成功。如果仅仅满足于能在 Windows 下运行 OpenFOAM，那到这里就可以了，下面的不需要再看了。</p>
 <p>但是，默认的 OpenFOAM 运行环境有很多不如意的地方，一是终端太简陋，没有颜色；二是 <code>vim</code> 使用的体验非常差；三是无法正常编译新的 OpenFOAM 代码。为了获得更好的使用体验以及更完整的功能，我进行了以下折腾。</p>
-<h2 id="2-_运行环境的配置">2. 运行环境的配置</h2><p>先简单描述一下我电脑的配置环境：我已安装过 32位版的 mingw，并配置好了 msys+mintty 环境，使用体验很不错。但是，从<a href="http://www.c-fields.com/technical-area/downloads" target="_blank" rel="external">Creative Fields</a> 提供的 OpenFOAM for Windows 默认使用的是它自带的 MSYS，经测试有问题，最不能忍的一个是，这个版本的 MSYS 配合 mintty 终端使用的时候，无法使用<code>ctrl + z</code>将程序放到后台，按<code>ctrl + z</code>会导致终端崩溃。此外，这个版本的 OpenFOAM 是在64 环境编译好的，经测验无法在 32位mingw 环境下编译新的代码，因为库的版本不一致。我不想破坏原来的配置，希望实现两个不同的终端入口，其中一个进入后会自动载入OpenFOAM的运行环境，包括 OpenFOAM 相关的环境变量，Mingw-64 编译环境，以及我配置好的 msys+mintty 运行环境。另一个入口，进入后则会自动载入先前配置的 msys+mingw-32 运行环境。下面开始配置：</p>
+<h2 id="2-_运行环境的配置">2. 运行环境的配置</h2><p>先简单描述一下我电脑的配置环境：我已安装过 32位版的 mingw，并配置好了 msys+mintty 环境，使用体验很不错。但是，从<a href="http://www.c-fields.com/technical-area/downloads" target="_blank" rel="external">Creative Fields</a> 提供的 OpenFOAM for Windows 默认使用的是它自带的 MSYS，经测试有问题，最不能忍的一个是，这个版本的 MSYS 配合 mintty 终端使用的时候，无法使用<code>ctrl + z</code>将程序放到后台，按<code>ctrl + z</code>会导致终端崩溃。此外，这个版本的 OpenFOAM 是在64 环境编译好的，经测验无法在 32位mingw 环境下编译新的代码，因为库的版本不一致。我不想破坏原来的配置，希望实现两个不同的终端入口，其中一个进入后会自动载入OpenFOAM的运行环境，包括 OpenFOAM 相关的环境变量， Mingw-64 编译环境，以及我配置好的 msys+mintty 运行环境。另一个入口，进入后则会自动载入先前配置的 msys + mingw-32 运行环境。下面开始配置：</p>
 <h4 id="2-1-_修改of23-bat">2.1. 修改<code>of23.bat</code></h4><p>默认的内容如下：<br><figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">@echo OFF</span><br><span class="line">if NOT exist D:<span class="command">\OpenFOAM</span><span class="command">\MSYS</span><span class="command">\home</span><span class="command">\%</span>USERNAME<span class="comment">%\.profile call D:\OpenFOAM\MSYS\initProfile.bat</span></span><br><span class="line">SET FOAM=of23</span><br><span class="line">D:<span class="command">\OpenFOAM</span><span class="command">\MSYS</span><span class="command">\bin</span><span class="command">\sh</span>.exe --login -i</span><br></pre></td></tr></table></figure></p>
 <p>我想载入我的 msys 环境，则需要对这个批处理脚本进行修改。最省事的方法是将原来安装 msys 时的脚本<code>msys.bat</code>的内容拷过来，然后加上一些 OpemFOAM 相关的变量，经测试，只需要改三处：</p>
 <ul>
