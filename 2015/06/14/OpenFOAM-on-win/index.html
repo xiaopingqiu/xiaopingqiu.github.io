@@ -119,11 +119,11 @@ ga('send', 'pageview');
 <h4 id="2-3-_一些坑">2.3. 一些坑</h4><p>如果以上配置好以后，仍然无法编译你的 OpenFOAM 代码，那可能是以下原因造成的：</p>
 <ul>
 <li>Creative Fields 这个版本的 OpenFOAM，将所有的属于 OpenFOAM 的源码文件名都在之前加了一个<code>OF_</code>的前缀。我估计这是为了防止文件名冲突，因为windows下，文件名不区分大小写，如此一来，OpenFOAM的源码文件<code>Vector.H</code>便与标准C++的头文件<code>vector.h</code>无法区分了。所以，从Linux下拷贝过来的OpenFOAM源码无法直接在这个环境下编译，需要修改一下<code>#include</code>的源文件名再尝试。</li>
-<li>wmake编译的时候，默认会去<code>src</code>目录下编译生成的<code>lnInclude</code>目录下寻找头文件，但是，估计是由于 msys 环境下不支持符号链接，这个版本的OpenFOAM的 <code>src</code>目录下不自带<code>inInclude</code>目录，所以，编译会遇到找不到头文件的错误，解决办法是重新运行一次<code>src</code>目录的<code>Allwmake</code>，编译不会成功，不过无所谓，只要生成了那些<code>lnInclude</code>目录就行了。</li>
-<li>mpicc，mpic++，mpicxx这几个程序在默认情况下不能正常运行，原因是，在<code>D:\OpenFOAM\OpenFOAM\ThirdParty-2.3.0\platforms\mingw64Gcc\openmpi-1.6.5\share\openmpi</code>下定义的<code>*-wrapper-data.txt</code>文件中，指定的默认编译器是<code>cl.exe</code>，这是<code>visual studio</code>带的命令行编译器。将之改成<code>gcc.exe</code>(mpic++和mpicxx的改成<code>g++.exe</code>)，便可以正常运行了。</li>
+<li>wmake编译的时候，默认会去<code>src</code>目录下编译生成的<code>lnInclude</code>目录下寻找头文件，但是，估计是由于 msys 环境下不支持符号链接，这个版本的OpenFOAM的 <code>src</code>目录下不自带<code>lnInclude</code>目录，所以，编译会遇到找不到头文件的错误，解决办法是重新运行一次<code>src</code>目录的<code>Allwmake</code>，编译不会成功，不过无所谓，只要生成了那些<code>lnInclude</code>目录就行了。</li>
+<li>mpicc，mpic++，mpicxx这几个程序在默认情况下不能正常运行，原因是，在<code>D:\OpenFOAM\OpenFOAM\ThirdParty-2.3.0\platforms\mingw64Gcc\openmpi-1.6.5\share\openmpi</code>下定义的<code>*-wrapper-data.txt</code>文件中，指定的默认编译器是<code>cl.exe</code>，这是<code>visual studio</code>带的命令行编译器。将之改成<code>gcc.exe</code>( mpic++ 和 mpicxx 的改成<code>g++.exe</code>)，便可以正常运行了。</li>
 </ul>
 <p>最后，所有配置都弄好以后，便可以以比较好的体验在Windows下编译和运行OpenFOAM了，但是，msys+mintty 这套环境仍有一个遗憾，那就是并行不能正常。如果在 mintty 终端里直接运行<code>mpirun -np 4 interFoam.exe -parallel</code>，会报错：<code>..\..\..\SOURCES\openmpi-1.6.5\opal\event\event.c: ompi_evesel-&gt;dispatch() failed.</code>。但是如果用 <code>nohup</code> 命令，<code>nohup mpirun -np 4 interFoam.exe -parallel &amp;</code>则可以并行运行。只是仍有一个bug，那就是程序运行结束以后，进程<code>interFoam.exe</code>不会自动关闭，需要手动从任务管理器里去结束。但在默认的<code>of23.bat</code>环境里，并行是正常的，所以妥协的办法是当需要并行运行的时候，就转移到默认环境里去运行。</p>
-<p>以上仅供读者参考，不推荐新手去折腾，因为不太值得，安装一个 Ubuntu 虚拟机，然后在里面安装配置 OpenFOAM 简单多了，而且使用体验也更好。即便要折腾，也不太推荐Creative Fields 的这个安装包，因为它所有的OpenFOAM源文件名前加<code>OF_</code>前缀造成了不小的麻烦。不知道其他的OpenFOAM for windows 安装包采用的是什么方法来规避上面提到的文件名可能冲突这个问题的。</p>
+<p>以上仅供读者参考，不推荐新手去折腾，因为不太值得，安装一个 Ubuntu 虚拟机，然后在里面安装配置 OpenFOAM 简单多了，而且使用体验也更好。即便要折腾，也不太推荐Creative Fields 的这个安装包，因为它在所有的OpenFOAM源文件名前加了<code>OF_</code>前缀,这对编译从linux环境下拷贝过来的 OpenFOAM 代码造成了不小的麻烦。不知道其他的OpenFOAM for windows 安装包采用的是什么方法来规避上面提到的文件名可能冲突这个问题的。</p>
 <p>顺带提一句，Creative Fields 除了提供OpenFOAM for Windows，还有一个画网格工具套装叫<code>cfMesh</code>，经简单试用，其特点是自动化程度很高，网格生成速度特别快。</p>
 
       
