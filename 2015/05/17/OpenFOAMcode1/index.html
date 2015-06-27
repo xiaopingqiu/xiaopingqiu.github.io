@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   
-  <title>OpenFOAM 中的 div 与 snGrad 操作符 | Giskard&#39;s CFD Learning Tricks</title>
+  <title>OpenFOAM 中的 div 与 snGrad 操作符 | 予独爱 CFD</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="OpenFOAM 的方便之处之一是利用C++的类模板和函数重载等技术定义了很多各种离散操作符，如div,laplacian,grad 等等。利用这些操作符，很容易就能对偏微分方程进行离散，并构建起线性方程组。但是，这些操作符真正执行的运算，却需要结合有限体积方法的本质来理解一番才能真正掌握。下面尝试着对 OpenFOAM 中的 div 和 snGrad 操作符进行一点解读。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="OpenFOAM 中的 div 与 snGrad 操作符">
 <meta property="og:url" content="http://xiaopingqiu.github.io/2015/05/17/OpenFOAMcode1/index.html">
-<meta property="og:site_name" content="Giskard's CFD Learning Tricks">
+<meta property="og:site_name" content="予独爱 CFD">
 <meta property="og:description" content="OpenFOAM 的方便之处之一是利用C++的类模板和函数重载等技术定义了很多各种离散操作符，如div,laplacian,grad 等等。利用这些操作符，很容易就能对偏微分方程进行离散，并构建起线性方程组。但是，这些操作符真正执行的运算，却需要结合有限体积方法的本质来理解一番才能真正掌握。下面尝试着对 OpenFOAM 中的 div 和 snGrad 操作符进行一点解读。">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="OpenFOAM 中的 div 与 snGrad 操作符">
@@ -45,7 +45,7 @@ ga('send', 'pageview');
   <div id="header-outer" class="outer">
     <div id="header-title" class="inner">
       <h1 id="logo-wrap">
-        <a href="/" id="logo">Giskard&#39;s CFD Learning Tricks</a>
+        <a href="/" id="logo">予独爱 CFD</a>
       </h1>
       
         <h2 id="subtitle-wrap">

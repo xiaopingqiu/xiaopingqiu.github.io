@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <title><![CDATA[Giskard's CFD Learning Tricks]]></title>
+  <title><![CDATA[予独爱 CFD]]></title>
   <subtitle><![CDATA[CFD and Scientific Computing]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://xiaopingqiu.github.io/"/>
