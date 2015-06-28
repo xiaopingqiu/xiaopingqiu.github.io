@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   
-  <title>foamTimeAverage | 予独爱 CFD</title>
+  <title>foamTimeAverage | Giskard&#39;s CFD Learning Tricks</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="在前面的一篇博文中，我介绍了fieldAverage这个functionObject的用法，其中提到， 可以用window这个参数来控制所计算的时均值的时间范围。如果 base = time且window = 10，那从第10s以后，每个时刻 t 输出的时均值其实相当于从 t-10 到 t 这个时间段内的时均值。但是，根据分析可以发现，这个时均值并不严格等价于从 t-10 时刻到 t 时刻某个场的">
 <meta property="og:type" content="article">
 <meta property="og:title" content="foamTimeAverage">
 <meta property="og:url" content="http://xiaopingqiu.github.io/2015/05/31/foamTimeAverage/index.html">
-<meta property="og:site_name" content="予独爱 CFD">
+<meta property="og:site_name" content="Giskard's CFD Learning Tricks">
 <meta property="og:description" content="在前面的一篇博文中，我介绍了fieldAverage这个functionObject的用法，其中提到， 可以用window这个参数来控制所计算的时均值的时间范围。如果 base = time且window = 10，那从第10s以后，每个时刻 t 输出的时均值其实相当于从 t-10 到 t 这个时间段内的时均值。但是，根据分析可以发现，这个时均值并不严格等价于从 t-10 时刻到 t 时刻某个场的">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="foamTimeAverage">
@@ -45,7 +45,7 @@ ga('send', 'pageview');
   <div id="header-outer" class="outer">
     <div id="header-title" class="inner">
       <h1 id="logo-wrap">
-        <a href="/" id="logo">予独爱 CFD</a>
+        <a href="/" id="logo">Giskard&#39;s CFD Learning Tricks</a>
       </h1>
       
         <h2 id="subtitle-wrap">
@@ -118,7 +118,7 @@ ga('send', 'pageview');
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2015/05/31/foamTimeAverage/" data-id="ciawk9srn000wnwmb4d95cfzi" class="article-share-link">Share</a>
+      <a data-url="http://xiaopingqiu.github.io/2015/05/31/foamTimeAverage/" data-id="cibf1cmcx0010xsmbblo4spda" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Postprocessing/">Postprocessing</a></li></ul>
@@ -177,7 +177,7 @@ ga('send', 'pageview');
   <div class="widget-wrap">
     <h3 class="widget-title">Categories</h3>
     <div class="widget">
-      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/">OpenFOAM</a><span class="category-list-count">7</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Paraview/">Paraview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/test/">test</a><span class="category-list-count">1</span></li></ul>
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/">OpenFOAM</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Paraview/">Paraview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/test/">test</a><span class="category-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -186,7 +186,7 @@ ga('send', 'pageview');
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Explained/">Code Explained</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Postprocessing/">Postprocessing</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/paraview/">paraview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/test/">test</a><span class="tag-list-count">1</span></li></ul>
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Explained/">Code Explained</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Postprocessing/">Postprocessing</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/paraview/">paraview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/test/">test</a><span class="tag-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -195,7 +195,7 @@ ga('send', 'pageview');
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/tags/Code-Explained/" style="font-size: 13.33px;">Code Explained</a><a href="/tags/OpenFOAM/" style="font-size: 20px;">OpenFOAM</a><a href="/tags/Postprocessing/" style="font-size: 16.67px;">Postprocessing</a><a href="/tags/Windows/" style="font-size: 10px;">Windows</a><a href="/tags/paraview/" style="font-size: 10px;">paraview</a><a href="/tags/test/" style="font-size: 10px;">test</a>
+      <a href="/tags/Code-Explained/" style="font-size: 15px;">Code Explained</a><a href="/tags/OpenFOAM/" style="font-size: 20px;">OpenFOAM</a><a href="/tags/Postprocessing/" style="font-size: 15px;">Postprocessing</a><a href="/tags/Windows/" style="font-size: 10px;">Windows</a><a href="/tags/paraview/" style="font-size: 10px;">paraview</a><a href="/tags/test/" style="font-size: 10px;">test</a>
     </div>
   </div>
 
@@ -204,7 +204,7 @@ ga('send', 'pageview');
   <div class="widget-wrap">
     <h3 class="widget-title">Archives</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">六月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a><span class="archive-list-count">2</span></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">六月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a><span class="archive-list-count">2</span></li></ul>
     </div>
   </div>
 
@@ -214,6 +214,10 @@ ga('send', 'pageview');
     <h3 class="widget-title">Recents</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/2015/06/27/twoPhaseEulerFoam3/">twoPhaseEulerFoam 全解读之三</a>
+          </li>
         
           <li>
             <a href="/2015/06/14/OpenFOAM-on-win/">在 Windows 7 下配置 OpenFOAM 运行环境</a>
@@ -229,10 +233,6 @@ ga('send', 'pageview');
         
           <li>
             <a href="/2015/05/17/twoPhaseEulerFoam1/">twoPhaseEulerFoam 全解读之一</a>
-          </li>
-        
-          <li>
-            <a href="/2015/05/17/OpenFOAMcode1/">OpenFOAM 中的 div 与 snGrad 操作符</a>
           </li>
         
       </ul>

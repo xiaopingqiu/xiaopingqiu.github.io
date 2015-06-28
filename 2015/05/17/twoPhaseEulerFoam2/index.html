@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   
-  <title>twoPhaseEulerFoam 全解读之二 | 予独爱 CFD</title>
+  <title>twoPhaseEulerFoam 全解读之二 | Giskard&#39;s CFD Learning Tricks</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="本系列将对OpenFOAM-2.1.1 中的 twoPhaseEulerFoam 求解器进行完全解读，共分三部分：方程推导，代码解读，补充说明。本篇对 twoPhaseEulerFoam 中的 UEqn.H 和 pEqn.H 中的代码进行详细地的解读。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="twoPhaseEulerFoam 全解读之二">
 <meta property="og:url" content="http://xiaopingqiu.github.io/2015/05/17/twoPhaseEulerFoam2/index.html">
-<meta property="og:site_name" content="予独爱 CFD">
+<meta property="og:site_name" content="Giskard's CFD Learning Tricks">
 <meta property="og:description" content="本系列将对OpenFOAM-2.1.1 中的 twoPhaseEulerFoam 求解器进行完全解读，共分三部分：方程推导，代码解读，补充说明。本篇对 twoPhaseEulerFoam 中的 UEqn.H 和 pEqn.H 中的代码进行详细地的解读。">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="twoPhaseEulerFoam 全解读之二">
@@ -45,7 +45,7 @@ ga('send', 'pageview');
   <div id="header-outer" class="outer">
     <div id="header-title" class="inner">
       <h1 id="logo-wrap">
-        <a href="/" id="logo">予独爱 CFD</a>
+        <a href="/" id="logo">Giskard&#39;s CFD Learning Tricks</a>
       </h1>
       
         <h2 id="subtitle-wrap">
@@ -117,7 +117,7 @@ ga('send', 'pageview');
 <p><code>fvm::Sp(beta/rhoa*K, Ua)</code>对应 $\frac{\alpha_b}{\rho_a} K U_a$，<code>beta/rhoa*(liftCoeff - Cvm*rhob*DDtUb)</code> 对应<br>$$<br>\frac{\alpha_b}{\rho_a} \left\{ {C_l (\alpha_b \rho_b + \alpha_a \rho_a) U_r \times (\nabla \times U) -  C_{vm}\rho_b\left[ {\frac{\partial U_b}{\partial t} + U_b \cdot \nabla U_b }\right] } \right\}<br>$$<br>其中变量<code>liftCoeff</code>定义为<br><figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">volVectorField</span> <span class="tag">liftCoeff</span>(<span class="tag">Cl</span>*(<span class="tag">beta</span>*<span class="tag">rhob</span> + <span class="tag">alpha</span>*<span class="tag">rhoa</span>)*(<span class="tag">Ur</span> ^ <span class="rule"><span class="attribute">fvc</span>:<span class="value">:<span class="function">curl</span>(U)))</span></span>;</span><br></pre></td></tr></table></figure></p>
 <p><code>DDtUb</code>定义为<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">DDtUb =</span><br><span class="line">        fvc::ddt(Ub)</span><br><span class="line">      + fvc::div(phib, Ub)</span><br><span class="line">      - fvc::div(phib)*Ub;</span><br></pre></td></tr></table></figure></p>
 <p>重力 $g$ 以及曳力的显式项 $\frac{\alpha_b}{\rho_a} K U_b $ 如注释所述，将会在 <code>pEqn</code> 中考虑，压力梯度项 $\frac{\nabla p}{\rho_a}$ 则将在 <code>pEqn</code> 中用来约束两相的连续性。<br>至此动量方程的每一项都与<code>UEqn.H</code>的代码对应起来了。</p>
-<h3 id="2-_pEqn">2. pEqn</h3><p>压力方程的作用是修正两相速度$U_a$ 和 $U_b$以使速度满足连续性方程。将两相的连续性方程加起来，得到总体的连续性方程如下 <strong>[ <em>注四</em> ]</strong>：<br>$$\begin{aligned}<br>&amp; \frac{\partial \alpha_a}{\partial t} + \nabla \cdot (\alpha_a U_a) + \frac{\partial \alpha_b}{\partial t} + \nabla \cdot (\alpha_b U_b) \\<br>= &amp; \frac{\partial (\alpha_a+\alpha_b)}{\partial t} + \nabla \cdot (\alpha_a U_a+\alpha_b U_b) = 0<br>\end{aligned}$$<br>由于$\alpha_a+\alpha_b=1$，于是两相连续性方程等价于<br>$$<br>\nabla \cdot (\alpha_a U_a+\alpha_b U_b) = 0<br>$$</p>
+<h3 id="2-2-_pEqn">2.2. pEqn</h3><p>压力方程的作用是修正两相速度$U_a$ 和 $U_b$以使速度满足连续性方程。将两相的连续性方程加起来，得到总体的连续性方程如下 <strong>[ <em>注四</em> ]</strong>：<br>$$\begin{aligned}<br>&amp; \frac{\partial \alpha_a}{\partial t} + \nabla \cdot (\alpha_a U_a) + \frac{\partial \alpha_b}{\partial t} + \nabla \cdot (\alpha_b U_b) \\<br>= &amp; \frac{\partial (\alpha_a+\alpha_b)}{\partial t} + \nabla \cdot (\alpha_a U_a+\alpha_b U_b) = 0<br>\end{aligned}$$<br>由于$\alpha_a+\alpha_b=1$，于是两相连续性方程等价于<br>$$<br>\nabla \cdot (\alpha_a U_a+\alpha_b U_b) = 0<br>$$</p>
 <p>再来看压力方程是如何构建起来的。<br>完整的动量方程离散后，可以写作如下的统一形式：<br>$$<br>a_{p,a}U_{p,a}=H(U_a)-\frac{\nabla p}{\rho_a}+\frac{\alpha_b}{\rho_a} K U_b +g<br>$$</p>
 <p>$$<br>a_{p,b}U_{p,b}=H(U_b)-\frac{\nabla p}{\rho_b}+\frac{\alpha_a}{\rho_b} K U_a +g<br>$$<br>其中$H(U_a)$ 和 $H(U_b)$ 包含了动量方程中除 压力梯度项，显式曳力项以及重力项以后所有项的贡献。<br>由此离散方程可以得到 $U_a$ 和 $U_b$ 的表达式如下：<br>$$<br>U_{a}=\frac{1}{a_{p,a}}H(U_a)-\frac{\nabla p}{a_{p,a}\rho_a}+\frac{\alpha_b}{ a_{p,a} \rho_a} K U_b +\frac{1}{a_{p,a}} g<br>$$</p>
 <p>$$<br>U_{b}=\frac{1}{a_{p,b}}H(U_b)-\frac{\nabla p}{a_{p,b}\rho_b}+\frac{\alpha_a}{ a_{p,b} \rho_b} K U_a +\frac{1}{a_{p,b}} g<br>$$</p>
@@ -143,7 +143,7 @@ ga('send', 'pageview');
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2015/05/17/twoPhaseEulerFoam2/" data-id="ciawk9sqv0007nwmbtgd1pu55" class="article-share-link">Share</a>
+      <a data-url="http://xiaopingqiu.github.io/2015/05/17/twoPhaseEulerFoam2/" data-id="cibf1cmc2000cxsmbl12te94i" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li></ul>
@@ -202,7 +202,7 @@ ga('send', 'pageview');
   <div class="widget-wrap">
     <h3 class="widget-title">Categories</h3>
     <div class="widget">
-      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/">OpenFOAM</a><span class="category-list-count">7</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Paraview/">Paraview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/test/">test</a><span class="category-list-count">1</span></li></ul>
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/">OpenFOAM</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Paraview/">Paraview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/test/">test</a><span class="category-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -211,7 +211,7 @@ ga('send', 'pageview');
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Explained/">Code Explained</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Postprocessing/">Postprocessing</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/paraview/">paraview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/test/">test</a><span class="tag-list-count">1</span></li></ul>
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Explained/">Code Explained</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Postprocessing/">Postprocessing</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/paraview/">paraview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/test/">test</a><span class="tag-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -220,7 +220,7 @@ ga('send', 'pageview');
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/tags/Code-Explained/" style="font-size: 13.33px;">Code Explained</a><a href="/tags/OpenFOAM/" style="font-size: 20px;">OpenFOAM</a><a href="/tags/Postprocessing/" style="font-size: 16.67px;">Postprocessing</a><a href="/tags/Windows/" style="font-size: 10px;">Windows</a><a href="/tags/paraview/" style="font-size: 10px;">paraview</a><a href="/tags/test/" style="font-size: 10px;">test</a>
+      <a href="/tags/Code-Explained/" style="font-size: 15px;">Code Explained</a><a href="/tags/OpenFOAM/" style="font-size: 20px;">OpenFOAM</a><a href="/tags/Postprocessing/" style="font-size: 15px;">Postprocessing</a><a href="/tags/Windows/" style="font-size: 10px;">Windows</a><a href="/tags/paraview/" style="font-size: 10px;">paraview</a><a href="/tags/test/" style="font-size: 10px;">test</a>
     </div>
   </div>
 
@@ -229,7 +229,7 @@ ga('send', 'pageview');
   <div class="widget-wrap">
     <h3 class="widget-title">Archives</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">六月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a><span class="archive-list-count">2</span></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">六月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a><span class="archive-list-count">2</span></li></ul>
     </div>
   </div>
 
@@ -239,6 +239,10 @@ ga('send', 'pageview');
     <h3 class="widget-title">Recents</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/2015/06/27/twoPhaseEulerFoam3/">twoPhaseEulerFoam 全解读之三</a>
+          </li>
         
           <li>
             <a href="/2015/06/14/OpenFOAM-on-win/">在 Windows 7 下配置 OpenFOAM 运行环境</a>
@@ -254,10 +258,6 @@ ga('send', 'pageview');
         
           <li>
             <a href="/2015/05/17/twoPhaseEulerFoam1/">twoPhaseEulerFoam 全解读之一</a>
-          </li>
-        
-          <li>
-            <a href="/2015/05/17/OpenFOAMcode1/">OpenFOAM 中的 div 与 snGrad 操作符</a>
           </li>
         
       </ul>

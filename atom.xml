@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <title><![CDATA[予独爱 CFD]]></title>
+  <title><![CDATA[Giskard's CFD Learning Tricks]]></title>
   <subtitle><![CDATA[CFD and Scientific Computing]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://xiaopingqiu.github.io/"/>
-  <updated>2015-06-17T06:25:43.426Z</updated>
+  <updated>2015-06-28T09:12:20.457Z</updated>
   <id>http://xiaopingqiu.github.io/</id>
   
   <author>
@@ -13,6 +13,68 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title><![CDATA[twoPhaseEulerFoam 全解读之三]]></title>
+    <link href="http://xiaopingqiu.github.io/2015/06/27/twoPhaseEulerFoam3/"/>
+    <id>http://xiaopingqiu.github.io/2015/06/27/twoPhaseEulerFoam3/</id>
+    <published>2015-06-27T12:39:01.000Z</published>
+    <updated>2015-06-28T09:12:20.457Z</updated>
+    <content type="html"><![CDATA[<p>本系列将对OpenFOAM-2.1.1 中的 <code>twoPhaseEulerFoam</code> 求解器进行完全解读，共分三部分：方程推导，代码解读，补充说明。本篇对 <code>twoPhaseEulerFoam</code> 中的 <code>alphaEqn.H</code> 进行详细地的解读，并作一些补充说明。</p>
+<a id="more"></a>
+<h3 id="2-3-_alphaEqn">2.3. alphaEqn</h3><p>前文提到，经过求解 <code>pEqn</code>，并修正速度<code>Ua</code>和<code>Ub</code>以后，总体的连续性便得到了保证。为了得到分散相的体积分率<code>alpha</code>，还需要利用得到的速度场来求解分散相的连续性方程，即<code>alphaEqn</code>。分散相连续性方程可以表达如下：<br>$$<br>\frac{\partial \alpha_a}{\partial t}+\nabla \cdot (\alpha_a U_a)=0<br>$$</p>
+<p>为了让每一项都写成守恒形式，并且保证$\alpha_a$的有界性，Weller 将分散相连续性方程写成如下形式<br>$$<br>\frac{\partial \alpha_a}{\partial t}+\nabla \cdot (\alpha_a U)+\nabla \cdot(U_r\alpha_a(1-\alpha_a))=0<br>$$<br>其中<br>$$<br>U=\alpha_a U_a + \alpha_b U_b \\<br>U_r=U_a-U_b<br>$$<br>OpenFOAM-2.1.1 的<code>alphaEqn</code>求解的正是 Weller 提出的形式。主要的代码如下：<br><figure class="highlight lisp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">fvScalarMatrix alphaEqn</span><br><span class="line">       <span class="list">(</span><br><span class="line">            <span class="keyword">fvm</span>:<span class="keyword">:ddt</span><span class="list">(<span class="keyword">alpha</span>)</span></span><br><span class="line">          + fvm:<span class="keyword">:div</span><span class="list">(<span class="keyword">phic</span>, alpha, scheme)</span></span><br><span class="line">          + fvm:<span class="keyword">:div</span><span class="list">(<span class="keyword">-fvc</span>:<span class="keyword">:flux</span><span class="list">(<span class="keyword">-phir</span>, beta, schemer)</span>, alpha, schemer)</span></span><br><span class="line">       )</span><span class="comment">;</span></span><br></pre></td></tr></table></figure></p>
+<p>其中<code>phic</code>与<code>phir</code>的定义如下：<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">surfaceScalarField <span class="title">phic</span><span class="params">(<span class="string">"phic"</span>, phi)</span></span>;</span><br><span class="line"><span class="function">surfaceScalarField <span class="title">phir</span><span class="params">(<span class="string">"phir"</span>, phia - phib)</span></span>;</span><br></pre></td></tr></table></figure></p>
+<p>得到分散相体积分率后，连续相体积分率$\alpha_b$则为$1-\alpha_a$，如下<br><figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">beta = <span class="literal">scalar</span>(1) - <span class="keyword">alpha</span>;</span><br></pre></td></tr></table></figure></p>
+<h2 id="3-_补充说明">3. 补充说明</h2><p>想必读者肯定发现了，我前面的代码解读相比于<code>twoPhaseEulerFoam</code>的源码其实省略了很多，总体上来讲，省略了三大块，一是跟<code>kineticTheory</code>相关的，二是跟<code>g0</code>相关的，三是<code>packingLimiter</code>，下面对这三部分进行一些补充说明。</p>
+<h3 id="3-1_kineticTheory">3.1 kineticTheory</h3><p><code>kineticTheory</code>是 KTGF(Kinetic Theory of Granular Flow) 方法在OpenFOAM-2.1.1里的实现。KTGF 的主要作用是计算固相压力和固相粘度，以封闭前述的分散相动量方程，所以<code>kineticTheory</code>只有在模拟气固（液固）两相流时才需要开启。 <code>kineticTheory</code> 是否开启以及 KTGF 模型的参数需要在算例的<code>constant/kineticTheoryProperties</code>文件里进行设置。如果开启了<code>kineticTheory</code>，主要的影响如下：</p>
+<ul>
+<li><p>UEqn.H</p>
+<figure class="highlight ocaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (kineticTheory.on<span class="literal">()</span>)</span><br><span class="line">&#123;</span><br><span class="line">    kineticTheory.solve(gradUaT);</span><br><span class="line">    nuEffa = kineticTheory.mua<span class="literal">()</span>/rhoa;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果开启<code>kineticTheory</code>，则固相粘度<code>nuEffa</code>是由 KTGF 来计算得到，否则<code>nuEffa</code>是用一个简单的关联式来计算</p>
+<figure class="highlight perl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">else</span></span><br><span class="line">&#123;</span><br><span class="line">    nuEffa = <span class="keyword">s</span><span class="string">qr(Ct)</span>*nutb + nua;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>此外，<code>Rca</code>项也要加上额外的项</p>
+<figure class="highlight delphi"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (kineticTheory.<span class="keyword">on</span>())</span><br><span class="line"><span class="comment">&#123;</span><br><span class="line">    Rca -= ((kineticTheory.lambda()/rhoa)*tr(gradUaT))*tensor(I);</span><br><span class="line">&#125;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>pEqn.H<br>如果<code>kineticTheory</code>开启了，则要在压力修正方程中加上额外的固相压力项。</p>
+<figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (kineticTheory.on())</span><br><span class="line">&#123;</span><br><span class="line">    phiDraga -= rUaAf*fvc::snGrad(kineticTheory.pa()/rhoa)*mesh.magSf();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>有关 OpenFOAM 中使用的 KTGF 模型的理论可以参考<a href="http://repository.tudelft.nl/view/ir/uuid%3A919e2efa-5db2-40e6-9082-83b1416709a6/" target="_blank" rel="external">Derivation, Implementation, and Validation of Computer Simulation Models for Gas-Solid Fluidized Beds</a>，以及B.G.M. van Wachem 的其他相关论文。</p>
+<h3 id="3-2_g0">3.2 g0</h3><p>跟 <code>kineticTheory</code>一样，<code>g0</code> 也是只有在模拟气固（液固）两相流时才需要开启，相关的设置在<code>constant/ppProperties</code>里，当<code>g0</code>的值设置为大于零时，则跟<code>g0</code>相关的项会其作用，主要的影响如下：</p>
+<ul>
+<li><p>pEqn</p>
+<figure class="highlight ocaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (g0.<span class="keyword">value</span><span class="literal">()</span> &gt; <span class="number">0.0</span>)</span><br><span class="line">&#123;</span><br><span class="line">    phiDraga -= ppMagf*fvc::snGrad(alpha)*mesh.magSf<span class="literal">()</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中<code>ppMagf</code>的定义如下：</p>
+<figure class="highlight gherkin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ppMagf = rUaAf<span class="keyword">*</span>fvc::interpolate</span><br><span class="line">(</span><br><span class="line"> (1.0/(rhoa<span class="keyword">*</span>(alpha + scalar(0.0001))))</span><br><span class="line"> <span class="keyword">*</span>g0<span class="keyword">*</span>min(exp(preAlphaExp<span class="keyword">*</span>(alpha - alphaMax)), expMax)</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<p>这一段的效果，相当于在<a href="http://xiaopingqiu.github.io/2015/05/17/twoPhaseEulerFoam1/" target="_blank" rel="external">本系列第一篇</a>最后的分散相动量方程的等式右边额外增加一项：<br>$$<br>-g0*min(e^{preAlphaExp*(\alpha_a - \alpha_{Max})},expMax)\nabla \alpha_a / (\alpha_a \rho_a)<br>$$<br>可见，这一项的作用是给固相额外施加了一个力，这个力与<code>\alpha\_a</code>的梯度有关，且与梯度的方向相反。<br>注意这一项的特点：<code>g0</code>, <code>preAlphaExp</code>, <code>alphaMax</code>, <code>expMax</code> 都是需要用户指定的参数，一般将<code>g0</code>, <code>preAlphaExp</code>和<code>expMax</code>设置为一个比较大的正整数（$10^3$的量级），当<code>alpha - alphaMax &lt; 0</code>时，$e^{\,preAlphaExp*(\alpha_a - \alpha_{Max})}$ 将是一个很小的数，此时整个增加的一项也将是一个较小的数，所以，<code>alpha - alphaMax &lt; 0</code>时额外增加的那一项对动量方程的贡献很小。但是，当<code>alpha - alphaMax &gt; 0</code>时，随着 <code>alpha</code> 偏离 <code>alphaMax</code> 越来越远，<code>exp(preAlphaExp*(alpha - alphaMax)</code>将迅速增大，<code>min(exp(preAlphaExp*(alpha - alphaMax)), expMax)</code>的值也将迅速增大，直到设定值<code>expMax</code>。可见，<code>g0</code>项的作用可以理解为为了防止固相过度堆积。气固系统中，固相的体积分率是有上限的，可以将<code>alphaMax</code>设置为这个上限值，当某个网格里的<code>alpha</code>超过设定的<code>alphaMax</code>时，就让固相迅速弹开，以防止固相体积分率过大。</p>
+</li>
+<li><p>alphaEqn.H</p>
+<figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (g0.value() &gt; <span class="number">0.0</span>)</span><br><span class="line">&#123;</span><br><span class="line">    ppMagf = rUaAf*fvc::interpolate</span><br><span class="line">    (</span><br><span class="line">     (1.0/(rhoa*(alpha + scalar(0.0001))))</span><br><span class="line">     *g0*min(exp(preAlphaExp*(alpha - alphaMax)), expMax)</span><br><span class="line">     );</span><br><span class="line">    </span><br><span class="line">    alphaEqn -= fvm::laplacian</span><br><span class="line">    (</span><br><span class="line">     (fvc::interpolate(alpha) + scalar(0.0001))*ppMagf,</span><br><span class="line">     alpha,</span><br><span class="line">     <span class="string">"laplacian(alphaPpMag,alpha)"</span></span><br><span class="line">     );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>这一段的效果相当于在分散相体积分率计算方程<code>alphaEqn</code>中增加额外的一项：<br>$$<br>-\nabla \cdot(g0*min(e^{preAlphaExp*(\alpha_a - \alpha_{Max})},expMax)/\rho_a, \nabla \alpha_a)<br>$$<br>根据上面的分析，其作用也是在当<code>alpha - alphaMax &gt; 0</code> 时让固相扩散开，防止过度堆积。</p>
+<p>最后，有必要说明一下，<code>g0</code>相关的项想要达到的效果是防止固相过度堆积，<code>kineticTheory</code>也能达到这个效果，而且更先进。所以 <code>g0</code>可以当作 KTGF 的某种简单的替代。从原理上将，<code>kineticTheory</code>和<code>g0</code>不应该同时开启。</p>
+<h3 id="3-3_packingLimiter">3.3 packingLimiter</h3><p>packingLimiter 的作用，从名字可以看出，也是用来处理过度堆积问题的。packingLimiter 缺乏理论基础，仅仅是一种不甚高明的数值技巧，其主要的处理是定义了一个<br><figure class="highlight lisp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">volScalarField alphaEx<span class="list">(<span class="keyword">max</span><span class="list">(<span class="keyword">alpha</span> - alphaMax, scalar<span class="list">(<span class="number">0</span>)</span>)</span>)</span><span class="comment">;</span></span><br></pre></td></tr></table></figure></p>
+<p>当<code>alpha - alphaMax &gt; 0</code>时，<code>alphaEx = alpha - alphaMax &gt; 0</code>，否则<code>alphaEx = 0</code>。<br>packingLimiter 本质操作是，当某个网格的固相体积分率超过设定的最大值时，就让该网格的固相往它的邻居网格匀一匀，就是这么简(ren)单(xing)。所以，一般情况下，不建议开启packingLimiter。</p>
+<p>至此，OpenFOAM-2.1.1 版本的<code>twoPhaseEulerFoam</code>便解读完了。最近的 OpenFOAM-2.3 系列中的<code>twoPhaseEulerFoam</code> 变化很大，求解的是全守恒形式的动量方程了（而不是 phase-intensive形式的），耦合了传热模型，考虑了可压缩效应，而且alphaEqn的求解不再是利用隐式迭代的方式，而是改成了用 MULES 方法来求解。这些有待于下一步进行解读。</p>
+<h2 id="参考资料">参考资料</h2><ol>
+<li>Henrik Rusche， PHD Thesis， Computational Fluid Dynamics of Dispersed Two-Phase Flows at High Phase Fractions， Imperial College of Science, Technology &amp; Medicine, Department of Mechanical Engineering, 2002</li>
+<li><a href="https://openfoamwiki.net/index.php/BubbleFoam" target="_blank" rel="external">https://openfoamwiki.net/index.php/BubbleFoam</a></li>
+</ol>
+]]></content>
+    <summary type="html">
+    <![CDATA[<p>本系列将对OpenFOAM-2.1.1 中的 <code>twoPhaseEulerFoam</code> 求解器进行完全解读，共分三部分：方程推导，代码解读，补充说明。本篇对 <code>twoPhaseEulerFoam</code> 中的 <code>alphaEqn.H</code> 进行详细地的解读，并作一些补充说明。</p>]]>
+    
+    </summary>
+    
+      <category term="Code Explained" scheme="http://xiaopingqiu.github.io/tags/Code-Explained/"/>
+    
+      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/tags/OpenFOAM/"/>
+    
+      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/categories/OpenFOAM/"/>
+    
+  </entry>
   
   <entry>
     <title><![CDATA[在 Windows 7 下配置 OpenFOAM 运行环境]]></title>
@@ -98,7 +160,7 @@
     <link href="http://xiaopingqiu.github.io/2015/05/17/twoPhaseEulerFoam2/"/>
     <id>http://xiaopingqiu.github.io/2015/05/17/twoPhaseEulerFoam2/</id>
     <published>2015-05-17T07:23:04.000Z</published>
-    <updated>2015-05-20T07:34:36.336Z</updated>
+    <updated>2015-06-27T12:42:13.207Z</updated>
     <content type="html"><![CDATA[<p>本系列将对OpenFOAM-2.1.1 中的 <code>twoPhaseEulerFoam</code> 求解器进行完全解读，共分三部分：方程推导，代码解读，补充说明。本篇对 <code>twoPhaseEulerFoam</code> 中的 <code>UEqn.H</code> 和 <code>pEqn.H</code> 中的代码进行详细地的解读。</p>
 <a id="more"></a>
 <h2 id="2-_代码解读">2. 代码解读</h2><h3 id="2-1-_UEqn">2.1. UEqn</h3><p>前一篇导出了分散相的动量守恒方程<br>$$<br>\begin{aligned}<br>&amp;(1+\frac{\alpha_b \rho_b}{\rho_a} C_{vm})(\frac{\partial U_a}{\partial t} + U_a\cdot \nabla U_a ) -\nabla \cdot \left[ \nu_{eff} \nabla U_a \right ] + \nabla \cdot \left[ R_{c,a}\right] + \frac{\nabla(\alpha_a)}{\alpha_a} \cdot \left[ -\nu_{eff}\nabla U_a + R_{c,a}\right] \\<br>= &amp; -\frac{\alpha_b}{\rho_a} K U_a - \frac{\alpha_b}{\rho_a} \left\{ {C_l (\alpha_b \rho_b + \alpha_a \rho_a) U_r \times (\nabla \times U) -  C_{vm}\rho_b\left[ {\frac{\partial U_b}{\partial t} + U_b \cdot \nabla U_b }\right] } \right\} -\frac{\nabla p}{\rho_a} + g + \frac{\alpha_b}{\rho_a} K U_b<br> \end{aligned}<br>$$<br>这一篇分析<code>twoPhaseEulerFoam</code>求解器是怎么来对动量方程进行离散的，以及，如果通过构建压力方程来对速度进行修正以保证两相的连续性。</p>
@@ -116,7 +178,7 @@
 <p><code>fvm::Sp(beta/rhoa*K, Ua)</code>对应 $\frac{\alpha_b}{\rho_a} K U_a$，<code>beta/rhoa*(liftCoeff - Cvm*rhob*DDtUb)</code> 对应<br>$$<br>\frac{\alpha_b}{\rho_a} \left\{ {C_l (\alpha_b \rho_b + \alpha_a \rho_a) U_r \times (\nabla \times U) -  C_{vm}\rho_b\left[ {\frac{\partial U_b}{\partial t} + U_b \cdot \nabla U_b }\right] } \right\}<br>$$<br>其中变量<code>liftCoeff</code>定义为<br><figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">volVectorField</span> <span class="tag">liftCoeff</span>(<span class="tag">Cl</span>*(<span class="tag">beta</span>*<span class="tag">rhob</span> + <span class="tag">alpha</span>*<span class="tag">rhoa</span>)*(<span class="tag">Ur</span> ^ <span class="rule"><span class="attribute">fvc</span>:<span class="value">:<span class="function">curl</span>(U)))</span></span>;</span><br></pre></td></tr></table></figure></p>
 <p><code>DDtUb</code>定义为<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">DDtUb =</span><br><span class="line">        fvc::ddt(Ub)</span><br><span class="line">      + fvc::div(phib, Ub)</span><br><span class="line">      - fvc::div(phib)*Ub;</span><br></pre></td></tr></table></figure></p>
 <p>重力 $g$ 以及曳力的显式项 $\frac{\alpha_b}{\rho_a} K U_b $ 如注释所述，将会在 <code>pEqn</code> 中考虑，压力梯度项 $\frac{\nabla p}{\rho_a}$ 则将在 <code>pEqn</code> 中用来约束两相的连续性。<br>至此动量方程的每一项都与<code>UEqn.H</code>的代码对应起来了。</p>
-<h3 id="2-_pEqn">2. pEqn</h3><p>压力方程的作用是修正两相速度$U_a$ 和 $U_b$以使速度满足连续性方程。将两相的连续性方程加起来，得到总体的连续性方程如下 <strong>[ <em>注四</em> ]</strong>：<br>$$\begin{aligned}<br>&amp; \frac{\partial \alpha_a}{\partial t} + \nabla \cdot (\alpha_a U_a) + \frac{\partial \alpha_b}{\partial t} + \nabla \cdot (\alpha_b U_b) \\<br>= &amp; \frac{\partial (\alpha_a+\alpha_b)}{\partial t} + \nabla \cdot (\alpha_a U_a+\alpha_b U_b) = 0<br>\end{aligned}$$<br>由于$\alpha_a+\alpha_b=1$，于是两相连续性方程等价于<br>$$<br>\nabla \cdot (\alpha_a U_a+\alpha_b U_b) = 0<br>$$</p>
+<h3 id="2-2-_pEqn">2.2. pEqn</h3><p>压力方程的作用是修正两相速度$U_a$ 和 $U_b$以使速度满足连续性方程。将两相的连续性方程加起来，得到总体的连续性方程如下 <strong>[ <em>注四</em> ]</strong>：<br>$$\begin{aligned}<br>&amp; \frac{\partial \alpha_a}{\partial t} + \nabla \cdot (\alpha_a U_a) + \frac{\partial \alpha_b}{\partial t} + \nabla \cdot (\alpha_b U_b) \\<br>= &amp; \frac{\partial (\alpha_a+\alpha_b)}{\partial t} + \nabla \cdot (\alpha_a U_a+\alpha_b U_b) = 0<br>\end{aligned}$$<br>由于$\alpha_a+\alpha_b=1$，于是两相连续性方程等价于<br>$$<br>\nabla \cdot (\alpha_a U_a+\alpha_b U_b) = 0<br>$$</p>
 <p>再来看压力方程是如何构建起来的。<br>完整的动量方程离散后，可以写作如下的统一形式：<br>$$<br>a_{p,a}U_{p,a}=H(U_a)-\frac{\nabla p}{\rho_a}+\frac{\alpha_b}{\rho_a} K U_b +g<br>$$</p>
 <p>$$<br>a_{p,b}U_{p,b}=H(U_b)-\frac{\nabla p}{\rho_b}+\frac{\alpha_a}{\rho_b} K U_a +g<br>$$<br>其中$H(U_a)$ 和 $H(U_b)$ 包含了动量方程中除 压力梯度项，显式曳力项以及重力项以后所有项的贡献。<br>由此离散方程可以得到 $U_a$ 和 $U_b$ 的表达式如下：<br>$$<br>U_{a}=\frac{1}{a_{p,a}}H(U_a)-\frac{\nabla p}{a_{p,a}\rho_a}+\frac{\alpha_b}{ a_{p,a} \rho_a} K U_b +\frac{1}{a_{p,a}} g<br>$$</p>
 <p>$$<br>U_{b}=\frac{1}{a_{p,b}}H(U_b)-\frac{\nabla p}{a_{p,b}\rho_b}+\frac{\alpha_a}{ a_{p,b} \rho_b} K U_a +\frac{1}{a_{p,b}} g<br>$$</p>
