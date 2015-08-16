@@ -4,7 +4,7 @@
   <subtitle><![CDATA[CFD and Scientific Computing]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://xiaopingqiu.github.io/"/>
-  <updated>2015-08-16T07:20:13.830Z</updated>
+  <updated>2015-08-16T08:50:58.124Z</updated>
   <id>http://xiaopingqiu.github.io/</id>
   
   <author>
@@ -19,14 +19,33 @@
     <link href="http://xiaopingqiu.github.io/2015/08/16/vimExtensionOpenFOAM/"/>
     <id>http://xiaopingqiu.github.io/2015/08/16/vimExtensionOpenFOAM/</id>
     <published>2015-08-16T06:59:23.000Z</published>
-    <updated>2015-08-16T07:20:13.830Z</updated>
-    <content type="html"><![CDATA[<p>本篇介绍一个<a href="https://bitbucket.org/shor-ty/vimextensionopenfoam" target="_blank" rel="external">vim 插件</a>，该插件的主要作用是当用 vim 来打开各种 OpenFOAM 的设置文件时，会根据不同的文件类型对大部分的 OpenFOAM 关键字进行高亮显示。单凭这一个特性，还不至让我专门写一篇博文来介绍它，真正让我觉得实用的是另外一个附带的特性：关键字补全。安装此插件以后，可以在用 vim 编辑 OpenFOAM 设置文件的时候对 OpenFOAM 的很多关键字，包括边界条件，湍流模型，离散格式等等进行自动补全，下面对这个插件和基本功能进行一个简单介绍。</p>
+    <updated>2015-08-16T08:50:58.124Z</updated>
+    <content type="html"><![CDATA[<p>本篇介绍一个<a href="https://bitbucket.org/shor-ty/vimextensionopenfoam" target="_blank" rel="external">vim 插件</a>，该插件会自动检测某个文件是否是 OpenFOAM 的设置文件，然后根据预设的颜色显示方案来对大部分的 OpenFOAM 关键字进行高亮显示。单凭这一个特性，还不至让我专门写一篇博文来介绍它，真正让我觉得实用的是另外一个附带的特性：关键字补全。安装此插件以后，可以在用 vim 编辑 OpenFOAM 设置文件的时候对 OpenFOAM 的很多关键字，包括边界条件，湍流模型，离散格式等等进行自动补全，下面对这个插件和基本功能进行一个简单介绍。</p>
 <a id="more"></a>
 <h4 id="1-_安装">1. 安装</h4><p>安装很简单，首先去 <a href="https://bitbucket.org/shor-ty/vimextensionopenfoam" target="_blank" rel="external">https://bitbucket.org/shor-ty/vimextensionopenfoam</a> 下载，建议使用 git clone 来讲插件的代码下载到本地。然后，运行代码根目录下的安装脚本 <code>install</code>，就完成了安装。更详细的步骤以及颜色配置的选项，在插件项目的主页上也有介绍，这里不再赘述。</p>
-<h4 id="2-_基本特性">2. 基本特性</h4><p>该插件的基本特性就是对 OpenFOAM 关键字进行高亮显示，见下图：<br> 图1：使用插件之前<br> <img src="/image/vimext/with_pugin.png" alt=""><br> 图2：使用插件之后<br> <img src="/image/vimext/without_pugin.png" alt=""></p>
+<h4 id="2-_基本特性">2. 基本特性</h4><p>该插件的基本特性就是对 OpenFOAM 关键字进行高亮显示，见下图：</p>
+<ul>
+<li><p>图1：使用插件之前<br><img src="/image/vimext/without_plugin.png" alt=""></p>
+</li>
+<li><p>图2：使用插件之后<br><img src="/image/vimext/with_plugin.png" alt=""></p>
+</li>
+</ul>
+<p>有了这个高亮显示后，就可以根据颜色看出设置文件里的关键词是否有错了。</p>
+<h4 id="3-_关键字补全">3. 关键字补全</h4><p>关键字补全在实际使用中还是很有作用的，一来可以减少手动输入，二来可以很有效地减少键入错误。注意，按照插件作者的介绍，这个插件的主要功能是高亮显示 OpenFOAM 关键词，补全功能，则算是一个副产物。下面通过几个动画来显示补全功能：</p>
+<ul>
+<li><p>边界条件补全<br><img src="/image/vimext/k.gif" alt=""><br><img src="/image/vimext/k1.gif" alt=""></p>
+</li>
+<li><p>RAS 湍流模型<br><img src="/image/vimext/RAS.gif" alt=""></p>
+</li>
+<li><p>fvSchemes<br><img src="/image/vimext/fvSchemes.gif" alt=""> </p>
+</li>
+<li>fvSolutions<br><img src="/image/vimext/fvSolutions.gif" alt=""> </li>
+</ul>
+<p>需要注意的是，这里我只使用了 vim 自带的最简单的补全方法：Ctrl n 和 Ctrl p。以上动画中，输入关键字的头几个字母，只需要按 ctrl n 或 ctrl p 就会显示出所有候选补全选项。</p>
+<p>但是，这个插件没有包括所有的 OpenFOAM 关键字，比如标准求解器以及 LES 湍流模型就没有包括。可以通过编辑 <code>~/.vim/syntax/foam256</code>目录下的相应设置文件进行修改来对其进行扩展。</p>
 ]]></content>
     <summary type="html">
-    <![CDATA[<p>本篇介绍一个<a href="https://bitbucket.org/shor-ty/vimextensionopenfoam">vim 插件</a>，该插件的主要作用是当用 vim 来打开各种 OpenFOAM 的设置文件时，会根据不同的文件类型对大部分的 OpenFOAM 关键字进行高亮显示。单凭这一个特性，还不至让我专门写一篇博文来介绍它，真正让我觉得实用的是另外一个附带的特性：关键字补全。安装此插件以后，可以在用 vim 编辑 OpenFOAM 设置文件的时候对 OpenFOAM 的很多关键字，包括边界条件，湍流模型，离散格式等等进行自动补全，下面对这个插件和基本功能进行一个简单介绍。</p>]]>
+    <![CDATA[<p>本篇介绍一个<a href="https://bitbucket.org/shor-ty/vimextensionopenfoam">vim 插件</a>，该插件会自动检测某个文件是否是 OpenFOAM 的设置文件，然后根据预设的颜色显示方案来对大部分的 OpenFOAM 关键字进行高亮显示。单凭这一个特性，还不至让我专门写一篇博文来介绍它，真正让我觉得实用的是另外一个附带的特性：关键字补全。安装此插件以后，可以在用 vim 编辑 OpenFOAM 设置文件的时候对 OpenFOAM 的很多关键字，包括边界条件，湍流模型，离散格式等等进行自动补全，下面对这个插件和基本功能进行一个简单介绍。</p>]]>
     
     </summary>
     
