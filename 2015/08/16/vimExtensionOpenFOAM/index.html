@@ -3,17 +3,19 @@
 <head>
   <meta charset="utf-8">
   
-  <title>Tag: paraview | Giskard&#39;s CFD Learning Tricks</title>
+  <title>vim Extension for OpenFOAM | Giskard&#39;s CFD Learning Tricks</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Giskard's CFD Learning Tricks">
-<meta property="og:url" content="http://xiaopingqiu.github.io/tags/paraview/index.html">
+  <meta name="description" content="本篇介绍一个vim 插件，该插件的主要作用是当用 vim 来打开各种 OpenFOAM 的设置文件时，会根据不同的文件类型对大部分的 OpenFOAM 关键字进行高亮显示。单凭这一个特性，还不至让我专门写一篇博文来介绍它，真正让我觉得实用的是另外一个附带的特性：关键字补全。安装此插件以后，可以在用 vim 编辑 OpenFOAM 设置文件的时候对 OpenFOAM 的很多关键字，包括边界条件，湍流">
+<meta property="og:type" content="article">
+<meta property="og:title" content="vim Extension for OpenFOAM">
+<meta property="og:url" content="http://xiaopingqiu.github.io/2015/08/16/vimExtensionOpenFOAM/index.html">
 <meta property="og:site_name" content="Giskard's CFD Learning Tricks">
-<meta property="og:description">
+<meta property="og:description" content="本篇介绍一个vim 插件，该插件的主要作用是当用 vim 来打开各种 OpenFOAM 的设置文件时，会根据不同的文件类型对大部分的 OpenFOAM 关键字进行高亮显示。单凭这一个特性，还不至让我专门写一篇博文来介绍它，真正让我觉得实用的是另外一个附带的特性：关键字补全。安装此插件以后，可以在用 vim 编辑 OpenFOAM 设置文件的时候对 OpenFOAM 的很多关键字，包括边界条件，湍流">
+<meta property="og:image" content="/image/vimext/with_pugin.png">
+<meta property="og:image" content="/image/vimext/without_pugin.png">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Giskard's CFD Learning Tricks">
-<meta name="twitter:description">
+<meta name="twitter:title" content="vim Extension for OpenFOAM">
+<meta name="twitter:description" content="本篇介绍一个vim 插件，该插件的主要作用是当用 vim 来打开各种 OpenFOAM 的设置文件时，会根据不同的文件类型对大部分的 OpenFOAM 关键字进行高亮显示。单凭这一个特性，还不至让我专门写一篇博文来介绍它，真正让我觉得实用的是另外一个附带的特性：关键字补全。安装此插件以后，可以在用 vim 编辑 OpenFOAM 设置文件的时候对 OpenFOAM 的很多关键字，包括边界条件，湍流">
   
   
     <link rel="icon" href="/favicon.png">
@@ -74,39 +76,82 @@ ga('send', 'pageview');
 </header>
 
       <div class="outer">
-        <section id="main">
-  
-  
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2015" class="archive-year">2015</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2015/05/03/paraview-remote/" class="archive-article-date">
-  <time datetime="2015-05-03T12:49:02.000Z" itemprop="datePublished">5月 3</time>
+        <section id="main"><article id="post-vimExtensionOpenFOAM" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2015/08/16/vimExtensionOpenFOAM/" class="article-date">
+  <time datetime="2015-08-16T06:59:23.000Z" itemprop="datePublished">2015-08-16</time>
 </a>
-      
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/vim/">vim</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2015/05/03/paraview-remote/">ParaView 的远程模式</a>
+    <h1 class="article-title" itemprop="name">
+      vim Extension for OpenFOAM
     </h1>
   
 
-    </header>
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本篇介绍一个<a href="https://bitbucket.org/shor-ty/vimextensionopenfoam" target="_blank" rel="external">vim 插件</a>，该插件的主要作用是当用 vim 来打开各种 OpenFOAM 的设置文件时，会根据不同的文件类型对大部分的 OpenFOAM 关键字进行高亮显示。单凭这一个特性，还不至让我专门写一篇博文来介绍它，真正让我觉得实用的是另外一个附带的特性：关键字补全。安装此插件以后，可以在用 vim 编辑 OpenFOAM 设置文件的时候对 OpenFOAM 的很多关键字，包括边界条件，湍流模型，离散格式等等进行自动补全，下面对这个插件和基本功能进行一个简单介绍。</p>
+<a id="more"></a>
+<h4 id="1-_安装">1. 安装</h4><p>安装很简单，首先去 <a href="https://bitbucket.org/shor-ty/vimextensionopenfoam" target="_blank" rel="external">https://bitbucket.org/shor-ty/vimextensionopenfoam</a> 下载，建议使用 git clone 来讲插件的代码下载到本地。然后，运行代码根目录下的安装脚本 <code>install</code>，就完成了安装。更详细的步骤以及颜色配置的选项，在插件项目的主页上也有介绍，这里不再赘述。</p>
+<h4 id="2-_基本特性">2. 基本特性</h4><p>该插件的基本特性就是对 OpenFOAM 关键字进行高亮显示，见下图：<br> 图1：使用插件之前<br> <img src="/image/vimext/with_pugin.png" alt=""><br> 图2：使用插件之后<br> <img src="/image/vimext/without_pugin.png" alt=""></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://xiaopingqiu.github.io/2015/08/16/vimExtensionOpenFOAM/" data-id="cide5rop60007n0mb8mnxbgv0" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/vim/">vim</a></li></ul>
+
+    </footer>
   </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2015/06/27/twoPhaseEulerFoam3/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">twoPhaseEulerFoam 全解读之三</div>
+    </a>
+  
+</nav>
+
+  
 </article>
-  
-  
-    </div></section>
-  
+
+
+<section id="comments">
+  <!-- 多说评论框 start -->
+  <div class="ds-thread" data-thread-key="post-vimExtensionOpenFOAM" data-title="vim Extension for OpenFOAM" data-url="http://xiaopingqiu.github.io/2015/08/16/vimExtensionOpenFOAM/"></div>
+  <!-- 多说评论框 end -->
+  <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+  <script type="text/javascript">
+  var duoshuoQuery = {short_name:"xiaopingqiu"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+  <!-- 多说公共JS代码 end -->
+</section>
+
 </section>
         
           <aside id="sidebar">
