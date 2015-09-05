@@ -134,7 +134,7 @@ ga('send', 'pageview');
 <li><code>base</code>用来指定作时间平均的基础，是基于时间步数(ITER)还是物理时间(time);</li>
 <li><code>window</code>用来作平均的时间段的长度，如果不设定，则求的是从开始到当前时间这个时间段的平均值。<code>window</code>的数值的实际含义依<code>base</code>而定，如果<code>base</code>是<code>ITER</code>，则<code>window=20</code>表示当前步及其前 19 个时间步从 20 个时间步内的平均，而如果<code>base</code>是<code>time</code>,则表示的是 20s 内的平均。</li>
 </ol>
-<p><strong>错误更正</strong>：<br>2015.09.05: 在 controlDict 里， <code>base</code> 只能是  <code>time</code> 或 <code>iteration</code>，而不能是上文中说的 <code>ITER</code> 。感谢“启之” 指出！  </p>
+<p><strong>错误更正</strong>：<br>2015.09.05: 在 controlDict 里， <code>base</code> 只能是  <code>time</code> 或 <code>iteration</code>，而不能是上文中说的 <code>ITER</code>， <code>ITER</code> 只是代码中使用的一个代称 。感谢“启之” 指出！  </p>
 
       
     </div>
