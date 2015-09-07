@@ -2,6 +2,11 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://xiaopingqiu.github.io/2015/09/07/twoPhaseEulerFoam23x-twoPhaseSystem/</loc>
+    <lastmod>2015-09-07T14:36:20.299Z</lastmod>
+  </url>
+  
+  <url>
     <loc>http://xiaopingqiu.github.io/2015/04/12/fieldAverage/</loc>
     <lastmod>2015-09-05T10:43:32.577Z</lastmod>
   </url>

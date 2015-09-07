@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>OpenFOAM-2.3.x 中的 twoPhaseEulerFoam 解析之曳力模型的调用过程 | Giskard&#39;s CFD Learning Tricks</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="前面有三篇博文对 OpenFOAM-2.1.x 中的 twoPhaseEulerFoam 求解器进行了解读，然而 OpenFOAM-2.3.x 中，这个求解器的代码有了很大的变化。本文将以一个曳力模型的调用过程为例，介绍 OpenFOAM-2.3.x 中 twoPhaseEulerFoam 是如何调用相间作用力模型的。后续还将对 OpenFOAM-2.3.x 中的 twoPhaseEulerFoa">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenFOAM-2.3.x 中的 twoPhaseEulerFoam 解析之曳力模型的调用过程">
+<meta property="og:url" content="http://xiaopingqiu.github.io/2015/09/07/twoPhaseEulerFoam23x-twoPhaseSystem/index.html">
+<meta property="og:site_name" content="Giskard's CFD Learning Tricks">
+<meta property="og:description" content="前面有三篇博文对 OpenFOAM-2.1.x 中的 twoPhaseEulerFoam 求解器进行了解读，然而 OpenFOAM-2.3.x 中，这个求解器的代码有了很大的变化。本文将以一个曳力模型的调用过程为例，介绍 OpenFOAM-2.3.x 中 twoPhaseEulerFoam 是如何调用相间作用力模型的。后续还将对 OpenFOAM-2.3.x 中的 twoPhaseEulerFoa">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="OpenFOAM-2.3.x 中的 twoPhaseEulerFoam 解析之曳力模型的调用过程">
+<meta name="twitter:description" content="前面有三篇博文对 OpenFOAM-2.1.x 中的 twoPhaseEulerFoam 求解器进行了解读，然而 OpenFOAM-2.3.x 中，这个求解器的代码有了很大的变化。本文将以一个曳力模型的调用过程为例，介绍 OpenFOAM-2.3.x 中 twoPhaseEulerFoam 是如何调用相间作用力模型的。后续还将对 OpenFOAM-2.3.x 中的 twoPhaseEulerFoa">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css" type="text/css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+##ga('create', '[object Object]', 'auto');
+ga('create', 'UA-62501686-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Giskard&#39;s CFD Learning Tricks</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">CFD and Scientific Computing</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="q" value="site:http://xiaopingqiu.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-twoPhaseEulerFoam23x-twoPhaseSystem" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2015/09/07/twoPhaseEulerFoam23x-twoPhaseSystem/" class="article-date">
+  <time datetime="2015-09-07T14:27:47.000Z" itemprop="datePublished">2015-09-07</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      OpenFOAM-2.3.x 中的 twoPhaseEulerFoam 解析之曳力模型的调用过程
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>前面有三篇博文对 OpenFOAM-2.1.x 中的 <code>twoPhaseEulerFoam</code> 求解器进行了解读，然而 OpenFOAM-2.3.x 中，这个求解器的代码有了很大的变化。本文将以一个曳力模型的调用过程为例，介绍 OpenFOAM-2.3.x 中 <code>twoPhaseEulerFoam</code> 是如何调用相间作用力模型的。后续还将对 OpenFOAM-2.3.x 中的 <code>twoPhaseEulerFoam</code> 的其他方面进行解读。</p>
+<a id="more"></a>
+<p>主程序中(“ UEqn.H “)，dragCoeff 定义为：<br><figure class="highlight lisp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">volScalarField dragCoeff<span class="list">(<span class="keyword">fluid</span>.dragCoeff<span class="list">()</span>)</span><span class="comment">;</span></span><br></pre></td></tr></table></figure></p>
+<p>其中，<code>fluid</code> 为 <code>twoPhaseSystem</code> 类的对象，所以，要去找  <code>twoPhaseSystem</code> 类的成员函数 <code>dragCoeff()</code>。<br>在源文件 <code>twoPhaseSystem.C</code> 中找到如下定义：<br><figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="constant">Foam:</span><span class="symbol">:tmp&lt;Foam</span><span class="symbol">:</span><span class="symbol">:volScalarField&gt;</span> <span class="constant">Foam:</span><span class="symbol">:twoPhaseSystem</span><span class="symbol">:</span><span class="symbol">:dragCoeff</span>() const</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> drag<span class="constant">_</span>-&gt;<span class="constant">K(</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>而  <code>drag_</code> 的定义为<br><figure class="highlight django"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="xml">autoPtr<span class="tag">&lt;<span class="title">BlendedInterfacialModel</span>&lt;<span class="attribute">dragModel</span>&gt;</span> &gt; drag_;</span></span><br></pre></td></tr></table></figure></p>
+<p>所以，需要找到类 <code>BlendedInterfacialModel&lt;dragModel&gt;</code> 的成员函数 <code>K()</code>的定义。<br>在源文件 <code>BlendedInterfacialModel.C</code> 中，找到如下定义：<br><figure class="highlight ocaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line">template&lt;<span class="keyword">class</span> modelType&gt;</span><br><span class="line"><span class="type">Foam</span>::tmp&lt;<span class="type">Foam</span>::volScalarField&gt;</span><br><span class="line"><span class="type">Foam</span>::<span class="type">BlendedInterfacialModel</span>&lt;modelType&gt;::<span class="type">K</span><span class="literal">()</span> const</span><br><span class="line">&#123;</span><br><span class="line">    tmp&lt;volScalarField&gt; f1, f2;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (model_.valid<span class="literal">()</span> || model1In2_.valid<span class="literal">()</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        f1 = blending_.f1(pair1In2_.dispersed<span class="literal">()</span>, pair2In1_.dispersed<span class="literal">()</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (model_.valid<span class="literal">()</span> || model2In1_.valid<span class="literal">()</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        f2 = blending_.f2(pair1In2_.dispersed<span class="literal">()</span>, pair2In1_.dispersed<span class="literal">()</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    tmp&lt;volScalarField&gt; x</span><br><span class="line">    (</span><br><span class="line">        <span class="keyword">new</span> volScalarField</span><br><span class="line">        (</span><br><span class="line">            <span class="type">IOobject</span></span><br><span class="line">            (</span><br><span class="line">                modelType::typeName + <span class="string">"Coeff"</span>,</span><br><span class="line">                pair_.phase1<span class="literal">()</span>.mesh<span class="literal">()</span>.time<span class="literal">()</span>.timeName<span class="literal">()</span>,</span><br><span class="line">                pair_.phase1<span class="literal">()</span>.mesh<span class="literal">()</span></span><br><span class="line">            ),</span><br><span class="line">            pair_.phase1<span class="literal">()</span>.mesh<span class="literal">()</span>,</span><br><span class="line">            dimensionedScalar(<span class="string">"zero"</span>, modelType::dimK, <span class="number">0</span>)</span><br><span class="line">        )</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (model_.valid<span class="literal">()</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        x<span class="literal">()</span> += model_-&gt;<span class="type">K</span><span class="literal">()</span>*(f1<span class="literal">()</span> - f2<span class="literal">()</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (model1In2_.valid<span class="literal">()</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        x<span class="literal">()</span> += model1In2_-&gt;<span class="type">K</span><span class="literal">()</span>*(<span class="number">1</span> - f1);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (model2In1_.valid<span class="literal">()</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        x<span class="literal">()</span> += model2In1_-&gt;<span class="type">K</span><span class="literal">()</span>*f2;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (model_.valid<span class="literal">()</span> || model1In2_.valid<span class="literal">()</span> || model2In1_.valid<span class="literal">()</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        correctFixedFluxBCs(x<span class="literal">()</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return x;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>对于曳力模型，上述成员函数的  <code>modelType</code> 可以实例化为 <code>dragModel</code>，要理解该函数的行为，有三点需要清楚： <code>pair_</code>，  <code>pair1In2_</code>， <code>pair2In1_</code> 的定义； <code>model_</code>， <code>model1In2_</code>，  <code>model2In1_</code> 的定义； <code>blendingMethod</code> 类的成员函数  <code>f1</code> 与 <code>f2</code> 的定义。下面一一解释：</p>
+<h3 id="1-_pair_，_pair1In2_，_pair2In1_">1.  <code>pair_</code>，  <code>pair1In2_</code>， <code>pair2In1_</code></h3><p>这三个是 <code>BlendedInterfacialModel</code> 类的数据成员，回到 <code>twoPhaseSystem</code> 类中去看 <code>drag_</code> 的初始化，<br><figure class="highlight actionscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">drag_.<span class="keyword">set</span></span><br><span class="line">   (</span><br><span class="line">       <span class="keyword">new</span> BlendedInterfacialModel&lt;dragModel&gt;</span><br><span class="line">       (</span><br><span class="line">           lookup(<span class="string">"drag"</span>),</span><br><span class="line">           (</span><br><span class="line">               blendingMethods_.found(<span class="string">"drag"</span>)</span><br><span class="line">             ? blendingMethods_[<span class="string">"drag"</span>]</span><br><span class="line">             : blendingMethods_[<span class="string">"default"</span>]</span><br><span class="line">           ),</span><br><span class="line">           pair_,</span><br><span class="line">           pair1In2_,</span><br><span class="line">           pair2In1_</span><br><span class="line">       )</span><br><span class="line">   );</span><br></pre></td></tr></table></figure></p>
+<p>可知，<code>BlendedInterfacialModel</code> 类中的 <code>pair_</code>，  <code>pair1In2_</code>， <code>pair2In1_</code> 是将 <code>twoPhaseSystem</code> 类的数据成员传递过去来实现初始化的，所以，真正要看懂的是<code>twoPhaseSystem</code>类中数据成员<code>pair_</code>，  <code>pair1In2_</code>， <code>pair2In1_</code> 是如何初始化的：<br><figure class="highlight actionscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">pair_.<span class="keyword">set</span></span><br><span class="line">    (</span><br><span class="line">        <span class="keyword">new</span> phasePair</span><br><span class="line">        (</span><br><span class="line">            phase1_,</span><br><span class="line">            phase2_,</span><br><span class="line">            g,</span><br><span class="line">            sigmaTable</span><br><span class="line">        )</span><br><span class="line">    );</span><br><span class="line">    pair1In2_.<span class="keyword">set</span></span><br><span class="line">    (</span><br><span class="line">        <span class="keyword">new</span> orderedPhasePair</span><br><span class="line">        (</span><br><span class="line">            phase1_,</span><br><span class="line">            phase2_,</span><br><span class="line">            g,</span><br><span class="line">            sigmaTable,</span><br><span class="line">            aspectRatioTable</span><br><span class="line">        )</span><br><span class="line">    );</span><br><span class="line">    pair2In1_.<span class="keyword">set</span></span><br><span class="line">    (</span><br><span class="line">        <span class="keyword">new</span> orderedPhasePair</span><br><span class="line">        (</span><br><span class="line">            phase2_,</span><br><span class="line">            phase1_,</span><br><span class="line">            g,</span><br><span class="line">            sigmaTable,</span><br><span class="line">            aspectRatioTable</span><br><span class="line">        )</span><br><span class="line">    );</span><br></pre></td></tr></table></figure></p>
+<p>可见，<code>pair_</code> 是  <code>phasePair</code> 类的指针，  <code>pair1In2_</code> 与 <code>pair2In1_</code> 是  <code>orderedPhasePair</code> 类的指针。<br>其中<code>phase1_</code> 和  <code>phase2_</code> 是通过从文件”phaseProperties”里读取内容来初始化的：<br><figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">phase1_</span><br><span class="line">    (</span><br><span class="line"><span class="comment">        *this, </span></span><br><span class="line"><span class="comment">        *this,</span></span><br><span class="line">        wordList(<span class="keyword">lookup</span>(<span class="string">"phases"</span>))[0]</span><br><span class="line">    ),</span><br><span class="line">    phase2_</span><br><span class="line">    (</span><br><span class="line"><span class="comment">        *this,</span></span><br><span class="line"><span class="comment">        *this,</span></span><br><span class="line">        wordList(<span class="keyword">lookup</span>(<span class="string">"phases"</span>))[1]</span><br><span class="line">    ),</span><br></pre></td></tr></table></figure></p>
+<p>举例说，假设”phaseProperties” 文件里有以下内容：<br><figure class="highlight lisp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">phases <span class="list">(<span class="keyword">particles</span> air)</span><span class="comment">;</span></span><br></pre></td></tr></table></figure></p>
+<p>则， <code>phase1_</code> = “particles”， <code>phase2_</code> = “air” 。</p>
+<p><code>dispersed()</code> 函数总是返回对象的<code>phase1</code>（也就是 <code>phasePair</code> 或者  <code>orderedPhasePair</code> 类的构造函数的第一个参数。），所以，对于 “particles air” 体系，<code>pair1In2_.dispersed() = &quot;particles&quot;</code>， 而 <code>pair2In1_.dispersed() = &quot;air&quot;</code>。</p>
+<h3 id="2-_model_，_model1In2_，_model2In1__的定义">2. <code>model_</code>， <code>model1In2_</code>，  <code>model2In1_</code> 的定义</h3><figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">autoPtr&lt;modelType&gt; model_;</span><br><span class="line">autoPtr&lt;modelType&gt; model<span class="number">1</span>I<span class="label">n2</span>_;</span><br><span class="line">autoPtr&lt;modelType&gt; model<span class="number">2</span>I<span class="label">n1</span>_;</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> <span class="comment">(modelTable.found(pair_)</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        model_.set</span><br><span class="line">        <span class="comment">(</span><br><span class="line">            modelType::New</span><br><span class="line">            (</span><br><span class="line">                modelTable[pair_],</span><br><span class="line">                pair_</span><br><span class="line">            )</span>.ptr<span class="comment">()</span></span><br><span class="line">        );</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> <span class="comment">(modelTable.found(pair1In2_)</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        model<span class="number">1</span>I<span class="label">n2</span>_.set</span><br><span class="line">        <span class="comment">(</span><br><span class="line">            modelType::New</span><br><span class="line">            (</span><br><span class="line">                modelTable[pair1In2_],</span><br><span class="line">                pair1In2_</span><br><span class="line">            )</span>.ptr<span class="comment">()</span></span><br><span class="line">        );</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> <span class="comment">(modelTable.found(pair2In1_)</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        model<span class="number">2</span>I<span class="label">n1</span>_.set</span><br><span class="line">        <span class="comment">(</span><br><span class="line">            modelType::New</span><br><span class="line">            (</span><br><span class="line">                modelTable[pair2In1_],</span><br><span class="line">                pair2In1_</span><br><span class="line">            )</span>.ptr<span class="comment">()</span></span><br><span class="line">        );</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意，这里讨论的是曳力模型的调用，所以，如前所述，<code>modelType</code> 可以实例化为 <code>dragModel</code>。 <code>modelTable</code> 是一个 HashTable，其 key 是 <code>phasePairKey</code> 类型的对象，value 是 <code>dictionary</code> 类的对象。 <code>found</code> 函数通过查找 <code>modelTable</code> 对象中是否存在某个 key 来决定返回值是 true 还是 false。这里要分头说，一边是 <code>modelTable</code> 的初始化，另一边是 <code>pair_</code>， <code>pair2In1_</code>， <code>pair2In1_</code>  如何与 <code>phasePairKey</code> 类进行对比。</p>
+<p>从 <code>twoPhaseSystem</code> 类中对 <code>drag_</code> 的初始化可知， <code>modelTable</code> 的初始化是由 <code>lookup(&quot;drag&quot;)</code> 来完成的。而根据前面的分析， <code>lookup</code> 函数的作用是读取”phaseProperties” 文件的内容来实现对一个 HashTable 的初始化。举例说，以下 “phaseProperties” 的内容<br><figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">drag</span><br><span class="line">(</span><br><span class="line">    (particles <span class="keyword">in</span> air)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="class"><span class="keyword">type</span>            <span class="title">GidaspowErgunWenYu</span>;</span></span><br><span class="line">        residualAlpha   <span class="number">1e-6</span>;</span><br><span class="line">        residualRe      <span class="number">1e-3</span>;</span><br><span class="line">        swarmCorrection</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="class"><span class="keyword">type</span>        <span class="title">none</span>;</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">);</span><br></pre></td></tr></table></figure></p>
+<p>将利用 <code>(particles in air)</code> 来初始化一个 <code>phasePairKey</code> 对象（利用 <code>phasePairKey</code>类中的空白构造函数和重载的 <code>&gt;&gt;</code> 符号）。成员<code>ordeded_</code> 的值取决于 “in” 或 “and” ，若形如 “particles in air “，<code>ordeded_ = true</code>，若形如 “particles and air “， 则 <code>ordeded_ = false</code>。 则剩余内容将用于初始化一个 <code>dictionary</code> 对象。</p>
+<p>而另一方面，<code>phasePair</code> 是 <code>phasePairKey</code>的派生类， <code>orderedPhasePair</code> 则是<code>phasePair</code> 的派生类，所以，将 <code>pair_</code> ，<code>pair1In2_</code> 以及 <code>pair2In1_</code> 作为 <code>found</code> 函数的参数，隐含了将派生类的引用转换成基类引用。 <code>phasePair</code> 默认 <code>ordered_ = false</code>， 而  <code>orderedPhasePair</code> 则默认<code>ordered_ = true</code>。<code>pair_</code> ，<code>pair1In2_</code> 以及 <code>pair2In1_</code> 与 <code>modelTable_</code> 的 key 进行比较，比较的是对应的 <code>phase1</code>，<code>phase2</code> 和 <code>ordered_</code> 是否相等，只有三者都一样时， <code>found</code> 函数才返回 <code>true</code> 。   所以，对于上面提到的设置，即<br><figure class="highlight lisp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">phases <span class="list">(<span class="keyword">particles</span> air)</span><span class="comment">;</span></span><br><span class="line">drag</span><br><span class="line"><span class="list">(</span><br><span class="line">    <span class="list">(<span class="keyword">particles</span> in air)</span></span><br><span class="line">    .......</span><br><span class="line">)</span><span class="comment">;</span></span><br></pre></td></tr></table></figure></p>
+<p>只有<code>modelTable.found(pair1In2_)</code>的值为<code>true</code>。同样，也就只有 <code>model1In2_.valid()</code> 为 <code>true</code> （即 <code>model1In2_</code> 指针不为空。）  </p>
+<h3 id="3-_blendingMethod_类的成员函数_f1_与_f2">3. <code>blendingMethod</code> 类的成员函数  <code>f1</code> 与 <code>f2</code></h3><p>这两个函数的示例，以 <code>noBlending</code> 类型为例：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line">Foam::tmp&lt;Foam::volScalarField&gt; Foam::blendingMethods::noBlending::f1</span><br><span class="line">(</span><br><span class="line">    <span class="keyword">const</span> phaseModel&amp; phase1,</span><br><span class="line">    <span class="keyword">const</span> phaseModel&amp; phase2</span><br><span class="line">) <span class="keyword">const</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">const</span> fvMesh&amp; mesh(phase1.mesh());</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span></span><br><span class="line">        tmp&lt;volScalarField&gt;</span><br><span class="line">        (</span><br><span class="line">            <span class="keyword">new</span> volScalarField</span><br><span class="line">            (</span><br><span class="line">                IOobject</span><br><span class="line">                (</span><br><span class="line">                    <span class="string">"f"</span>,</span><br><span class="line">                    mesh.time().timeName(),</span><br><span class="line">                    mesh</span><br><span class="line">                ),</span><br><span class="line">                mesh,</span><br><span class="line">                dimensionedScalar</span><br><span class="line">                (</span><br><span class="line">                    <span class="string">"f"</span>,</span><br><span class="line">                    dimless,</span><br><span class="line">                    phase2.name() != continuousPhase_</span><br><span class="line">                ) <span class="comment">// 如果 phase2 就是 continuousPhase，那么 f1 = 0；否则 f1 = 1</span></span><br><span class="line">            )</span><br><span class="line">        );</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Foam::tmp&lt;Foam::volScalarField&gt; Foam::blendingMethods::noBlending::f2</span><br><span class="line">(</span><br><span class="line">    <span class="keyword">const</span> phaseModel&amp; phase1,</span><br><span class="line">    <span class="keyword">const</span> phaseModel&amp; phase2</span><br><span class="line">) <span class="keyword">const</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">const</span> fvMesh&amp; mesh(phase1.mesh());</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span></span><br><span class="line">        tmp&lt;volScalarField&gt;</span><br><span class="line">        (</span><br><span class="line">            <span class="keyword">new</span> volScalarField</span><br><span class="line">            (</span><br><span class="line">                IOobject</span><br><span class="line">                (</span><br><span class="line">                    <span class="string">"f"</span>,</span><br><span class="line">                    mesh.time().timeName(),</span><br><span class="line">                    mesh</span><br><span class="line">                ),</span><br><span class="line">                mesh,</span><br><span class="line">                dimensionedScalar</span><br><span class="line">                (</span><br><span class="line">                    <span class="string">"f"</span>,</span><br><span class="line">                    dimless,</span><br><span class="line">                    phase1.name() == continuousPhase_</span><br><span class="line">                ) <span class="comment">// 如果 phase1 是 continuousPhase，那么 f2 = 1，否则 f2 = 0。</span></span><br><span class="line">            )</span><br><span class="line">        );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>再回头看 <code>BlendedInterfacialModel</code> 类的成员函数 <code>K()</code>，<br><figure class="highlight ocaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (model_.valid<span class="literal">()</span> || model1In2_.valid<span class="literal">()</span>)</span><br><span class="line">   &#123;</span><br><span class="line">       f1 = blending_.f1(pair1In2_.dispersed<span class="literal">()</span>, pair2In1_.dispersed<span class="literal">()</span>);</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">if</span> (model_.valid<span class="literal">()</span> || model2In1_.valid<span class="literal">()</span>)</span><br><span class="line">   &#123;</span><br><span class="line">       f2 = blending_.f2(pair1In2_.dispersed<span class="literal">()</span>, pair2In1_.dispersed<span class="literal">()</span>);</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure></p>
+<p>根据上面的 “phaseProperties” 的设置，可知 <code>pair1In2_.dispersed() = &quot;particles&quot;</code>，  <code>pair2In1_.dispersed() = &quot;air&quot;</code>，而  <code>continuousPhase_</code> 是从 “phaseProperties” 的 “blending” 子字典里读取的，这里<code>continuousPhase_ = &quot;air&quot;</code>，于是，可以得到 <code>f1 = 0</code>， <code>f2 = 1</code>。再看 <code>K()</code> 的返回值，可知，最终有效的返回值是<br><figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> <span class="comment">(model1In2_.valid()</span>)</span><br><span class="line">   &#123;</span><br><span class="line">       x<span class="comment">()</span> += model<span class="number">1</span>I<span class="label">n2</span>_-&gt;K<span class="comment">()</span>*<span class="comment">(1 - f1)</span>;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure></p>
+<p>即，最终 <code>K()</code> 函数的返回值是 <code>model1In2_-&gt;K()</code> 。而<code>model1In2_-&gt;K()</code>的值就取决于具体调用的曳力模型了，举例说，假如调用的是 Ergun 曳力模型，则 <code>K()</code> 最终返回的值，也就是 “UEqn.H” 中的 <code>dragCoeff</code> 的值是<br><figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="rule"><span class="attribute">Foam</span>:<span class="value">:tmp&lt;Foam::volScalarField&gt; Foam::dragModel::<span class="function">K</span>() const</span><br><span class="line">&#123;</span><br><span class="line">    return</span><br><span class="line">        <span class="number">0.75</span></span><br><span class="line">       *<span class="function">CdRe</span>()</span><br><span class="line">       *<span class="function">max</span>(pair_.<span class="function">dispersed</span>(), residualAlpha_)</span><br><span class="line">       *swarmCorrection_-&gt;<span class="function">Cs</span>()</span><br><span class="line">       *pair_.<span class="function">continuous</span>().<span class="function">rho</span>()</span><br><span class="line">       *pair_.<span class="function">continuous</span>().<span class="function">nu</span>()</span><br><span class="line">       /<span class="function">sqr</span>(pair_.<span class="function">dispersed</span>().<span class="function">d</span>())</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>其中 <code>CdRe()</code> 的定义为<br><figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="rule"><span class="attribute">Foam</span>:<span class="value">:tmp&lt;Foam::volScalarField&gt; Foam::dragModels::Ergun::<span class="function">CdRe</span>() const</span><br><span class="line">&#123;</span><br><span class="line">    return</span><br><span class="line">        (<span class="number">4</span>/<span class="number">3</span>)</span><br><span class="line">       *(</span><br><span class="line">            <span class="number">150</span></span><br><span class="line">           *<span class="function">max</span>(<span class="function">scalar</span>(<span class="number">1</span>) - pair_.<span class="function">continuous</span>(), residualAlpha_)</span><br><span class="line">           /<span class="function">max</span>(pair_.<span class="function">continuous</span>(), residualAlpha_)</span><br><span class="line">          + <span class="number">1.75</span></span><br><span class="line">           *pair_.<span class="function">Re</span>()</span><br><span class="line">        )</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>注意所有曳力模型的 <code>K()</code>函数形式是一样的，不同曳力模型的区别在于 <code>CdRe()</code>  不一样。<br>此外，virtualMass，  heatTransfer，lift，wallLubrication，           turbulentDispersion 这些子模型的调用也都是经过类似的方法进行的。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://xiaopingqiu.github.io/2015/09/07/twoPhaseEulerFoam23x-twoPhaseSystem/" data-id="ciea17hwg000i9gmbc825nckb" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/code-Explained/">code Explained</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2015/08/16/vimExtensionOpenFOAM/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">vim Extension for OpenFOAM</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+<section id="comments">
+  <!-- 多说评论框 start -->
+  <div class="ds-thread" data-thread-key="post-twoPhaseEulerFoam23x-twoPhaseSystem" data-title="OpenFOAM-2.3.x 中的 twoPhaseEulerFoam 解析之曳力模型的调用过程" data-url="http://xiaopingqiu.github.io/2015/09/07/twoPhaseEulerFoam23x-twoPhaseSystem/"></div>
+  <!-- 多说评论框 end -->
+  <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+  <script type="text/javascript">
+  var duoshuoQuery = {short_name:"xiaopingqiu"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+  <!-- 多说公共JS代码 end -->
+</section>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/">OpenFOAM</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Paraview/">Paraview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/test/">test</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/vim/">vim</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Explained/">Code Explained</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a><span class="tag-list-count">10</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Postprocessing/">Postprocessing</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/code-Explained/">code Explained</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/paraview/">paraview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/test/">test</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vim/">vim</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Code-Explained/" style="font-size: 15px;">Code Explained</a><a href="/tags/OpenFOAM/" style="font-size: 20px;">OpenFOAM</a><a href="/tags/Postprocessing/" style="font-size: 15px;">Postprocessing</a><a href="/tags/Windows/" style="font-size: 10px;">Windows</a><a href="/tags/code-Explained/" style="font-size: 10px;">code Explained</a><a href="/tags/paraview/" style="font-size: 10px;">paraview</a><a href="/tags/test/" style="font-size: 10px;">test</a><a href="/tags/vim/" style="font-size: 10px;">vim</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/09/">九月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/08/">八月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">六月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a><span class="archive-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recents</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2015/09/07/twoPhaseEulerFoam23x-twoPhaseSystem/">OpenFOAM-2.3.x 中的 twoPhaseEulerFoam 解析之曳力模型的调用过程</a>
+          </li>
+        
+          <li>
+            <a href="/2015/08/16/vimExtensionOpenFOAM/">vim Extension for OpenFOAM</a>
+          </li>
+        
+          <li>
+            <a href="/2015/06/27/twoPhaseEulerFoam3/">twoPhaseEulerFoam 全解读之三</a>
+          </li>
+        
+          <li>
+            <a href="/2015/06/14/OpenFOAM-on-win/">在 Windows 7 下配置 OpenFOAM 运行环境</a>
+          </li>
+        
+          <li>
+            <a href="/2015/05/31/foamTimeAverage/">foamTimeAverage</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2015 Giskard Q.<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+<script src="//dn-lbstatics.qbox.me/lbservice/busuanzi/2.0/busuanzi.mini.js"/></script>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css" type="text/css">
+  <script src="/fancybox/jquery.fancybox.pack.js" type="text/javascript"></script>
+
+
+<script src="/js/script.js" type="text/javascript"></script>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-62501686-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+  </div>
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+</body>
+</html>

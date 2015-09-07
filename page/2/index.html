@@ -76,6 +76,55 @@ ga('send', 'pageview');
       <div class="outer">
         <section id="main">
   
+    <article id="post-fieldAverage" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2015/04/12/fieldAverage/" class="article-date">
+  <time datetime="2015-04-12T09:00:54.000Z" itemprop="datePublished">2015-04-12</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2015/04/12/fieldAverage/">fieldAverage 使用说明</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><code>fieldAverage</code>是 OpenFOAM 中的一种 functionObject，用来计算时均值。其基本用法是作为一个 function object 放在 controlDict 文件中，运行 solver 的同时计算指定场的时均值，以下是一个示例：</p>
+<figure class="highlight applescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">functions</span><br><span class="line">&#123;</span><br><span class="line">    fieldAverage1</span><br><span class="line">    &#123;</span><br><span class="line">        type            fieldAverage;</span><br><span class="line">        functionObjectLibs ( <span class="string">"libfieldFunctionObjects.so"</span> );</span><br><span class="line">        outputControl   outputTime;</span><br><span class="line">        fields</span><br><span class="line">        (</span><br><span class="line">            Ua</span><br><span class="line">            &#123;</span><br><span class="line">                 mean        <span class="function_start"><span class="keyword">on</span></span>;</span><br><span class="line">                 prime2Mean  off;</span><br><span class="line">                 base        <span class="property">time</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            Ub</span><br><span class="line">            &#123;</span><br><span class="line">                 mean        <span class="function_start"><span class="keyword">on</span></span>;</span><br><span class="line">                 prime2Mean  off;</span><br><span class="line">                 base        <span class="property">time</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        );</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+        
+          <p class="article-more-link">
+            <a href="/2015/04/12/fieldAverage/#more">Read More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://xiaopingqiu.github.io/2015/04/12/fieldAverage/" data-id="ciea17hxu001f9gmb98f2x64h" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Postprocessing/">Postprocessing</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-hello-world" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2015/04/04/hello-world/" class="article-date">
@@ -120,7 +169,7 @@ ga('send', 'pageview');
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2015/04/04/hello-world/" data-id="cide5roqd000xn0mbh97xp57i" class="article-share-link">Share</a>
+      <a data-url="http://xiaopingqiu.github.io/2015/04/04/hello-world/" data-id="ciea17hx700129gmb8o0d4ufn" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/test/">test</a></li></ul>
@@ -146,7 +195,7 @@ ga('send', 'pageview');
   <div class="widget-wrap">
     <h3 class="widget-title">Categories</h3>
     <div class="widget">
-      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/">OpenFOAM</a><span class="category-list-count">8</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Paraview/">Paraview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/test/">test</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/vim/">vim</a><span class="category-list-count">1</span></li></ul>
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/">OpenFOAM</a><span class="category-list-count">9</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Paraview/">Paraview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/test/">test</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/vim/">vim</a><span class="category-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -155,7 +204,7 @@ ga('send', 'pageview');
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Explained/">Code Explained</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Postprocessing/">Postprocessing</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/paraview/">paraview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/test/">test</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vim/">vim</a><span class="tag-list-count">1</span></li></ul>
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Explained/">Code Explained</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a><span class="tag-list-count">10</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Postprocessing/">Postprocessing</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/code-Explained/">code Explained</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/paraview/">paraview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/test/">test</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vim/">vim</a><span class="tag-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -164,7 +213,7 @@ ga('send', 'pageview');
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/tags/Code-Explained/" style="font-size: 15px;">Code Explained</a><a href="/tags/OpenFOAM/" style="font-size: 20px;">OpenFOAM</a><a href="/tags/Postprocessing/" style="font-size: 15px;">Postprocessing</a><a href="/tags/Windows/" style="font-size: 10px;">Windows</a><a href="/tags/paraview/" style="font-size: 10px;">paraview</a><a href="/tags/test/" style="font-size: 10px;">test</a><a href="/tags/vim/" style="font-size: 10px;">vim</a>
+      <a href="/tags/Code-Explained/" style="font-size: 15px;">Code Explained</a><a href="/tags/OpenFOAM/" style="font-size: 20px;">OpenFOAM</a><a href="/tags/Postprocessing/" style="font-size: 15px;">Postprocessing</a><a href="/tags/Windows/" style="font-size: 10px;">Windows</a><a href="/tags/code-Explained/" style="font-size: 10px;">code Explained</a><a href="/tags/paraview/" style="font-size: 10px;">paraview</a><a href="/tags/test/" style="font-size: 10px;">test</a><a href="/tags/vim/" style="font-size: 10px;">vim</a>
     </div>
   </div>
 
@@ -173,7 +222,7 @@ ga('send', 'pageview');
   <div class="widget-wrap">
     <h3 class="widget-title">Archives</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/08/">八月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">六月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a><span class="archive-list-count">2</span></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/09/">九月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/08/">八月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">六月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a><span class="archive-list-count">2</span></li></ul>
     </div>
   </div>
 
@@ -183,6 +232,10 @@ ga('send', 'pageview');
     <h3 class="widget-title">Recents</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/2015/09/07/twoPhaseEulerFoam23x-twoPhaseSystem/">OpenFOAM-2.3.x 中的 twoPhaseEulerFoam 解析之曳力模型的调用过程</a>
+          </li>
         
           <li>
             <a href="/2015/08/16/vimExtensionOpenFOAM/">vim Extension for OpenFOAM</a>
@@ -198,10 +251,6 @@ ga('send', 'pageview');
         
           <li>
             <a href="/2015/05/31/foamTimeAverage/">foamTimeAverage</a>
-          </li>
-        
-          <li>
-            <a href="/2015/05/17/twoPhaseEulerFoam2/">twoPhaseEulerFoam 全解读之二</a>
           </li>
         
       </ul>
