@@ -4,7 +4,7 @@
   <subtitle><![CDATA[CFD and Scientific Computing]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://xiaopingqiu.github.io/"/>
-  <updated>2015-09-13T07:24:37.722Z</updated>
+  <updated>2015-09-13T07:49:21.876Z</updated>
   <id>http://xiaopingqiu.github.io/</id>
   
   <author>
@@ -15,13 +15,14 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
-    <title><![CDATA[OpenFOAM-install-centOS]]></title>
+    <title><![CDATA[在集群上安装 OpenFOAM ]]></title>
     <link href="http://xiaopingqiu.github.io/2015/09/13/OpenFOAM-install-centOS/"/>
     <id>http://xiaopingqiu.github.io/2015/09/13/OpenFOAM-install-centOS/</id>
     <published>2015-09-13T05:23:06.000Z</published>
-    <updated>2015-09-13T07:24:37.722Z</updated>
+    <updated>2015-09-13T07:49:21.876Z</updated>
     <content type="html"><![CDATA[<p>本篇记录我在 CentOS 上编译安装 OpenFOAM 的过程。我需要在不能联网且没有 root 权限的集群上使用OpenFOAM ，最早的时候，我使用的是 <a href="http://sourceforge.net/projects/centfoam/" target="_blank" rel="external">centFOAM project</a> 提供的 64bit CentOS 安装包，这个很方便，把压缩包下载，解压，然后配置一下环境变量就可以了。但是后来 centFOAM 好像不再更新了，所以我只好尝试着自己编译。</p>
-<p>由于集群上缺少一些 OpenFOAM 依赖的包，要是一个一个去下载源码编译以补齐那些依赖的包，实在很费劲，所以我采取了另一种尝试：在虚拟机里安装跟集群上一样的系统，然后在虚拟机里编译好 OpenFOAM ，然后再拷贝到集群上去用（据信 cenoFOAM project 提供的安装包也是在虚拟机编译好的，而且在 cfd-online 论坛上也见有人推荐这么做）。我尝试过在CentOS 5.4 ，CentOS 6.3 以及 Scientific Linux 6.5 上安装过 OpenFOAM-2.3.x，都成功了，过程大同小异。下面是我的安装过程的一个简要记录。</p>
+<p>由于集群上缺少一些 OpenFOAM 依赖的包，要是一个一个去下载源码编译以补齐那些依赖的包，实在很费劲，所以我采取了另一种尝试：在虚拟机里安装跟集群上一样的系统，然后在虚拟机里编译好 OpenFOAM ，再拷贝到集群上去用（据信 cenoFOAM project 提供的安装包也是在虚拟机编译好的，而且在 cfd-online 论坛上也见有人推荐这么做）。我尝试过在CentOS 5.4 ，CentOS 6.3 以及 Scientific Linux 6.5 上安装过 OpenFOAM-2.3.x，都成功了，过程大同小异。下面是我的安装过程的一个简要记录。</p>
+<a id="more"></a>
 <h3 id="1_CentOS_6-3">1 CentOS 6.3</h3><p>首先，你需要一个虚拟机软件，我使用的是 VirtualBox，然后在虚拟机里安装一个64 bit 的CentOS 6.3（镜像可以去<a href="http://vault.centos.org/" target="_blank" rel="external">官网</a>下载）。注意，要想在 VirtualBox安装 64 bit的虚拟机，你的主系统也必须是 64 bit，而且，还要求你的 CPU 支持并开启了虚拟化技术，见<a href="http://rickie622.blog.163.com/blog/static/2123881120113473224536/" target="_blank" rel="external">这个链接</a>。然后，安装虚拟机的过程中，CentOS 6.3 会让你选择以哪种方式安装系统，我选择的是 “Software Development Workstation”，因为这种方式安装的包最全。以下是我在虚拟机里编译安装OpenFOAM-2.3.x的过程。</p>
 <h4 id="1-0_补充一些依赖包">1.0 补充一些依赖包</h4><p>确保你的虚拟机可以联网，然后运行以下命令补充一些包：<br><figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">yum groupinstall 'Development Tools</span><br><span class="line"></span><br><span class="line">yum <span class="keyword">install</span> glibc-devel.i686</span><br><span class="line"></span><br><span class="line">yum <span class="keyword">install</span> zlib.x86_64</span><br><span class="line">yum <span class="keyword">install</span> zlib-devel.x86_64</span><br></pre></td></tr></table></figure></p>
 <h4 id="1-1_下载需要的源码包。">1.1 下载需要的源码包。</h4><p>需要的源码包包括：OpenFOAM-2.3.x ，ThirdParty-2.3.x，这两个可以在OpenFOAM的官网找到，其中OpenFOAM-2.3.x可以用 git 从<a href="https://github.com/OpenFOAM/OpenFOAM-2.3.x" target="_blank" rel="external">这里</a>克隆一份；gcc-4.8.2, mpfr-3.1.2, gmp-5.1.2, mpc-1.0.1, boost-1.55.0, 这些可以OpenFOAM的 github 仓库里<a href="https://github.com/OpenFOAM/ThirdParty-2.3.x" target="_blank" rel="external">找到链接</a>。因为有移植到集群上的需要，所以我这里需要自己编译gcc 和openmpi，这样，就不需要依赖集群系统上的gcc和openmpi了。</p>
@@ -49,10 +50,19 @@
 <p>将压缩包拷贝到集群，在你的$HOME 下解压。建议你在集群上也创建跟在虚拟上一样的目录结构，即在<code>$HOME</code>下创建目录 <code>OpenFOAM</code>，然后将OpenFOAM-2.3.x和ThirdParty-2.3.x拷贝到<code>OpenFOAM</code>目录下，这样，就不再需要去修改OpenFOAM的安装路径这个环境变量了。万一你没法做到这一点，那么，你需要修改 <code>OpenFOAM-2.3.x/etc/bashrc</code> 文件，将 “foamInstall=$HOME/$WM_PROJECT” 修改成你的实际路径（这里 <code>$HOME/$WM_PROJECT=$HOME/OpenFOAM</code>）。</p>
 <p>然后，类似的，打开<code>~/.bashrc</code> 文件，在最后一行输入”source $HOME/OpenFOAM/OpenFOAM-2.3.x/etc/bashrc”，保存后，在终端里运行一下<br><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">source</span> ~/.bashrc</span><br></pre></td></tr></table></figure></p>
 <p>一切正常的话，移植工作就完成了。</p>
-<p>当然，也需要测试一下移植是否成功，同样可以通过运行 dambreak算例来测试。我曾经遇到的问题是，串行可以运行，但是并行出问题了。对于这种情况，解决办法是，到 <code>OpenFOAM/OpenFOAM-2.3.x/src/Pstream</code> 目录下， <code>dummy</code> 和 <code>mpi</code> 下运行  <code>wclean</code>，然后，运行 <code>Pstream</code> 下面的  <code>Allwmake</code> ，重新编译 <code>dummy</code> 和 <code>mpi</code> 。如果这样编译了仍然不能并行，那么还可以再试试重新编译openmpi，具体做法是，删除 <code>ThirdParty-2.3.x/platforms/linux64GccDPOpt/lib/openmpi-1.6.5</code> 以及 <code>ThirdParty-2.3.x/platforms/linux64Gcc/openmpi-1.6.5</code>，然后重新运行ThirdParty-2.3.x 下的  <code>Allwmake</code>，编译完以后在重新编译一下 <code>dummy</code> 和 <code>mpi</code>。一般情况下，这样处理以后，就可以正常并行运行了。</p>
+<p>当然，也需要测试一下移植是否成功，同样可以通过运行 dambreak算例来测试。我曾经遇到的问题是，串行可以运行，但是并行出问题了。对于这种情况，解决办法是，到 <code>OpenFOAM/OpenFOAM-2.3.x/src/Pstream</code> 目录下， <code>dummy</code> 和 <code>mpi</code> 下运行  <code>wclean</code>，然后，运行 <code>Pstream</code> 下面的  <code>Allwmake</code> ，重新编译 <code>dummy</code> 和 <code>mpi</code> 。如果这样编译了仍然不能并行，那么还可以再试试重新编译openmpi，具体做法是，删除 <code>ThirdParty-2.3.x/platforms/linux64GccDPOpt/lib/openmpi-1.6.5</code> 以及 <code>ThirdParty-2.3.x/platforms/linux64Gcc/openmpi-1.6.5</code>，然后重新运行ThirdParty-2.3.x 下的  <code>Allwmake</code>，编译完以后在重新编译一下 <code>dummy</code> 和 <code>mpi</code>。一般情况下，可以编译成功，因为编译需要的东西其实都在ThirdParty-2.3.x下面包含了，不需要依赖系统的什么包，这也是自己上面自己手动编译gcc等这些包带来的好处。这样处理以后，就可以正常并行运行了。</p>
+<h3 id="2-_CentOS_5-4">2. CentOS 5.4</h3><p>CentOS 5.4 上的编译和移植过程几乎和上面是一样的，只有几个细节不同，比如，安装依赖包的时候，<br><figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum <span class="keyword">install</span> glibc-devel.i686</span><br></pre></td></tr></table></figure></p>
+<p>应该是<br><figure class="highlight cmake"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">yum <span class="keyword">install</span> glibc-devel.i386</span><br></pre></td></tr></table></figure></p>
+<p>其他的差别，在我印象中是没有了。</p>
+<p>最后，有必要提一下一个诡异的失败经历，这个问题我至今也不知道是什么原因导致的。<br>有一次在移植到集群的时候，重新编以openmpi的过程中遇到如下报错：<br><figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">CDPATH=<span class="string">"$&#123;ZSH_VERSION+.&#125;:"</span> &amp;&amp; cd . &amp;&amp; <span class="regexp">/bin/</span>sh <span class="regexp">/storage02.mnt/</span>home<span class="regexp">/lmu/</span>OpenFOAM<span class="regexp">/ThirdParty-2.3.x/</span>openmpi-<span class="number">1.6</span>.<span class="number">5</span><span class="regexp">/config/mi</span>ssing --run aclocal-<span class="number">1.11</span> -I config</span><br></pre></td></tr></table></figure></p>
+<p>导致openmpi无法编译。<br>但是，将OpenFOAM拷贝到另一个目录（不再是 <code>$HOME/OpenFOAM</code> ），再重新尝试，却成功了。</p>
+<p>另一次，是在Scientific Linux上，也是重新编译 openmpi 的时候遇到了一样的报错，后来解决的办法是，弃用ThirdParty下的 openmpi，改启用系统的openmpi（虽然版本老一点），具体设置是将” export WM_MPLIB=OPENMPI” 改为 “ export WM_MPLIB=SYSTEMOPENMPI”，改完以后也能成功并行运行。</p>
+<p>本篇博文，由于是写在我编译 OpenFOAM 好几个月之后，当时也没有详细记录编译过程，所以肯定有细节遗漏或者错误的地方。而且，在不同的系统上，也可能遇到我这里没有提到的问题，本篇博文仅仅是给有需要的人做一个参考。要是你编译过程中遇到某个问题在看了本文后得到了解决，那我的目的就达到了。有问题 ，欢迎来OpenFOAM开源计算千人群讨论交流。</p>
 ]]></content>
     <summary type="html">
-    <![CDATA[<p>本篇记录我在 CentOS 上编译安装 OpenFOAM 的过程。我需要在不能联网且没有 root 权限的集群上使用OpenFOAM ，最早的时候，我使用的是 <a href="http://sourceforge.net/projects/centfoam/" targe]]>
+    <![CDATA[<p>本篇记录我在 CentOS 上编译安装 OpenFOAM 的过程。我需要在不能联网且没有 root 权限的集群上使用OpenFOAM ，最早的时候，我使用的是 <a href="http://sourceforge.net/projects/centfoam/">centFOAM project</a> 提供的 64bit CentOS 安装包，这个很方便，把压缩包下载，解压，然后配置一下环境变量就可以了。但是后来 centFOAM 好像不再更新了，所以我只好尝试着自己编译。</p>
+<p>由于集群上缺少一些 OpenFOAM 依赖的包，要是一个一个去下载源码编译以补齐那些依赖的包，实在很费劲，所以我采取了另一种尝试：在虚拟机里安装跟集群上一样的系统，然后在虚拟机里编译好 OpenFOAM ，再拷贝到集群上去用（据信 cenoFOAM project 提供的安装包也是在虚拟机编译好的，而且在 cfd-online 论坛上也见有人推荐这么做）。我尝试过在CentOS 5.4 ，CentOS 6.3 以及 Scientific Linux 6.5 上安装过 OpenFOAM-2.3.x，都成功了，过程大同小异。下面是我的安装过程的一个简要记录。</p>]]>
+    
     </summary>
     
       <category term="CentOS" scheme="http://xiaopingqiu.github.io/tags/CentOS/"/>
