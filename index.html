@@ -103,7 +103,7 @@ ga('send', 'pageview');
     <div class="article-entry" itemprop="articleBody">
       
         <p>本篇记录我在 CentOS 上编译安装 OpenFOAM 的过程。我需要在不能联网且没有 root 权限的集群上使用OpenFOAM ，最早的时候，我使用的是 <a href="http://sourceforge.net/projects/centfoam/">centFOAM project</a> 提供的 64bit CentOS 安装包，这个很方便，把压缩包下载，解压，然后配置一下环境变量就可以了。但是后来 centFOAM 好像不再更新了，所以我只好尝试着自己编译。</p>
-<p>由于集群上缺少一些 OpenFOAM 依赖的包，要是一个一个去下载源码编译以补齐那些依赖的包，实在很费劲，所以我采取了另一种尝试：在虚拟机里安装跟集群上一样的系统，然后在虚拟机里编译好 OpenFOAM ，再拷贝到集群上去用（据信 cenoFOAM project 提供的安装包也是在虚拟机编译好的，而且在 cfd-online 论坛上也见有人推荐这么做）。我尝试过在CentOS 5.4 ，CentOS 6.3 以及 Scientific Linux 6.5 上安装过 OpenFOAM-2.3.x，都成功了，过程大同小异。下面是我的安装过程的一个简要记录。</p>
+<p>由于集群上缺少一些 OpenFOAM 依赖的包，要是一个一个去下载源码编译以补齐那些依赖的包，实在很费劲，所以我采取了另一种尝试：在虚拟机里安装跟集群上一样的系统，然后在虚拟机里编译好 OpenFOAM ，再拷贝到集群上去用（据信 cenoFOAM project 提供的安装包也是在虚拟机编译好的，而且在 cfd-online 论坛上也见有人推荐这么做）。我尝试过在 CentOS 5.4 ，CentOS 6.3 以及 Scientific Linux 6.5 上安装过 OpenFOAM-2.3.x，都成功了，过程大同小异。下面是我的安装过程的一个简要记录。</p>
         
           <p class="article-more-link">
             <a href="/2015/09/13/OpenFOAM-install-centOS/#more">Read More</a>
