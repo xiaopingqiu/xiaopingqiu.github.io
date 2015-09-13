@@ -3,17 +3,20 @@
 <head>
   <meta charset="utf-8">
   
-  <title>Giskard&#39;s CFD Learning Tricks</title>
+  <title>OpenFOAM-install-centOS | Giskard&#39;s CFD Learning Tricks</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Giskard's CFD Learning Tricks">
-<meta property="og:url" content="http://xiaopingqiu.github.io/index.html">
+  <meta name="description" content="本篇记录我在 CentOS 上编译安装 OpenFOAM 的过程。我需要在不能联网且没有 root 权限的集群上使用OpenFOAM ，最早的时候，我使用的是 centFOAM project 提供的 64bit CentOS 安装包，这个很方便，把压缩包下载，解压，然后配置一下环境变量就可以了。但是后来 centFOAM 好像不再更新了，所以我只好尝试着自己编译。
+由于集群上缺少一些 OpenF">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenFOAM-install-centOS">
+<meta property="og:url" content="http://xiaopingqiu.github.io/2015/09/13/OpenFOAM-install-centOS/index.html">
 <meta property="og:site_name" content="Giskard's CFD Learning Tricks">
-<meta property="og:description">
+<meta property="og:description" content="本篇记录我在 CentOS 上编译安装 OpenFOAM 的过程。我需要在不能联网且没有 root 权限的集群上使用OpenFOAM ，最早的时候，我使用的是 centFOAM project 提供的 64bit CentOS 安装包，这个很方便，把压缩包下载，解压，然后配置一下环境变量就可以了。但是后来 centFOAM 好像不再更新了，所以我只好尝试着自己编译。
+由于集群上缺少一些 OpenF">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Giskard's CFD Learning Tricks">
-<meta name="twitter:description">
+<meta name="twitter:title" content="OpenFOAM-install-centOS">
+<meta name="twitter:description" content="本篇记录我在 CentOS 上编译安装 OpenFOAM 的过程。我需要在不能联网且没有 root 权限的集群上使用OpenFOAM ，最早的时候，我使用的是 centFOAM project 提供的 64bit CentOS 安装包，这个很方便，把压缩包下载，解压，然后配置一下环境变量就可以了。但是后来 centFOAM 好像不再更新了，所以我只好尝试着自己编译。
+由于集群上缺少一些 OpenF">
   
   
     <link rel="icon" href="/favicon.png">
@@ -74,9 +77,7 @@ ga('send', 'pageview');
 </header>
 
       <div class="outer">
-        <section id="main">
-  
-    <article id="post-OpenFOAM-install-centOS" class="article article-type-post" itemscope itemprop="blogPost">
+        <section id="main"><article id="post-OpenFOAM-install-centOS" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2015/09/13/OpenFOAM-install-centOS/" class="article-date">
   <time datetime="2015-09-13T05:23:06.000Z" itemprop="datePublished">2015-09-13</time>
@@ -93,8 +94,8 @@ ga('send', 'pageview');
       <header class="article-header">
         
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2015/09/13/OpenFOAM-install-centOS/">OpenFOAM-install-centOS</a>
+    <h1 class="article-title" itemprop="name">
+      OpenFOAM-install-centOS
     </h1>
   
 
@@ -144,448 +145,40 @@ ga('send', 'pageview');
     </footer>
   </div>
   
-</article>
-
-
-
+    
+<nav id="article-nav">
   
-    <article id="post-twoPhaseEulerFoam23x-twoPhaseSystem" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2015/09/07/twoPhaseEulerFoam23x-twoPhaseSystem/" class="article-date">
-  <time datetime="2015-09-07T14:27:47.000Z" itemprop="datePublished">2015-09-07</time>
-</a>
-    
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
-  </div>
-
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2015/09/07/twoPhaseEulerFoam23x-twoPhaseSystem/">OpenFOAM-2.3.x 中的 twoPhaseEulerFoam 解析之曳力模型的调用过程</a>
-    </h1>
+    <a href="/2015/09/07/twoPhaseEulerFoam23x-twoPhaseSystem/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">OpenFOAM-2.3.x 中的 twoPhaseEulerFoam 解析之曳力模型的调用过程</div>
+    </a>
   
+</nav>
 
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>前面有三篇博文对 OpenFOAM-2.1.x 中的 <code>twoPhaseEulerFoam</code> 求解器进行了解读，然而 OpenFOAM-2.3.x 中，这个求解器的代码有了很大的变化。本文将以一个曳力模型的调用过程为例，介绍 OpenFOAM-2.3.x 中 <code>twoPhaseEulerFoam</code> 是如何调用相间作用力模型的。后续还将对 OpenFOAM-2.3.x 中的 <code>twoPhaseEulerFoam</code> 的其他方面进行解读。</p>
-        
-          <p class="article-more-link">
-            <a href="/2015/09/07/twoPhaseEulerFoam23x-twoPhaseSystem/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2015/09/07/twoPhaseEulerFoam23x-twoPhaseSystem/" data-id="ciei6fbf4000i1gmbzo5awgnb" class="article-share-link">Share</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/code-Explained/">code Explained</a></li></ul>
-
-    </footer>
-  </div>
   
 </article>
 
 
+<section id="comments">
+  <!-- 多说评论框 start -->
+  <div class="ds-thread" data-thread-key="post-OpenFOAM-install-centOS" data-title="OpenFOAM-install-centOS" data-url="http://xiaopingqiu.github.io/2015/09/13/OpenFOAM-install-centOS/"></div>
+  <!-- 多说评论框 end -->
+  <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+  <script type="text/javascript">
+  var duoshuoQuery = {short_name:"xiaopingqiu"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+  <!-- 多说公共JS代码 end -->
+</section>
 
-  
-    <article id="post-vimExtensionOpenFOAM" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2015/08/16/vimExtensionOpenFOAM/" class="article-date">
-  <time datetime="2015-08-16T06:59:23.000Z" itemprop="datePublished">2015-08-16</time>
-</a>
-    
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/vim/">vim</a>
-  </div>
-
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2015/08/16/vimExtensionOpenFOAM/">vim Extension for OpenFOAM</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>本篇介绍一个<a href="https://bitbucket.org/shor-ty/vimextensionopenfoam">vim 插件</a>，该插件会自动检测某个文件是否是 OpenFOAM 的设置文件，然后根据预设的颜色显示方案来对大部分的 OpenFOAM 关键字进行高亮显示。单凭这一个特性，还不至让我专门写一篇博文来介绍它，真正让我觉得实用的是另外一个附带的特性：关键字补全。安装此插件以后，可以在用 vim 编辑 OpenFOAM 设置文件的时候对 OpenFOAM 的很多关键字，包括边界条件，湍流模型，离散格式等等进行自动补全，下面对这个插件和基本功能进行一个简单介绍。</p>
-        
-          <p class="article-more-link">
-            <a href="/2015/08/16/vimExtensionOpenFOAM/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2015/08/16/vimExtensionOpenFOAM/" data-id="ciei6fbeu00071gmbohsiyxu8" class="article-share-link">Share</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/vim/">vim</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-twoPhaseEulerFoam3" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2015/06/27/twoPhaseEulerFoam3/" class="article-date">
-  <time datetime="2015-06-27T12:39:01.000Z" itemprop="datePublished">2015-06-27</time>
-</a>
-    
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
-  </div>
-
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2015/06/27/twoPhaseEulerFoam3/">twoPhaseEulerFoam 全解读之三</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>本系列将对OpenFOAM-2.1.1 中的 <code>twoPhaseEulerFoam</code> 求解器进行完全解读，共分三部分：方程推导，代码解读，补充说明。本篇对 <code>twoPhaseEulerFoam</code> 中的 <code>alphaEqn.H</code> 进行详细地的解读，并作一些补充说明。</p>
-        
-          <p class="article-more-link">
-            <a href="/2015/06/27/twoPhaseEulerFoam3/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2015/06/27/twoPhaseEulerFoam3/" data-id="ciei6fbez000d1gmboeem9sv2" class="article-share-link">Share</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-OpenFOAM-on-win" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2015/06/14/OpenFOAM-on-win/" class="article-date">
-  <time datetime="2015-06-14T13:06:32.000Z" itemprop="datePublished">2015-06-14</time>
-</a>
-    
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
-  </div>
-
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2015/06/14/OpenFOAM-on-win/">在 Windows 7 下配置 OpenFOAM 运行环境</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>本篇介绍如何在 Windows 7 64 bit 下配置 OpenFOAM 的编译及运行环境。我并不打算在 windows 下进行 OpenFOAM 的开发，这里的折腾仅仅是作为一种测试，想看看目前的 OpenFOAM for windows 安装能做到什么程度。我使用的是<a href="http://www.c-fields.com/">Creative Fields</a>提供的安装包，编译环境是基于 Mingw-64 来搭建的，linux模拟环境采用的是 MSYS，终端使用的是 <a href="https://code.google.com/p/mintty/">mintty</a>。经过一番折腾，我成功在 Windows 下安装了OpenFOAM-2.3.0，程序可以串行或并行运行，也可以用 wmake 编译新的代码。本篇博文不会一步一步详细介绍我的搭建过程，仅介绍一些基本的原则以及我遇到的坑。尤其注意的是，以下很多步骤其实对于安装 OpenFOAM for Windows 不是必需的，仅仅是因为我的特殊要求而徒增折腾而已。</p>
-        
-          <p class="article-more-link">
-            <a href="/2015/06/14/OpenFOAM-on-win/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2015/06/14/OpenFOAM-on-win/" data-id="ciei6fbgo001n1gmbl2zfevxj" class="article-share-link">Share</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Windows/">Windows</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-foamTimeAverage" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2015/05/31/foamTimeAverage/" class="article-date">
-  <time datetime="2015-05-31T09:11:00.000Z" itemprop="datePublished">2015-05-31</time>
-</a>
-    
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
-  </div>
-
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2015/05/31/foamTimeAverage/">foamTimeAverage</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p> 在<a href="http://xiaopingqiu.github.io/2015/04/12/fieldAverage/">前面的一篇博文</a>中，我介绍了<code>fieldAverage</code>这个<code>functionObject</code>的用法，其中提到， 可以用<code>window</code>这个参数来控制所计算的时均值的时间范围。如果 <code>base = time</code>且<code>window = 10</code>，那从第10s以后，每个时刻 t 输出的时均值其实相当于从 t-10 到 t 这个时间段内的时均值。但是，根据分析可以发现，这个时均值并不严格等价于从 t-10 时刻到 t 时刻某个场的时均值。有时候，需要从某个时刻才开始计算时均值，而<code>fieldAverage</code>没有参数可以控制从某个时刻才开始计算时间平均。于是我参照<code>OpenFOAM</code>的<code>patchAverage.C</code>的代码写了一个后处理程序，用来计算指定时间段内的某个场的时均值。</p>
-        
-          <p class="article-more-link">
-            <a href="/2015/05/31/foamTimeAverage/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2015/05/31/foamTimeAverage/" data-id="ciei6fbg6001b1gmbg83pjge2" class="article-share-link">Share</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Postprocessing/">Postprocessing</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-twoPhaseEulerFoam2" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2015/05/17/twoPhaseEulerFoam2/" class="article-date">
-  <time datetime="2015-05-17T07:23:04.000Z" itemprop="datePublished">2015-05-17</time>
-</a>
-    
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
-  </div>
-
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2015/05/17/twoPhaseEulerFoam2/">twoPhaseEulerFoam 全解读之二</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>本系列将对OpenFOAM-2.1.1 中的 <code>twoPhaseEulerFoam</code> 求解器进行完全解读，共分三部分：方程推导，代码解读，补充说明。本篇对 <code>twoPhaseEulerFoam</code> 中的 <code>UEqn.H</code> 和 <code>pEqn.H</code> 中的代码进行详细地的解读。</p>
-        
-          <p class="article-more-link">
-            <a href="/2015/05/17/twoPhaseEulerFoam2/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2015/05/17/twoPhaseEulerFoam2/" data-id="ciei6fbf9000n1gmbi39nlh2j" class="article-share-link">Share</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-twoPhaseEulerFoam1" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2015/05/17/twoPhaseEulerFoam1/" class="article-date">
-  <time datetime="2015-05-17T06:46:07.000Z" itemprop="datePublished">2015-05-17</time>
-</a>
-    
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
-  </div>
-
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2015/05/17/twoPhaseEulerFoam1/">twoPhaseEulerFoam 全解读之一</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>本系列将对OpenFOAM-2.1.1 中的 <code>twoPhaseEulerFoam</code> 求解器进行完全解读，共分三部分：方程推导，代码解读，补充说明。本篇进行方程推导，详细介绍如果从双流体模型出发得到 <code>twoPhaseEulerFoam</code> 中的 <code>UEqn.H</code> 对应的模型方程形式。</p>
-        
-          <p class="article-more-link">
-            <a href="/2015/05/17/twoPhaseEulerFoam1/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2015/05/17/twoPhaseEulerFoam1/" data-id="ciei6fbff000r1gmbm4zldj1w" class="article-share-link">Share</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-OpenFOAMcode1" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2015/05/17/OpenFOAMcode1/" class="article-date">
-  <time datetime="2015-05-17T06:02:37.000Z" itemprop="datePublished">2015-05-17</time>
-</a>
-    
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
-  </div>
-
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2015/05/17/OpenFOAMcode1/">OpenFOAM 中的 div 与 snGrad 操作符</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>OpenFOAM 的方便之处之一是利用<code>C++</code>的类模板和函数重载等技术定义了很多各种离散操作符，如<code>div</code>,<code>laplacian</code>,<code>grad</code> 等等。利用这些操作符，很容易就能对偏微分方程进行离散，并构建起线性方程组。但是，这些操作符真正执行的运算，却需要结合有限体积方法的本质来理解一番才能真正掌握。下面尝试着对 OpenFOAM 中的 <code>div</code> 和 <code>snGrad</code> 操作符进行一点解读。</p>
-        
-          <p class="article-more-link">
-            <a href="/2015/05/17/OpenFOAMcode1/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2015/05/17/OpenFOAMcode1/" data-id="ciei6fbgi001j1gmbs7rv1ip2" class="article-share-link">Share</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-functionObjects" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2015/05/09/functionObjects/" class="article-date">
-  <time datetime="2015-05-09T07:24:56.000Z" itemprop="datePublished">2015-05-09</time>
-</a>
-    
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
-  </div>
-
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2015/05/09/functionObjects/">利用functionObjects对指定区域内进行后处理</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>CFD中很重要的一个环节是模拟结果的后处理。而后处理过程中，常常涉及到对某个指定区域的某个物理量进行操作，比如，求指定截面上的流率，或者求某个区域内的平均空隙率，等等。这里介绍一种利用 OpenFOAM 中的 <code>functionObjects</code> 来对指定区域进行后处理的方法。本方法一共分三步：1). 将指定区域内的网格(或者面)提取到 cellZone（或faceZone）; 2). 在 controlDict 里写后处理 functions；3). 运行后处理。<br>
-        
-          <p class="article-more-link">
-            <a href="/2015/05/09/functionObjects/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2015/05/09/functionObjects/" data-id="ciei6fbg100171gmbp9jzgyty" class="article-share-link">Share</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Postprocessing/">Postprocessing</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-  
-    <nav id="page-nav">
-      <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/">Next &raquo;</a>
-    </nav>
-  
 </section>
         
           <aside id="sidebar">
