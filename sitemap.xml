@@ -2,6 +2,11 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://xiaopingqiu.github.io/2015/09/19/kineticTheoryModel/</loc>
+    <lastmod>2015-09-19T03:29:33.653Z</lastmod>
+  </url>
+  
+  <url>
     <loc>http://xiaopingqiu.github.io/2015/09/13/CPP-conversion-Of-derived-class-reference-to-base-class-type/</loc>
     <lastmod>2015-09-13T13:19:36.361Z</lastmod>
   </url>
