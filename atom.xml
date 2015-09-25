@@ -4,7 +4,7 @@
   <subtitle><![CDATA[CFD and Scientific Computing]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://xiaopingqiu.github.io/"/>
-  <updated>2015-09-19T05:57:07.859Z</updated>
+  <updated>2015-09-25T09:15:31.359Z</updated>
   <id>http://xiaopingqiu.github.io/</id>
   
   <author>
@@ -19,7 +19,7 @@
     <link href="http://xiaopingqiu.github.io/2015/09/19/TFM-TurbulenceModel/"/>
     <id>http://xiaopingqiu.github.io/2015/09/19/TFM-TurbulenceModel/</id>
     <published>2015-09-19T04:38:20.000Z</published>
-    <updated>2015-09-19T05:57:07.859Z</updated>
+    <updated>2015-09-25T09:15:31.359Z</updated>
     <content type="html"><![CDATA[<p>在 <code>kineticTheoryModel</code> 类的解读时前面提到过， <code>kineticTheoryModel</code> 使用了跟湍流模型一样的接口。这一篇，就来看一下 <code>twoPhaseEulerFoam</code> 中的湍流模型。  </p>
 <a id="more"></a>
 <p>OpenFOAM-2.3.x 中的<code>twoPhaseEulerFoam</code> 流体相可以调用 RAS 和 LES 湍流模型，固相可以使用两种计算固相应力的“湍流模型”。<br>湍流模型的调用是通过 phaseModel 来进行的，具体的过程放到最后来讲，这里先说一下最重要的 <code>divDevRhoReff</code> 函数的形式，主要有三种类型：用于固相的 <code>phasePressure</code> 和  <code>kineticTheoryModel</code> 以及用于流体相的 RAS 模型或 LES 模型，以 <code>kEpsilon</code> 模型为例。此外，在”pEqn.H”里，还需要用到 <code>pPrime()</code> 函数，这个函数主要是在处理颗粒相的压力时有意义，所以，在 <code>phasePressure</code> 和 <code>kineticTheoryModel</code> 两个模型中，这个函数也需要关注一下。</p>
@@ -55,9 +55,9 @@
     
     </summary>
     
-      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/tags/OpenFOAM/"/>
+      <category term="Code Explained" scheme="http://xiaopingqiu.github.io/tags/Code-Explained/"/>
     
-      <category term="code Explained" scheme="http://xiaopingqiu.github.io/tags/code-Explained/"/>
+      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/tags/OpenFOAM/"/>
     
       <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/categories/OpenFOAM/"/>
     
@@ -68,7 +68,7 @@
     <link href="http://xiaopingqiu.github.io/2015/09/19/kineticTheoryModelSubModels/"/>
     <id>http://xiaopingqiu.github.io/2015/09/19/kineticTheoryModelSubModels/</id>
     <published>2015-09-19T03:45:35.000Z</published>
-    <updated>2015-09-19T04:33:35.369Z</updated>
+    <updated>2015-09-25T09:15:03.630Z</updated>
     <content type="html"><![CDATA[<p>上一篇博文解读了 <code>kineticTheoryModel</code>  其中提到需要调用子模型来完成其功能，这里将 OpenFOAM 中 <code>kineticTheoryModel</code> 模型的子模型罗列如下。</p>
 <a id="more"></a>
 <h4 id="1-_viscosityModel">1. viscosityModel</h4><p>viscosityModel 的作用是根据颗粒温度 <code>Theta</code> 来计算固相粘度。<br>基类代码如下，核心是那个返回固相粘度的 <code>nu</code> 函数。<br><figure class="highlight cs"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> <span class="title">Foam</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">namespace</span> <span class="title">kineticTheoryModels</span></span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*---------------------------------------------------------------------------*\</span><br><span class="line">                           Class viscosityModel Declaration</span><br><span class="line">\*---------------------------------------------------------------------------*/</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title">viscosityModel</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// Private member functions</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">//- Disallow default bitwise copy construct</span></span><br><span class="line">        viscosityModel(<span class="keyword">const</span> viscosityModel&amp;);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//- Disallow default bitwise assignment</span></span><br><span class="line">        <span class="keyword">void</span> <span class="keyword">operator</span>=(<span class="keyword">const</span> viscosityModel&amp;);</span><br><span class="line"><span class="keyword">protected</span>:</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Protected data</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">const</span> dictionary&amp; dict_;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line"></span><br><span class="line">    <span class="comment">//- Runtime type information</span></span><br><span class="line">    TypeName(<span class="string">"viscosityModel"</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Declare runtime constructor selection table</span></span><br><span class="line">    declareRunTimeSelectionTable</span><br><span class="line">    (</span><br><span class="line">        autoPtr,</span><br><span class="line">        viscosityModel,</span><br><span class="line">        dictionary,</span><br><span class="line">        (</span><br><span class="line">            <span class="keyword">const</span> dictionary&amp; dict</span><br><span class="line">        ),</span><br><span class="line">        (dict)</span><br><span class="line">    );</span><br><span class="line">    <span class="comment">// Constructors</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">//- Construct from components</span></span><br><span class="line">        viscosityModel(<span class="keyword">const</span> dictionary&amp; dict);</span><br><span class="line">    <span class="comment">// Selectors</span></span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">static</span> autoPtr&lt;viscosityModel&gt; <span class="title">New</span></span><br><span class="line">        <span class="params">(</span><br><span class="line">            <span class="keyword">const</span> dictionary&amp; dict</span><br><span class="line">        )</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//- Destructor</span></span><br><span class="line">    <span class="keyword">virtual</span> ~viscosityModel();</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Member Functions</span></span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">virtual</span> tmp&lt;volScalarField&gt; <span class="title">nu</span></span><br><span class="line">        <span class="params">(</span><br><span class="line">            <span class="keyword">const</span> volScalarField&amp; alpha1,</span><br><span class="line">            <span class="keyword">const</span> volScalarField&amp; Theta,</span><br><span class="line">            <span class="keyword">const</span> volScalarField&amp; g0,</span><br><span class="line">            <span class="keyword">const</span> volScalarField&amp; rho1,</span><br><span class="line">            <span class="keyword">const</span> volScalarField&amp; da,</span><br><span class="line">            <span class="keyword">const</span> dimensionedScalar&amp; e</span><br><span class="line">        )</span> <span class="keyword">const</span> </span>= <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">virtual</span> <span class="keyword">bool</span> <span class="title">read</span><span class="params">()</span></span><br><span class="line">        </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
@@ -125,9 +125,9 @@
     
     </summary>
     
-      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/tags/OpenFOAM/"/>
+      <category term="Code Explained" scheme="http://xiaopingqiu.github.io/tags/Code-Explained/"/>
     
-      <category term="code Explained" scheme="http://xiaopingqiu.github.io/tags/code-Explained/"/>
+      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/tags/OpenFOAM/"/>
     
       <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/categories/OpenFOAM/"/>
     
@@ -138,7 +138,7 @@
     <link href="http://xiaopingqiu.github.io/2015/09/19/kineticTheoryModel/"/>
     <id>http://xiaopingqiu.github.io/2015/09/19/kineticTheoryModel/</id>
     <published>2015-09-19T02:26:09.000Z</published>
-    <updated>2015-09-19T03:41:51.404Z</updated>
+    <updated>2015-09-25T09:14:38.738Z</updated>
     <content type="html"><![CDATA[<p>OpenFOAM 中双流体模型的 kineticTheoryModel 是以 “ <em>Derivation, implementation, and validation of computer simulation models for gas-solid fluidized beds</em>, B.G.M. van Wachem, Ph.D. Thesis, Delft University of Technology, Amsterdam, 2000. “ 为蓝本来设计的，下面分析这个类的代码。需要注意的是，这个类需要调用一些别的类（如 viscosityModel 等，后面会一一分析）来完成其功能。</p>
 <a id="more"></a>
 <h4 id="1-_头文件_kineticTheoryModel-H">1. 头文件 kineticTheoryModel.H</h4><p>头文件中要注意的是 kineticTheoryModel 类的继承关系，以及六个子类的智能指针作为 kineticTheoryModel 类的数据成员。</p>
@@ -169,9 +169,9 @@
     
     </summary>
     
-      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/tags/OpenFOAM/"/>
+      <category term="Code Explained" scheme="http://xiaopingqiu.github.io/tags/Code-Explained/"/>
     
-      <category term="code Explained" scheme="http://xiaopingqiu.github.io/tags/code-Explained/"/>
+      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/tags/OpenFOAM/"/>
     
       <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/categories/OpenFOAM/"/>
     
@@ -284,7 +284,7 @@ obj1 * obj2 :<span class="number">12</span>
     <link href="http://xiaopingqiu.github.io/2015/09/07/twoPhaseEulerFoam23x-twoPhaseSystem/"/>
     <id>http://xiaopingqiu.github.io/2015/09/07/twoPhaseEulerFoam23x-twoPhaseSystem/</id>
     <published>2015-09-07T14:27:47.000Z</published>
-    <updated>2015-09-07T14:56:55.654Z</updated>
+    <updated>2015-09-25T09:06:26.746Z</updated>
     <content type="html"><![CDATA[<p>前面有三篇博文对 OpenFOAM-2.1.x 中的 <code>twoPhaseEulerFoam</code> 求解器进行了解读，然而 OpenFOAM-2.3.x 中，这个求解器的代码有了很大的变化。本文将以一个曳力模型的调用过程为例，介绍 OpenFOAM-2.3.x 中 <code>twoPhaseEulerFoam</code> 是如何调用相间作用力模型的。后续还将对 OpenFOAM-2.3.x 中的 <code>twoPhaseEulerFoam</code> 的其他方面进行解读。</p>
 <a id="more"></a>
 <p>主程序中(“ UEqn.H “)，dragCoeff 定义为：<br><figure class="highlight lisp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">volScalarField dragCoeff<span class="list">(<span class="keyword">fluid</span>.dragCoeff<span class="list">()</span>)</span><span class="comment">;</span></span><br></pre></td></tr></table></figure></p>
@@ -317,9 +317,9 @@ obj1 * obj2 :<span class="number">12</span>
     
     </summary>
     
-      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/tags/OpenFOAM/"/>
+      <category term="Code Explained" scheme="http://xiaopingqiu.github.io/tags/Code-Explained/"/>
     
-      <category term="code Explained" scheme="http://xiaopingqiu.github.io/tags/code-Explained/"/>
+      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/tags/OpenFOAM/"/>
     
       <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/categories/OpenFOAM/"/>
     
