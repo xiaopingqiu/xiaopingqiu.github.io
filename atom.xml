@@ -4,7 +4,7 @@
   <subtitle><![CDATA[CFD and Scientific Computing]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://xiaopingqiu.github.io/"/>
-  <updated>2015-09-25T09:15:31.359Z</updated>
+  <updated>2015-10-06T13:08:27.394Z</updated>
   <id>http://xiaopingqiu.github.io/</id>
   
   <author>
@@ -13,6 +13,35 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title><![CDATA[blockMesh 的新功能：multi/sectional grading in a block]]></title>
+    <link href="http://xiaopingqiu.github.io/2015/10/06/blockMesh-multi-sectional-grading/"/>
+    <id>http://xiaopingqiu.github.io/2015/10/06/blockMesh-multi-sectional-grading/</id>
+    <published>2015-10-06T12:24:52.000Z</published>
+    <updated>2015-10-06T13:08:27.394Z</updated>
+    <content type="html"><![CDATA[<p>从 OpenFOAM-2.3.x 的 “<a href="https://github.com/OpenFOAM/OpenFOAM-2.3.x/commit/cf370883644ec59782be375041b2434eb3e2c4ed" target="_blank" rel="external">commit cf370883644ec59782be375041b2434eb3e2c4ed</a>“ 开始，<code>blockMesh</code> 有了一项新功能：multi/sectional grading in a block。这项功能说起来很简单即可以在同一个block里面设置多个方向的大小渐变网格。举个例子，假设你想画一个简单的二维槽道流网格，你希望两边靠近壁面处的网格更密一点，而中心的网格稀疏一点。以前版本的 <code>blockMesh</code> 由于只支持让网格大小在某一个方向上渐变（通过设置 simpleGrading），要实现上述网格，你需要将整个槽道分成两个block，然后分别设置 simpleGrading。现在有了 “multi/sectional grading”以后，只需要一个block，并设置好simpleGrading便可实现了。下面解释一下新版 <code>blockMesh</code> 具体设置，并以一个二维方腔流例子来说明。</p>
+<a id="more"></a>
+<p>先来解释一下参数的含义，下面是我设置的一个二维方腔流算例的 blockMeshDict 文件的部分：<br><figure class="highlight lisp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">vertices</span><br><span class="line"><span class="list">(</span><br><span class="line">    <span class="list">(<span class="number">0</span> <span class="number">0</span> <span class="number">0</span>)</span></span><br><span class="line">    <span class="list">(<span class="number">1</span> <span class="number">0</span> <span class="number">0</span>)</span></span><br><span class="line">    <span class="list">(<span class="number">1</span> <span class="number">1</span> <span class="number">0</span>)</span></span><br><span class="line">    <span class="list">(<span class="number">0</span> <span class="number">1</span> <span class="number">0</span>)</span></span><br><span class="line">    <span class="list">(<span class="number">0</span> <span class="number">0</span> <span class="number">0.1</span>)</span></span><br><span class="line">    <span class="list">(<span class="number">1</span> <span class="number">0</span> <span class="number">0.1</span>)</span></span><br><span class="line">    <span class="list">(<span class="number">1</span> <span class="number">1</span> <span class="number">0.1</span>)</span></span><br><span class="line">    <span class="list">(<span class="number">0</span> <span class="number">1</span> <span class="number">0.1</span>)</span></span><br><span class="line">)</span><span class="comment">;</span></span><br><span class="line"></span><br><span class="line">blocks</span><br><span class="line"><span class="list">(</span><br><span class="line">    <span class="keyword">hex</span> <span class="list">(<span class="number">0</span> <span class="number">1</span> <span class="number">2</span> <span class="number">3</span> <span class="number">4</span> <span class="number">5</span> <span class="number">6</span> <span class="number">7</span>)</span> <span class="list">(<span class="number">100</span> <span class="number">100</span> <span class="number">1</span>)</span></span><br><span class="line">    simpleGrading</span><br><span class="line">    <span class="list">(</span><br><span class="line">      <span class="list">(<span class="list">(<span class="number">0.5</span> <span class="number">0.5</span> <span class="number">2</span>)</span>  <span class="list">(<span class="number">0.5</span> <span class="number">0.5</span> <span class="number">0.5</span>)</span>)</span></span><br><span class="line">      <span class="list">(<span class="list">(<span class="number">0.5</span> <span class="number">0.5</span> <span class="number">2</span>)</span>  <span class="list">(<span class="number">0.5</span> <span class="number">0.5</span> <span class="number">0.5</span>)</span>)</span></span><br><span class="line">      <span class="number">1</span></span><br><span class="line">    )</span></span><br><span class="line">)</span><span class="comment">;</span></span><br></pre></td></tr></table></figure></p>
+<p>跟前面版本的差别在于 simpleGrading 部分的参数更多了。下面解释一下多出来的参数的含义。首先，注意 simpleGrading 的参数仍然是分成三段，分别代表x，y，z方向的网格渐变设置。其中，x方向的渐变设置参数又分作两段：”(0.5 0.5 2)”和”(0.5 0.5 0.5)”，每一段均代表一个子 block，这个子 block 的网格参数由三个数字来确定。以”(0.5 0.5 2)” 为例，第一个”0.5” 表示该子 block 的尺度是总 block 的尺度的0.5倍；第二个”0.5”表示在这个子block里划分的网格总数占整个block的网格总数的一半；”2” 代表着网格渐变因子，这个跟以前的 blockMesh 的 simpleGrading 参数的含义一样。</p>
+<p>了解了参数的含义，便可以推知上述 blockMeshDict 文件对应的网格了：二维方腔，x和y方向上各分为两个子 block，子 block 的尺度都是整个 block 的一半，且子 block 的网格渐变因子分别为 “2” 和 “0.5”。得到的网格如下：</p>
+<p><img src="/image/blockMesh/mesh_whole.png" alt="整体"></p>
+<p>右上角局部放大图如下：<br><img src="/image/blockMesh/mesh_local.png" alt="右上角局部放大"></p>
+<p>上述描述中有一个不是很严谨的地方，用下面这个例子来说明一下：<br><figure class="highlight lisp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">blocks</span><br><span class="line"><span class="list">(</span><br><span class="line">    <span class="keyword">hex</span> <span class="list">(<span class="number">0</span> <span class="number">1</span> <span class="number">2</span> <span class="number">3</span> <span class="number">4</span> <span class="number">5</span> <span class="number">6</span> <span class="number">7</span>)</span> <span class="list">(<span class="number">20</span> <span class="number">60</span> <span class="number">20</span>)</span></span><br><span class="line">    simpleGrading</span><br><span class="line">    <span class="list">(</span><br><span class="line">        <span class="number">1</span></span><br><span class="line">        <span class="list">(<span class="list">(<span class="number">2</span> <span class="number">3</span> <span class="number">4</span>)</span> <span class="list">(<span class="number">6</span> <span class="number">4</span> <span class="number">1</span>)</span> <span class="list">(<span class="number">2</span> <span class="number">3</span> <span class="number">0.25</span>)</span>)</span></span><br><span class="line">        <span class="number">1</span></span><br><span class="line">    )</span></span><br><span class="line">)</span><span class="comment">;</span></span><br></pre></td></tr></table></figure></p>
+<p>按照上文的描述，这个网格将在y方向上划分成3个子 block，其中第一个子 block 的尺度是整个 block 的2倍…等等，2倍？这怎么可能？实际情况是，blockMesh 会自动对参数进行归一化，第一个子 block 的尺度将是整个 block 的 2/(2+6+2)=0.2 倍，其余的依此类推。</p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<p>从 OpenFOAM-2.3.x 的 “<a href="https://github.com/OpenFOAM/OpenFOAM-2.3.x/commit/cf370883644ec59782be375041b2434eb3e2c4ed">commit cf370883644ec59782be375041b2434eb3e2c4ed</a>“ 开始，<code>blockMesh</code> 有了一项新功能：multi/sectional grading in a block。这项功能说起来很简单即可以在同一个block里面设置多个方向的大小渐变网格。举个例子，假设你想画一个简单的二维槽道流网格，你希望两边靠近壁面处的网格更密一点，而中心的网格稀疏一点。以前版本的 <code>blockMesh</code> 由于只支持让网格大小在某一个方向上渐变（通过设置 simpleGrading），要实现上述网格，你需要将整个槽道分成两个block，然后分别设置 simpleGrading。现在有了 “multi/sectional grading”以后，只需要一个block，并设置好simpleGrading便可实现了。下面解释一下新版 <code>blockMesh</code> 具体设置，并以一个二维方腔流例子来说明。</p>]]>
+    
+    </summary>
+    
+      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/tags/OpenFOAM/"/>
+    
+      <category term="Preprocessing" scheme="http://xiaopingqiu.github.io/tags/Preprocessing/"/>
+    
+      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/categories/OpenFOAM/"/>
+    
+  </entry>
   
   <entry>
     <title><![CDATA[OpenFOAM-2.3.x 中的 twoPhaseEulerFoam 解析之 TurbulenceModel]]></title>
