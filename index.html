@@ -104,7 +104,7 @@ ga('send', 'pageview');
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>cong<br>从 OpenFOAM-2.3.x 的 “<a href="https://github.com/OpenFOAM/OpenFOAM-2.3.x/commit/cf370883644ec59782be375041b2434eb3e2c4ed">commit cf370883644ec59782be375041b2434eb3e2c4ed</a>“ 开始，<code>blockMesh</code> 有了一项新功能：multi/sectional grading in a block。这项功能说起来很简单即可以在同一个block里面设置多个方向的大小渐变网格。举个例子，假设你想画一个简单的二维槽道流网格，你希望两边靠近壁面处的网格更密一点，而中心的网格稀疏一点。以前版本的 <code>blockMesh</code> 由于只支持让网格大小在某一个方向上渐变（通过设置 simpleGrading），要实现上述网格，你需要将整个槽道分成两个block，然后分别设置 simpleGrading。现在有了 “multi/sectional grading”以后，只需要一个block，并设置好simpleGrading便可实现了。下面解释一下新版 <code>blockMesh</code> 具体设置，并以一个二维方腔流例子来说明。</p>
+        <p>从 OpenFOAM-2.3.x 的 “<a href="https://github.com/OpenFOAM/OpenFOAM-2.3.x/commit/cf370883644ec59782be375041b2434eb3e2c4ed">commit cf370883644ec59782be375041b2434eb3e2c4ed</a>“ 开始，<code>blockMesh</code> 有了一项新功能：multi/sectional grading in a block。这项功能说起来很简单即可以在同一个block里面设置多个方向的大小渐变网格。举个例子，假设你想画一个简单的二维槽道流网格，你希望两边靠近壁面处的网格更密一点，而中心的网格稀疏一点。以前版本的 <code>blockMesh</code> 由于只支持让网格大小在某一个方向上渐变（通过设置 simpleGrading），要实现上述网格，你需要将整个槽道分成两个block，然后分别设置 simpleGrading。现在有了 “multi/sectional grading”以后，只需要一个block，并设置好simpleGrading便可实现了。下面解释一下新版 <code>blockMesh</code> 具体设置，并以一个二维方腔流例子来说明。</p>
         
           <p class="article-more-link">
             <a href="/2015/10/06/blockMesh-multi-sectional-grading/#more">Read More</a>
