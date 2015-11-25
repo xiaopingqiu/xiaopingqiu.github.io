@@ -4,7 +4,7 @@
   <subtitle><![CDATA[CFD and Scientific Computing]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://xiaopingqiu.github.io/"/>
-  <updated>2015-11-25T11:52:36.901Z</updated>
+  <updated>2015-11-25T11:57:16.958Z</updated>
   <id>http://xiaopingqiu.github.io/</id>
   
   <author>
@@ -19,7 +19,7 @@
     <link href="http://xiaopingqiu.github.io/2015/11/25/OpenFOAM-singlePhase-turbulenceModel/"/>
     <id>http://xiaopingqiu.github.io/2015/11/25/OpenFOAM-singlePhase-turbulenceModel/</id>
     <published>2015-11-25T11:13:58.000Z</published>
-    <updated>2015-11-25T11:52:36.901Z</updated>
+    <updated>2015-11-25T11:57:16.958Z</updated>
     <content type="html"><![CDATA[<p>相信有不少 OpenFOAM 用户有添加湍流模型的需求，我自己最早用 OpenFOAM 完成的一项工作就是在其中添加了一些单相流的湍流模型，并进行了一些计算。这里将我对单相湍流模型代码框架的理解记录下来，供大家参考。本系列将包含三篇，第一篇介绍湍流模型类的继承派生关系，第二篇具体分析几个 OpenFOAM 中带的湍流模型，并给出修改或增加新模型的方法，第三篇分析湍流模型的运行时选择机制（Run Time Selection）的原理。</p>
 <a id="more"></a>
 <h4 id="1-_湍流模型类的继承派生关系">1. 湍流模型类的继承派生关系</h4><p>这一部分是最简单的，只要有一点<code>C++</code>的知识，看一下湍流模型的代码头文件的类声明部分，就能理解。OpenFOAM 里的单相湍流模型包含两大类，<code>RAS</code> 和 <code>LES</code>，下面将分别分析。</p>
@@ -45,11 +45,11 @@
 <p>LESModel.C 的结构与 RASModel.C 几乎一样，所以这里就不重复了。</p>
 <p>前面提到，基类 turbulenceModel 里声明了很多纯虚函数，所以，turbulenceModel 类是抽象类，不能直接创建对象。注意这里的 RASModel 类和 LESModel 类由于继承了 turbulenceModel 类的纯虚函数，所以这两个依然是抽象类。这一点在后面解析具体湍流模型类的时候还会提到，这里先提个醒。</p>
 <h5 id="1-4_继承派生关系">1.4 继承派生关系</h5><p>前面看完了基类 turbulenceModel，RASModel 以及 LESModel，可以看出这三个类的继承派生关系为：</p>
-<p><img src="image/turbulenceModel/RAS_LES.png" alt="RAS 和 LES 与 turbulenceModel 的继承关系"></p>
+<p><img src="/image/turbulenceModel/RAS_LES.png" alt="RAS 和 LES 与 turbulenceModel 的继承关系"></p>
 <p>下面继续看具体湍流模型类与基类的继承关系。<br>先看雷诺时均类湍流模型：<br>位于 <code>src/turbulenceModels/incompressible/RAS</code> 目录下的都是雷诺时均类的湍流模型，这个类型的继承关系很简单：所有具体湍流模型类都继承自 RASModel 类，关系示意图如下：</p>
-<p><img src="image/turbulenceModel/RAS.png" alt="RAS 类湍流模型的继承关系"></p>
+<p><img src="/image/turbulenceModel/RAS.png" alt="RAS 类湍流模型的继承关系"></p>
 <p>位于 <code>src/turbulenceModels/incompressible/LES</code> 目录下的是大涡模拟类型的湍流模型，这类湍流模型的继承关系比雷诺时均类的要复杂一点，但是也不难捋清，过程我就不详述了，下面给出我整理的继承关系图：</p>
-<p><img src="image/turbulenceModel/LES.png" alt="LES 类湍流模型的继承关系"></p>
+<p><img src="/image/turbulenceModel/LES.png" alt="LES 类湍流模型的继承关系"></p>
 <p>上图中，虚线框里的是抽象类，实线框里的是具体的可以调用的湍流模型类。</p>
 <h5 id="1-5_求解器中湍流模型的调用">1.5 求解器中湍流模型的调用</h5><p>最后简单提一下求解器中调用湍流模型的接口。以 <code>pisoFoam</code> 求解器为例：<br>纵观 <code>pisoFoam</code> 的代码，跟湍流模型有关的共有三处，第一处是在 createField.H 的最后面，创建一个智能指针<br><figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">autoPtr</span>&lt;<span class="rule"><span class="attribute">incompressible</span>:<span class="value">:turbulenceModel&gt; turbulence</span><br><span class="line">    (</span><br><span class="line">        incompressible::turbulenceModel::<span class="function">New</span>(U, phi, laminarTransport)</span><br><span class="line">    )</span></span>;</span><br></pre></td></tr></table></figure></p>
 <p>注意，这个指针的类型是 <code>incompressible::turbulenceModel</code> ，也就是说，创建的是基类的指针。<br>第二处位于 <code>UEqn</code> 中，<br><figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">+ turbulence-&gt;<span class="function"><span class="title">divDevReff</span><span class="params">(U)</span></span></span><br></pre></td></tr></table></figure></p>
@@ -60,7 +60,7 @@
 <li>在基类中声明的纯虚函数可以在派生类中进行定义，当基类类型指针指向派生类对象以后，用这个指针调用成员函数时，实际调用的是指针指向的派生类中定义的函数。</li>
 </ol>
 <p>把握这两点，然后再去理解湍流模型的调用过程：<br>首先是调用 <code>incompressible::turbulenceModel::New</code> 函数来初始化指针 <code>turbulence</code> ，查看上面 <code>turbulenceModel</code> 类中 <code>New</code> 函数的定义，可以知道，函数要先从“turbulenceProperties” 文件里 <code>simulationType</code>　关键字，从而决定是调用 <code>RAS</code> 模型还是 <code>LES</code> 模型。如果用户设定的是 <code>RAS</code> ，那么 <code>turbulenceModel</code> 类的 <code>New</code> 函数将返回一个指向 <code>RASModel</code> 类的指针，这个指针将继续调用 <code>RASModel</code> 类的 <code>New</code> 函数，并在这个函数中读取 <code>RASProperties</code> 文件，查找关键字 <code>RASModel</code> ，从而决定具体调用的湍流模型。假设用户指定的是 <code>kEpsilon</code> 那么最终 createField.H 中定义的指针 <code>turbulence</code> 将指向一个 <code>kEpsilon</code> 类的对象，由此， <code>turbulence-&gt;divDevReff(U)</code> 和 <code>turbulence-&gt;correct()</code> 都将分别调用定义在 <code>kEpsilon</code> 类中的成员函数 <code>divDevReff</code> 和 <code>correct</code>。<br>一个简单的湍流模型调用示意图如下：</p>
-<p><img src="image/turbulenceModel/call.png" alt="湍流模型调用示意图"></p>
+<p><img src="/image/turbulenceModel/call.png" alt="湍流模型调用示意图"></p>
 <p>以上是 RAS 类型模型的调用，LES 类型的基本上差不多，但是，从上面的继承关系图也能看出，LES 模型类的结构更复杂一点。根本原因在于，LES 模型不像 RAS 模型那样都是同一的对湍流粘度 <code>nut</code> 建模，而是有一部分是对亚格子粘度 <code>nuSgs</code> 建模（这一部分湍流模型均继承自 <code>GenEddyVisc</code> ），还有另一部分是直接对亚格子应力 <code>B</code> 建模（这一部分湍流模型均继承自 <code>GenSGSStress</code> ），此外，分离涡模型（Detached eddy model， DESModel）也放在这个目录下，而且还有一个直接继承自 <code>LESModel</code> 的模型 <code>kOmegaSSTSAS</code> （这个模型与 <code>LESModel</code> 的关系就跟 <code>kEpsilon</code> 与 <code>RASModel</code> 的关系一样）。虽然有这么多种类型，但是调用过程其实跟 RAS 类型的是差不多的。如果从字典文件“turbulenceProperties” 里读到的 <code>simulationType</code> 是 <code>LES</code> 的话，那么将继续从字典文件 <code>LESProperties</code> 里读取具体的 LES 模型。上面总结的那张继承关系图中，所有的实线框中的模型都可以选择。但是，具体的模型需要具体的设置，比如，需要设置滤波尺度 <code>delta</code> 模型，还可能需要设置 <code>filter</code> 模型，具体的要求可以去具体的湍流模型类的代码中去看。如果你了解一点你需要使用的湍流模型的基本理论，能写出模型的方程，那要看懂这个湍流模型在 OpenFOAM 中实现的代码是很容易的。</p>
 <p>上述关于调用过程的叙述，只是我的理解，其实不严谨，但大致原理应该是这样。计划中这个系列将写三篇，我将在第三篇中叙述运行时选择机制，到时候还会深入说说这个调用过程。</p>
 ]]></content>
