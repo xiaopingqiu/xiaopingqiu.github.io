@@ -2,6 +2,11 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://xiaopingqiu.github.io/2015/11/25/swak4Foam-alpha-water/</loc>
+    <lastmod>2015-11-25T12:41:36.424Z</lastmod>
+  </url>
+  
+  <url>
     <loc>http://xiaopingqiu.github.io/2015/11/25/OpenFOAM-singlePhase-turbulenceModel/</loc>
     <lastmod>2015-11-25T12:14:31.405Z</lastmod>
   </url>

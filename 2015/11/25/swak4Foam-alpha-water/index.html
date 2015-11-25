@@ -3,17 +3,20 @@
 <head>
   <meta charset="utf-8">
   
-  <title>Category: OpenFOAM | Giskard&#39;s CFD Learning Tricks</title>
+  <title>swak4Foam 如何用于名字形如 alpha.water 的场？ | Giskard&#39;s CFD Learning Tricks</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Giskard's CFD Learning Tricks">
-<meta property="og:url" content="http://xiaopingqiu.github.io/categories/OpenFOAM/page/2/index.html">
+  <meta name="description" content="swak4Foam 的 groovyBC 边界条件提供了一种很灵活的用表达式定义边界条件的方法。但是，从 OpenFOAM-2.3 开始，两相流求解器如 和 开始采用类似于 ` 的场，这种场名默认情况下groovyBC是无法正确识别的，因为.在 swak4Foam 表达式中有特殊的作用。
+所幸的是，开发人员也早就意识到这个问题了，并给出了解决方案，那就是用aliases`。这个东西真是不知道就很难">
+<meta property="og:type" content="article">
+<meta property="og:title" content="swak4Foam 如何用于名字形如 alpha.water 的场？">
+<meta property="og:url" content="http://xiaopingqiu.github.io/2015/11/25/swak4Foam-alpha-water/index.html">
 <meta property="og:site_name" content="Giskard's CFD Learning Tricks">
-<meta property="og:description">
+<meta property="og:description" content="swak4Foam 的 groovyBC 边界条件提供了一种很灵活的用表达式定义边界条件的方法。但是，从 OpenFOAM-2.3 开始，两相流求解器如 和 开始采用类似于 ` 的场，这种场名默认情况下groovyBC是无法正确识别的，因为.在 swak4Foam 表达式中有特殊的作用。
+所幸的是，开发人员也早就意识到这个问题了，并给出了解决方案，那就是用aliases`。这个东西真是不知道就很难">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Giskard's CFD Learning Tricks">
-<meta name="twitter:description">
+<meta name="twitter:title" content="swak4Foam 如何用于名字形如 alpha.water 的场？">
+<meta name="twitter:description" content="swak4Foam 的 groovyBC 边界条件提供了一种很灵活的用表达式定义边界条件的方法。但是，从 OpenFOAM-2.3 开始，两相流求解器如 和 开始采用类似于 ` 的场，这种场名默认情况下groovyBC是无法正确识别的，因为.在 swak4Foam 表达式中有特殊的作用。
+所幸的是，开发人员也早就意识到这个问题了，并给出了解决方案，那就是用aliases`。这个东西真是不知道就很难">
   
   
     <link rel="icon" href="/favicon.png">
@@ -76,134 +79,83 @@ ga('send', 'pageview');
 </header>
 
       <div class="outer">
-        <section id="main">
-  
-  
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2015" class="archive-year">2015</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2015/05/31/foamTimeAverage/" class="archive-article-date">
-  <time datetime="2015-05-31T09:11:00.000Z" itemprop="datePublished">5月 31</time>
+        <section id="main"><article id="post-swak4Foam-alpha-water" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2015/11/25/swak4Foam-alpha-water/" class="article-date">
+  <time datetime="2015-11-25T12:33:10.000Z" itemprop="datePublished">2015-11-25</time>
 </a>
-      
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>►<a class="article-category-link" href="/categories/OpenFOAM/swak4Foam/">swak4Foam</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2015/05/31/foamTimeAverage/">foamTimeAverage</a>
+    <h1 class="article-title" itemprop="name">
+      swak4Foam 如何用于名字形如 alpha.water 的场？
     </h1>
   
 
-    </header>
-  </div>
-</article>
-  
+      </header>
     
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2015/05/17/twoPhaseEulerFoam2/" class="archive-article-date">
-  <time datetime="2015-05-17T07:23:04.000Z" itemprop="datePublished">5月 17</time>
-</a>
+    <div class="article-entry" itemprop="articleBody">
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2015/05/17/twoPhaseEulerFoam2/">twoPhaseEulerFoam 全解读之二</a>
-    </h1>
-  
+        <p>swak4Foam 的 <code>groovyBC</code> 边界条件提供了一种很灵活的用表达式定义边界条件的方法。但是，从 OpenFOAM-2.3 开始，两相流求解器如 <code>和</code> 开始采用类似于 <code>` 的场，这种场名默认情况下</code>groovyBC<code>是无法正确识别的，因为</code>.<code>在 swak4Foam 表达式中有特殊的作用。
+所幸的是，开发人员也早就意识到这个问题了，并给出了解决方案，那就是用</code>aliases`。这个东西真是不知道就很难，知道了就很简单，下面举一个我实际用过的例子：</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">solid_inlet_left</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="title">type</span>               groovyBC;</span><br><span class="line">        <span class="title">valueExpression</span>    <span class="string">"-inVel*normal()"</span></span><br><span class="line">        value              uniform (<span class="number">0</span> <span class="number">0</span> <span class="number">0</span>);</span><br><span class="line">        <span class="title">variables</span> (</span><br><span class="line">            <span class="string">"A=sum(area());"</span></span><br><span class="line">            <span class="string">"outFlow&#123;outlet_left&#125;=sum(Uparticles&amp;normal()*area()*alphaparticles);"</span></span><br><span class="line">            <span class="string">"myFlow=outFlow/alphaparticles;"</span></span><br><span class="line">            <span class="string">"inVel=myFlow/sum(area());"</span></span><br><span class="line">            );</span><br><span class="line">        <span class="title">aliases</span> &#123;</span><br><span class="line">            <span class="title">Uparticles</span>            U.particles;</span><br><span class="line">            <span class="title">alphaparticles</span>        alpha.particles;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>我想我应该不用再解释什么。</p>
+<p>主要参考<a href="http://sourceforge.net/p/openfoam-extend/ticketsswak4foam/210/" target="_blank" rel="external">这个网页</a>。</p>
 
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2015/05/17/twoPhaseEulerFoam1/" class="archive-article-date">
-  <time datetime="2015-05-17T06:46:07.000Z" itemprop="datePublished">5月 17</time>
-</a>
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2015/05/17/twoPhaseEulerFoam1/">twoPhaseEulerFoam 全解读之一</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2015/05/17/OpenFOAMcode1/" class="archive-article-date">
-  <time datetime="2015-05-17T06:02:37.000Z" itemprop="datePublished">5月 17</time>
-</a>
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://xiaopingqiu.github.io/2015/11/25/swak4Foam-alpha-water/" data-id="cihesw890000vk0mb9h6zn88x" class="article-share-link">Share</a>
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2015/05/17/OpenFOAMcode1/">OpenFOAM 中的 div 与 snGrad 操作符</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2015/05/09/functionObjects/" class="archive-article-date">
-  <time datetime="2015-05-09T07:24:56.000Z" itemprop="datePublished">5月 9</time>
-</a>
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2015/05/09/functionObjects/">利用functionObjects对指定区域内进行后处理</a>
-    </h1>
-  
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/TIL/">TIL</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/groovyBC/">groovyBC</a></li></ul>
 
-    </header>
+    </footer>
   </div>
-</article>
   
     
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2015/04/12/fieldAverage/" class="archive-article-date">
-  <time datetime="2015-04-12T09:00:54.000Z" itemprop="datePublished">4月 12</time>
-</a>
-      
+<nav id="article-nav">
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2015/04/12/fieldAverage/">fieldAverage 使用说明</a>
-    </h1>
   
+    <a href="/2015/11/25/OpenFOAM-singlePhase-turbulenceModel/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">OpenFOAM 中的单相流湍流模型之一</div>
+    </a>
+  
+</nav>
 
-    </header>
-  </div>
+  
 </article>
-  
-  
-    </div></section>
-  
+
+
+<section id="comments">
+  <!-- 多说评论框 start -->
+  <div class="ds-thread" data-thread-key="post-swak4Foam-alpha-water" data-title="swak4Foam 如何用于名字形如 alpha.water 的场？" data-url="http://xiaopingqiu.github.io/2015/11/25/swak4Foam-alpha-water/"></div>
+  <!-- 多说评论框 end -->
+  <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+  <script type="text/javascript">
+  var duoshuoQuery = {short_name:"xiaopingqiu"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+  <!-- 多说公共JS代码 end -->
+</section>
+
 </section>
         
           <aside id="sidebar">
