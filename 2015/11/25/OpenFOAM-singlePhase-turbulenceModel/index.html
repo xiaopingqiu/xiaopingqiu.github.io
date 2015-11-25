@@ -149,6 +149,7 @@ ga('send', 'pageview');
 <p><img src="/image/turbulenceModel/call.png" alt="湍流模型调用示意图"></p>
 <p>以上是 RAS 类型模型的调用，LES 类型的基本上差不多，但是，从上面的继承关系图也能看出，LES 模型类的结构更复杂一点。根本原因在于，LES 模型不像 RAS 模型那样都是同一的对湍流粘度 <code>nut</code> 建模，而是有一部分是对亚格子粘度 <code>nuSgs</code> 建模（这一部分湍流模型均继承自 <code>GenEddyVisc</code> ），还有另一部分是直接对亚格子应力 <code>B</code> 建模（这一部分湍流模型均继承自 <code>GenSGSStress</code> ），此外，分离涡模型（Detached eddy model， DESModel）也放在这个目录下，而且还有一个直接继承自 <code>LESModel</code> 的模型 <code>kOmegaSSTSAS</code> （这个模型与 <code>LESModel</code> 的关系就跟 <code>kEpsilon</code> 与 <code>RASModel</code> 的关系一样）。虽然有这么多种类型，但是调用过程其实跟 RAS 类型的是差不多的。如果从字典文件“turbulenceProperties” 里读到的 <code>simulationType</code> 是 <code>LES</code> 的话，那么将继续从字典文件 <code>LESProperties</code> 里读取具体的 LES 模型。上面总结的那张继承关系图中，所有的实线框中的模型都可以选择。但是，具体的模型需要具体的设置，比如，需要设置滤波尺度 <code>delta</code> 模型，还可能需要设置 <code>filter</code> 模型，具体的要求可以去具体的湍流模型类的代码中去看。如果你了解一点你需要使用的湍流模型的基本理论，能写出模型的方程，那要看懂这个湍流模型在 OpenFOAM 中实现的代码是很容易的。</p>
 <p>上述关于调用过程的叙述，只是我的理解，其实不严谨，但大致原理应该是这样。计划中这个系列将写三篇，我将在第三篇中叙述运行时选择机制，到时候还会深入说说这个调用过程。</p>
+<p>P.S：本系列在筹划时，OpenFOAM-3.0 版本还没发布。随着 3.0 版本的发布，本系列里对湍流模型的描述已经“过时”了，因为在 3.0 版中，湍流模型类进行了重新模板化，将单相湍流和多相湍流模型整合在一起了，所以这里的描述只适用于 3.0 以下的版本。</p>
 
       
     </div>
