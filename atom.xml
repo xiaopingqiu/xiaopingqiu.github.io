@@ -4,7 +4,7 @@
   <subtitle><![CDATA[CFD and Scientific Computing]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://xiaopingqiu.github.io/"/>
-  <updated>2015-11-25T12:46:34.806Z</updated>
+  <updated>2015-12-12T08:41:24.219Z</updated>
   <id>http://xiaopingqiu.github.io/</id>
   
   <author>
@@ -13,6 +13,56 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title><![CDATA[两个简单的随时间变化的边界条件]]></title>
+    <link href="http://xiaopingqiu.github.io/2015/12/12/timeVaryingBC1/"/>
+    <id>http://xiaopingqiu.github.io/2015/12/12/timeVaryingBC1/</id>
+    <published>2015-12-12T06:38:50.000Z</published>
+    <updated>2015-12-12T08:41:24.219Z</updated>
+    <content type="html"><![CDATA[<p>这一篇里介绍OpenFOAM自带的两个简单的随时间变化的边界条件： <code>uniformFixedValue</code> 和 <code>flowRateInletVelocity</code> 。</p>
+<a id="more"></a>
+<h4 id="1-_uniformFixedValue">1. uniformFixedValue</h4><p>这个边界属于第一类边界，即直接指定边界上某个量的值。跟 <code>fixedValue</code> 的不同之处在于，这个边界条件允许边界上的值随着时间变化。一般的用法如下：</p>
+<figure class="highlight lisp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">type            uniformFixedValue<span class="comment">;</span></span><br><span class="line">uniformValue     table</span><br><span class="line"><span class="list">(</span><br><span class="line">    <span class="list">(<span class="number">0.000</span> <span class="list">(<span class="number">0</span> <span class="number">0</span> <span class="number">0.002</span>)</span>)</span></span><br><span class="line">    <span class="list">(<span class="number">0.010</span> <span class="list">(<span class="number">0</span> <span class="number">0</span> <span class="number">0.002</span>)</span>)</span></span><br><span class="line">    <span class="list">(<span class="number">0.011</span> <span class="list">(<span class="number">0.011</span> <span class="number">0</span> <span class="number">0.011</span>)</span>)</span></span><br><span class="line">    <span class="list">(<span class="number">0.100</span> <span class="list">(<span class="number">0.10</span> <span class="number">0</span> <span class="number">0.100</span>)</span>)</span></span><br><span class="line">)</span><span class="comment">;</span></span><br></pre></td></tr></table></figure>
+<p>上面这一段指定的是速度 U （也可以是其他矢量，或者标量）的边界条件，通过一个 table 来定义边界随时间的变化行为，具体解释如下（假定时间步长等于0.001 s）：</p>
+<ul>
+<li>当 0.00 &lt;= t &lt;= 0.01 s 时，速度值为 (0   0   0.002);</li>
+<li>当 t = 0.011 s 时，速度变为 (0.011   0   0.011);</li>
+<li>0.011 &lt;= t &lt;= 0.100 之间，速度的每个分量均为线性变化的;</li>
+<li>当 t &gt; 0.100 s 以后，速度保持  (0.10   0   0.100) 不变。</li>
+</ul>
+<p>除了通过 table 来定义随时间分段线性变化边界条件，还可以定义多项式变化的边界，比如：</p>
+<figure class="highlight lisp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">type uniformFixedValue<span class="comment">;</span></span><br><span class="line">uniformValue polynomial</span><br><span class="line"><span class="list">(</span><br><span class="line">    <span class="list">(<span class="list">(<span class="number">1</span> <span class="number">0</span> <span class="number">0</span>)</span> <span class="list">(<span class="number">0</span> <span class="number">0</span> <span class="number">0</span>)</span>)</span></span><br><span class="line">    <span class="list">(<span class="list">(<span class="number">2</span> <span class="number">2</span> <span class="number">0</span>)</span> <span class="list">(<span class="number">1</span> <span class="number">2</span> <span class="number">0</span>)</span>)</span></span><br><span class="line">    <span class="list">(<span class="list">(<span class="number">3</span> <span class="number">5</span> <span class="number">0</span>)</span> <span class="list">(<span class="number">2</span> <span class="number">4</span> <span class="number">0</span>)</span>)</span></span><br><span class="line">)</span><span class="comment">;</span></span><br></pre></td></tr></table></figure>
+<p>以上这段定义的是这样一个边界：x 分量，$U_x=1+2\cdot t+3\cdot t^2$；y 分量，$U_y=2\cdot t^2+5\cdot t^4$; z 分量，$U_z=0$。<br>需要注意的是， <code>polynomial</code> 这种方式，目前测试在 2.3.x 以及以下版本不能使用，在最新的 3.0.x 版中可以使用。</p>
+<p>此外，还有其他的一些定义方式，列举如下（参考<a href="http://www.geocities.jp/penguinitis2002/study/OpenFOAM/time_varying_bc.html" target="_blank" rel="external">这个网站</a>）：</p>
+<h5 id="固定值">固定值</h5><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">inlet</span></span><br><span class="line">&#123; </span><br><span class="line">    <span class="title">type</span> uniformFixedValue; </span><br><span class="line">    <span class="title">uniformValue</span> constant (<span class="number">10</span> <span class="number">0</span> <span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这种方式与 <code>fixedValue</code> 效果是一样的。</p>
+<h5 id="tableFile">tableFile</h5><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">inlet</span> </span><br><span class="line">&#123; </span><br><span class="line">    <span class="title">type</span> uniformFixedValue; </span><br><span class="line">    <span class="title">uniformValue</span> tableFile; </span><br><span class="line">    <span class="title">tableFileCoeffs</span></span><br><span class="line">    &#123; </span><br><span class="line">	<span class="title">fileName</span> <span class="string">"<span class="variable">$FOAM_CASE</span>/velocity"</span> </span><br><span class="line">	outOfBounds clamp; </span><br><span class="line">    &#125; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个跟 <code>table</code> 那种类似，只不过将上面 <code>table</code> 的内容写到一个文件里了（这里是 <code>velocity</code> 文件）。 <code>velocity</code> 文件的格式为<br><figure class="highlight scheme"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="list">(</span><br><span class="line">    <span class="list">(<span class="keyword">0</span>   <span class="list">(<span class="keyword">0</span> <span class="number">0</span> <span class="number">0</span>)</span>)</span></span><br><span class="line">    <span class="list">(<span class="keyword">0.01</span> <span class="list">(<span class="keyword">10</span> <span class="number">0</span> <span class="number">0</span>)</span>)</span></span><br><span class="line">)</span><span class="comment">;</span></span><br></pre></td></tr></table></figure></p>
+<p> outOfBounds 的可选项及其含义有：</p>
+<ul>
+<li>clamp：当实际时间超过 tableFile 里的最大时间（比如上述示例文件里，最大时间为0.01s）以后，保持 tableFile 最大时间定义的那个值（对上述示例文件，为(10 0 0)）不变；</li>
+<li>repeat：重复前面的变化模式，比如上上述示例中，0 &lt; t &lt; 0.01 时，$U_x=1000\cdot t$，当 t 超过0.01 时，计算方法为 $U_x = 1000\cdot (t-0.01)$；</li>
+<li>error：t &gt; 0.01 时，报错退出；</li>
+<li>warn：给出警告，但是程序继续运行，边界值计算方法同 clamp。</li>
+</ul>
+<h5 id="csvFile">csvFile</h5><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">inlet</span> </span><br><span class="line">&#123; </span><br><span class="line">    <span class="title">type</span> uniformFixedValue; </span><br><span class="line">    <span class="title">uniformValue</span> csvFile; </span><br><span class="line">    <span class="title">csvFileCoeffs</span> </span><br><span class="line">    &#123; </span><br><span class="line">	<span class="title">fileName</span> <span class="string">"<span class="variable">$FOAM_CASE</span>/velocity.csv"</span> </span><br><span class="line">	outOfBounds clamp; </span><br><span class="line">	<span class="title">nHeaderLine</span> <span class="number">1</span>; </span><br><span class="line">	<span class="title">mergeSeparators</span> <span class="built_in">no</span>; </span><br><span class="line">	<span class="title">separator</span> <span class="string">","</span>;</span><br><span class="line">	<span class="title">refColumn</span> <span class="number">0</span>; </span><br><span class="line">	<span class="title">componentColumns</span> (<span class="number">1</span> <span class="number">2</span> <span class="number">3</span>); </span><br><span class="line">    &#125; </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这种方式是通过一个 <code>csv</code> 格式的文件来定义分段函数，文件格式为<br><figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">time</span>,velocity-x,velocity-y,velocity-z</span><br><span class="line"><span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span></span><br><span class="line"><span class="number">0.01</span>,<span class="number">10</span>,<span class="number">0</span>,<span class="number">0</span></span><br></pre></td></tr></table></figure></p>
+<h4 id="2-_flowRateInletVelocity">2. flowRateInletVelocity</h4><p>这个边界条件指定的是界面上的体积流量或者质量流量，并根据流量来反推速度。速度的方向为<strong>垂直边界并指向区域内部</strong>。一般的用法如下：<br><figure class="highlight fsharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">myPatch</span><br><span class="line">  &#123;</span><br><span class="line">      <span class="class"><span class="keyword">type</span>        <span class="title">flowRateInletVelocity</span>;</span></span><br><span class="line">      volumetricFlowRate  <span class="number">0.2</span>; <span class="comment">// 体积流量</span></span><br><span class="line">      value       uniform (<span class="number">0</span> <span class="number">0</span> <span class="number">0</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">  myPatch</span><br><span class="line">  &#123;</span><br><span class="line">      <span class="class"><span class="keyword">type</span>                <span class="title">flowRateInletVelocity</span>;</span></span><br><span class="line">      massFlowRate        <span class="number">0.2</span>; <span class="comment">// 质量流量</span></span><br><span class="line">      rho                 rho; <span class="comment">//要指定密度场的名字</span></span><br><span class="line">      rhoInlet            <span class="number">1.0</span>; <span class="comment">//如果上述指定的密度场不存在，则使用这里指定的值作为边界上的密度</span></span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure></p>
+<p>类似的，前面 <code>uniformFixedValue</code> 边界里的那些类型，<code>table</code>， <code>tableFile</code>  <code>csvFile</code>， <code>polynomial</code> 也都可以使用，而且格式是类似的，这里就不重复了，更多细节可以参考<a href="http://www.geocities.jp/penguinitis2002/study/OpenFOAM/time_varying_bc.html" target="_blank" rel="external">这个页面</a> </p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<p>这一篇里介绍OpenFOAM自带的两个简单的随时间变化的边界条件： <code>uniformFixedValue</code> 和 <code>flowRateInletVelocity</code> 。</p>]]>
+    
+    </summary>
+    
+      <category term="Boundary conditions" scheme="http://xiaopingqiu.github.io/tags/Boundary-conditions/"/>
+    
+      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/tags/OpenFOAM/"/>
+    
+      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/categories/OpenFOAM/"/>
+    
+  </entry>
   
   <entry>
     <title><![CDATA[swak4Foam 如何用于名字形如 alpha.water 的场？]]></title>
@@ -960,37 +1010,6 @@ obj1 * obj2 :<span class="number">12</span>
       <category term="Postprocessing" scheme="http://xiaopingqiu.github.io/tags/Postprocessing/"/>
     
       <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/categories/OpenFOAM/"/>
-    
-  </entry>
-  
-  <entry>
-    <title><![CDATA[Hello World]]></title>
-    <link href="http://xiaopingqiu.github.io/2015/04/04/hello-world/"/>
-    <id>http://xiaopingqiu.github.io/2015/04/04/hello-world/</id>
-    <published>2015-04-04T02:00:00.000Z</published>
-    <updated>2015-04-10T14:57:00.000Z</updated>
-    <content type="html"><![CDATA[<p>Welcome to <a href="http://hexo.io/" target="_blank" rel="external">Hexo</a>! This is your very first post. Check <a href="http://hexo.io/docs/" target="_blank" rel="external">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="http://hexo.io/docs/troubleshooting.html" target="_blank" rel="external">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="external">GitHub</a>.</p>
-<h2 id="Quick_Start">Quick Start</h2><h3 id="Create_a_new_post">Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
-<p>More info: <a href="http://hexo.io/docs/writing.html" target="_blank" rel="external">Writing</a></p>
-<h3 id="Run_server">Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="http://hexo.io/docs/server.html" target="_blank" rel="external">Server</a></p>
-<h3 id="Generate_static_files">Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="http://hexo.io/docs/generating.html" target="_blank" rel="external">Generating</a></p>
-<h3 id="Deploy_to_remote_sites">Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="http://hexo.io/docs/deployment.html" target="_blank" rel="external">Deployment</a></p>
-<h4 id="Test_code">Test code</h4><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="preprocessor">#<span class="keyword">include</span>&lt;iostream&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span>* argv[])</span></span><br><span class="line"></span>&#123;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span>&lt;&lt;<span class="string">"hello world!"</span> &lt;&lt; <span class="built_in">std</span>::endl;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="中文支持测试">中文支持测试</h4><p>看看是否支持中文。</p>
-<h4 id="数学公式">数学公式</h4><p>$$ x=\frac{-b\pm \sqrt{b^2-4ac}}{2a} $$</p>
-<h4 id="本地图片测试">本地图片测试</h4><p><img src="/image/juperter_impact.jpg" alt="Jupiter"></p>
-<h4 id="gif图片测试">gif图片测试</h4><p><img src="/image/cfb.gif" alt="cfb"></p>
-]]></content>
-    <summary type="html">
-    <![CDATA[<p>Welcome to <a href="http://hexo.io/" target="_blank" rel="external">Hexo</a>! This is your very first post. Check <a href="http://hexo.io]]>
-    </summary>
-    
-      <category term="test" scheme="http://xiaopingqiu.github.io/tags/test/"/>
-    
-      <category term="test" scheme="http://xiaopingqiu.github.io/categories/test/"/>
     
   </entry>
   
