@@ -80,6 +80,103 @@ ga('send', 'pageview');
       <div class="outer">
         <section id="main">
   
+    <article id="post-OpenFOAM-install-centOS" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2015/09/13/OpenFOAM-install-centOS/" class="article-date">
+  <time datetime="2015-09-13T05:23:06.000Z" itemprop="datePublished">2015-09-13</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2015/09/13/OpenFOAM-install-centOS/">在 CentOS 上安装 OpenFOAM </a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本篇记录我在 CentOS 上编译安装 OpenFOAM 的过程。我需要在不能联网且没有 root 权限的集群上使用OpenFOAM ，最早的时候，我使用的是 <a href="http://sourceforge.net/projects/centfoam/">centFOAM project</a> 提供的 64bit CentOS 安装包，这个很方便，把压缩包下载，解压，然后配置一下环境变量就可以了。但是后来 centFOAM 好像不再更新了，所以我只好尝试着自己编译。</p>
+<p>由于集群上缺少一些 OpenFOAM 依赖的包，要是一个一个去下载源码编译以补齐那些依赖的包，实在很费劲，所以我采取了另一种尝试：在虚拟机里安装跟集群上一样的系统，然后在虚拟机里编译好 OpenFOAM ，再拷贝到集群上去用（据信 cenoFOAM project 提供的安装包也是在虚拟机编译好的，而且在 cfd-online 论坛上也见有人推荐这么做）。我尝试过在 CentOS 5.4 ，CentOS 6.3 以及 Scientific Linux 6.5 上安装过 OpenFOAM-2.3.x，都成功了，过程大同小异。下面是我的安装过程的一个简要记录。</p>
+        
+          <p class="article-more-link">
+            <a href="/2015/09/13/OpenFOAM-install-centOS/#more">Read More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://xiaopingqiu.github.io/2015/09/13/OpenFOAM-install-centOS/" data-id="cilgkrqlw0032ngmbc7hppzps" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/CentOS/">CentOS</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-twoPhaseEulerFoam23x-twoPhaseSystem" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2015/09/07/twoPhaseEulerFoam23x-twoPhaseSystem/" class="article-date">
+  <time datetime="2015-09-07T14:27:47.000Z" itemprop="datePublished">2015-09-07</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2015/09/07/twoPhaseEulerFoam23x-twoPhaseSystem/">OpenFOAM-2.3.x 中的 twoPhaseEulerFoam 解析之曳力模型的调用过程</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>前面有三篇博文对 OpenFOAM-2.1.x 中的 <code>twoPhaseEulerFoam</code> 求解器进行了解读，然而 OpenFOAM-2.3.x 中，这个求解器的代码有了很大的变化。本文将以一个曳力模型的调用过程为例，介绍 OpenFOAM-2.3.x 中 <code>twoPhaseEulerFoam</code> 是如何调用相间作用力模型的。后续还将对 OpenFOAM-2.3.x 中的 <code>twoPhaseEulerFoam</code> 的其他方面进行解读。</p>
+        
+          <p class="article-more-link">
+            <a href="/2015/09/07/twoPhaseEulerFoam23x-twoPhaseSystem/#more">Read More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://xiaopingqiu.github.io/2015/09/07/twoPhaseEulerFoam23x-twoPhaseSystem/" data-id="cilgkrqfy000kngmb95xiujrc" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-vimExtensionOpenFOAM" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2015/08/16/vimExtensionOpenFOAM/" class="article-date">
@@ -115,7 +212,7 @@ ga('send', 'pageview');
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2015/08/16/vimExtensionOpenFOAM/" data-id="cii2s47qs0008nkmbe8tznsiz" class="article-share-link">Share</a>
+      <a data-url="http://xiaopingqiu.github.io/2015/08/16/vimExtensionOpenFOAM/" data-id="cilgkrqfl0008ngmbedgw7e5u" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/vim/">vim</a></li></ul>
@@ -163,7 +260,7 @@ ga('send', 'pageview');
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2015/06/27/twoPhaseEulerFoam3/" data-id="cii2s47qy000enkmbhpme6v0b" class="article-share-link">Share</a>
+      <a data-url="http://xiaopingqiu.github.io/2015/06/27/twoPhaseEulerFoam3/" data-id="cilgkrqfr000engmbgz3j04h1" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li></ul>
@@ -211,7 +308,7 @@ ga('send', 'pageview');
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2015/06/14/OpenFOAM-on-win/" data-id="cii2s47u6002nnkmb81bmc6qw" class="article-share-link">Share</a>
+      <a data-url="http://xiaopingqiu.github.io/2015/06/14/OpenFOAM-on-win/" data-id="cilgkrqkh002xngmbaqu5ago4" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Windows/">Windows</a></li></ul>
@@ -259,7 +356,7 @@ ga('send', 'pageview');
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2015/05/31/foamTimeAverage/" data-id="cii2s47ta001ynkmb2pao0apj" class="article-share-link">Share</a>
+      <a data-url="http://xiaopingqiu.github.io/2015/05/31/foamTimeAverage/" data-id="cilgkrqiz0024ngmb3wdt7rpm" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Postprocessing/">Postprocessing</a></li></ul>
@@ -307,7 +404,7 @@ ga('send', 'pageview');
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2015/05/17/twoPhaseEulerFoam2/" data-id="cii2s47ru000onkmb2iaa2eqs" class="article-share-link">Share</a>
+      <a data-url="http://xiaopingqiu.github.io/2015/05/17/twoPhaseEulerFoam2/" data-id="cilgkrqgc000ongmbcdoj1trr" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li></ul>
@@ -355,7 +452,7 @@ ga('send', 'pageview');
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2015/05/17/twoPhaseEulerFoam1/" data-id="cii2s47s4000snkmbjsbvrund" class="article-share-link">Share</a>
+      <a data-url="http://xiaopingqiu.github.io/2015/05/17/twoPhaseEulerFoam1/" data-id="cilgkrqgs000sngmbufaayqng" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li></ul>
@@ -403,7 +500,7 @@ ga('send', 'pageview');
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2015/05/17/OpenFOAMcode1/" data-id="cii2s47tu002fnkmbffc043qt" class="article-share-link">Share</a>
+      <a data-url="http://xiaopingqiu.github.io/2015/05/17/OpenFOAMcode1/" data-id="cilgkrqjp002lngmbxvg1o6vb" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li></ul>
@@ -451,113 +548,7 @@ ga('send', 'pageview');
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2015/05/09/functionObjects/" data-id="cii2s47t7001unkmb3j88xxcf" class="article-share-link">Share</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Postprocessing/">Postprocessing</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-paraview-remote" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2015/05/03/paraview-remote/" class="article-date">
-  <time datetime="2015-05-03T12:49:02.000Z" itemprop="datePublished">2015-05-03</time>
-</a>
-    
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/Paraview/">Paraview</a>
-  </div>
-
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2015/05/03/paraview-remote/">ParaView 的远程模式</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>OpenFOAM 用户肯定都用过<a href="http://www.paraview.org/">ParaView</a>可视化软件，这款软件可以方便地读取 OpenFOAM 的数据进行种类丰富的可视化操作。用 ParaView 可视化 OpenFOAM数据很简单，只需要在算例目录下运行<code>paraFoam</code>即可(注一)。但是，如果你不是在本地机器上运行 OpenFOAM，而是在远程机器上运行，这时候想在本地直接用 ParaView 来可视化远程机器上的数据，该怎么办呢？这个问题要分情况讨论：</p>
-<ol>
-<li>远程机器没有禁止远程开启GUI<ul>
-<li>本地机器安装的是Linux系统，那么可以这样做：<code>ssh -X your_remote_machine</code> 登录到远程机器，注意这里加了<code>-X</code>选项，正常的话，应该直接在终端里运行<code>paraFoam</code>就可以远程启动 ParaView。</li>
-<li>本地机器安装的是 Windows，这种情况下可以通过安装一个 Xserver，比如<a href="http://sourceforge.net/projects/xming/">Xming</a>，然后用一个支持 X11 Forwarding 的 SSH 客户端（比如 putty）用<code>ssh -X</code>登录到远程机器，正常的话，直接运行<code>paraFoam</code>可以远程启动 ParaView。但根据我的使用经验，这种方法稳定性很差，容易崩溃。</li>
-</ul>
-</li>
-<li>远程机器设置了禁止远程开启GUI程序<br>这种情况下上面提到的两种方法就都不奏效了。这时，下面要介绍的 ParaView 远程模式就能派上用场了。</li>
-</ol>
-<p>ParaView 远程模式基本的使用方法是，在远程机器上启动一个<code>pvserver</code>，然后用本地机器安装的 ParaView 连接到这个 server上(Client/Server 模式)，或者反过来，本地机器开启一个 server，然后让远程机器连接到本地的 server(Client/Server(reverse connection) 模式),以下将一一介绍。</p>
-        
-          <p class="article-more-link">
-            <a href="/2015/05/03/paraview-remote/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2015/05/03/paraview-remote/" data-id="cii2s47sm001ankmbz7tkvlk1" class="article-share-link">Share</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Postprocessing/">Postprocessing</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/paraview/">paraview</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-fieldAverage" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2015/04/12/fieldAverage/" class="article-date">
-  <time datetime="2015-04-12T09:00:54.000Z" itemprop="datePublished">2015-04-12</time>
-</a>
-    
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
-  </div>
-
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2015/04/12/fieldAverage/">fieldAverage 使用说明</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p><code>fieldAverage</code>是 OpenFOAM 中的一种 functionObject，用来计算时均值。其基本用法是作为一个 function object 放在 controlDict 文件中，运行 solver 的同时计算指定场的时均值，以下是一个示例：</p>
-<figure class="highlight applescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">functions</span><br><span class="line">&#123;</span><br><span class="line">    fieldAverage1</span><br><span class="line">    &#123;</span><br><span class="line">        type            fieldAverage;</span><br><span class="line">        functionObjectLibs ( <span class="string">"libfieldFunctionObjects.so"</span> );</span><br><span class="line">        outputControl   outputTime;</span><br><span class="line">        fields</span><br><span class="line">        (</span><br><span class="line">            Ua</span><br><span class="line">            &#123;</span><br><span class="line">                 mean        <span class="function_start"><span class="keyword">on</span></span>;</span><br><span class="line">                 prime2Mean  off;</span><br><span class="line">                 base        <span class="property">time</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            Ub</span><br><span class="line">            &#123;</span><br><span class="line">                 mean        <span class="function_start"><span class="keyword">on</span></span>;</span><br><span class="line">                 prime2Mean  off;</span><br><span class="line">                 base        <span class="property">time</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        );</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-        
-          <p class="article-more-link">
-            <a href="/2015/04/12/fieldAverage/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2015/04/12/fieldAverage/" data-id="cii2s47te0022nkmbx75o2tkd" class="article-share-link">Share</a>
+      <a data-url="http://xiaopingqiu.github.io/2015/05/09/functionObjects/" data-id="cilgkrqir0020ngmb2mj90vu4" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Postprocessing/">Postprocessing</a></li></ul>
@@ -583,7 +574,7 @@ ga('send', 'pageview');
   <div class="widget-wrap">
     <h3 class="widget-title">Categories</h3>
     <div class="widget">
-      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/">OpenFOAM</a><span class="category-list-count">17</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/swak4Foam/">swak4Foam</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/Paraview/">Paraview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/test/">test</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/vim/">vim</a><span class="category-list-count">1</span></li></ul>
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a><span class="category-list-count">2</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/C/OpenFOAM/">OpenFOAM</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/">OpenFOAM</a><span class="category-list-count">18</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/swak4Foam/">swak4Foam</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/Paraview/">Paraview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/test/">test</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/vim/">vim</a><span class="category-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -592,7 +583,7 @@ ga('send', 'pageview');
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Boundary-conditions/">Boundary conditions</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/">C++</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CentOS/">CentOS</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Explained/">Code Explained</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a><span class="tag-list-count">19</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Postprocessing/">Postprocessing</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Preprocessing/">Preprocessing</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TIL/">TIL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/groovyBC/">groovyBC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/paraview/">paraview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/test/">test</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vim/">vim</a><span class="tag-list-count">1</span></li></ul>
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Boundary-conditions/">Boundary conditions</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/">C++</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CentOS/">CentOS</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Explained/">Code Explained</a><span class="tag-list-count">11</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a><span class="tag-list-count">20</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Postprocessing/">Postprocessing</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Preprocessing/">Preprocessing</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TIL/">TIL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/groovyBC/">groovyBC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/paraview/">paraview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/test/">test</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vim/">vim</a><span class="tag-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -601,7 +592,7 @@ ga('send', 'pageview');
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/tags/Boundary-conditions/" style="font-size: 10px;">Boundary conditions</a><a href="/tags/C/" style="font-size: 10px;">C++</a><a href="/tags/CentOS/" style="font-size: 10px;">CentOS</a><a href="/tags/Code-Explained/" style="font-size: 16.67px;">Code Explained</a><a href="/tags/OpenFOAM/" style="font-size: 20px;">OpenFOAM</a><a href="/tags/Postprocessing/" style="font-size: 13.33px;">Postprocessing</a><a href="/tags/Preprocessing/" style="font-size: 10px;">Preprocessing</a><a href="/tags/TIL/" style="font-size: 10px;">TIL</a><a href="/tags/Windows/" style="font-size: 10px;">Windows</a><a href="/tags/groovyBC/" style="font-size: 10px;">groovyBC</a><a href="/tags/paraview/" style="font-size: 10px;">paraview</a><a href="/tags/test/" style="font-size: 10px;">test</a><a href="/tags/vim/" style="font-size: 10px;">vim</a>
+      <a href="/tags/Boundary-conditions/" style="font-size: 10px;">Boundary conditions</a><a href="/tags/C/" style="font-size: 12.5px;">C++</a><a href="/tags/CentOS/" style="font-size: 10px;">CentOS</a><a href="/tags/Code-Explained/" style="font-size: 17.5px;">Code Explained</a><a href="/tags/OpenFOAM/" style="font-size: 20px;">OpenFOAM</a><a href="/tags/Postprocessing/" style="font-size: 15px;">Postprocessing</a><a href="/tags/Preprocessing/" style="font-size: 10px;">Preprocessing</a><a href="/tags/TIL/" style="font-size: 10px;">TIL</a><a href="/tags/Windows/" style="font-size: 10px;">Windows</a><a href="/tags/groovyBC/" style="font-size: 10px;">groovyBC</a><a href="/tags/paraview/" style="font-size: 10px;">paraview</a><a href="/tags/test/" style="font-size: 10px;">test</a><a href="/tags/vim/" style="font-size: 10px;">vim</a>
     </div>
   </div>
 
@@ -610,7 +601,7 @@ ga('send', 'pageview');
   <div class="widget-wrap">
     <h3 class="widget-title">Archives</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/12/">十二月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/11/">十一月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/10/">十月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/09/">九月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/08/">八月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">六月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a><span class="archive-list-count">2</span></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/12/">十二月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/11/">十一月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/10/">十月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/09/">九月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/08/">八月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">六月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a><span class="archive-list-count">2</span></li></ul>
     </div>
   </div>
 
@@ -622,6 +613,14 @@ ga('send', 'pageview');
       <ul>
         
           <li>
+            <a href="/2016/03/06/separationOfDeclarationAndDefiniton/">为什么要将声明和定义分离</a>
+          </li>
+        
+          <li>
+            <a href="/2016/03/06/OpenFOAM-singlePhase-turbulenceModel2/">OpenFOAM 中的单相流湍流模型之SpalartAllmaras</a>
+          </li>
+        
+          <li>
             <a href="/2015/12/12/timeVaryingBC1/">两个简单的随时间变化的边界条件</a>
           </li>
         
@@ -631,14 +630,6 @@ ga('send', 'pageview');
         
           <li>
             <a href="/2015/11/25/OpenFOAM-singlePhase-turbulenceModel/">OpenFOAM 中的单相流湍流模型之一</a>
-          </li>
-        
-          <li>
-            <a href="/2015/10/06/blockMesh-multi-sectional-grading/">blockMesh 的新功能：multi/sectional grading in a block</a>
-          </li>
-        
-          <li>
-            <a href="/2015/09/19/TFM-TurbulenceModel/">OpenFOAM-2.3.x 中的 twoPhaseEulerFoam 解析之 TurbulenceModel</a>
           </li>
         
       </ul>
@@ -653,7 +644,7 @@ ga('send', 'pageview');
   
   <div class="outer">
     <div id="footer-info" class="inner">
-      &copy; 2015 Giskard Q.<br>
+      &copy; 2016 Giskard Q.<br>
       Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
     </div>
   </div>
