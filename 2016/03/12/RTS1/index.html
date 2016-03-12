@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>OpenFOAM 中的 Run Time Selection 机制 | Giskard&#39;s CFD Learning Tricks</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="source flux 博客 曾经出过一个解释 Run Time Selection(RTS) 机制的系列博文，推荐想理解 RTS 的读者去仔细读读。本篇算是我在读完以后做的一个笔记，以及一些总结，供读者参考。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenFOAM 中的 Run Time Selection 机制">
+<meta property="og:url" content="http://xiaopingqiu.github.io/2016/03/12/RTS1/index.html">
+<meta property="og:site_name" content="Giskard's CFD Learning Tricks">
+<meta property="og:description" content="source flux 博客 曾经出过一个解释 Run Time Selection(RTS) 机制的系列博文，推荐想理解 RTS 的读者去仔细读读。本篇算是我在读完以后做的一个笔记，以及一些总结，供读者参考。">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="OpenFOAM 中的 Run Time Selection 机制">
+<meta name="twitter:description" content="source flux 博客 曾经出过一个解释 Run Time Selection(RTS) 机制的系列博文，推荐想理解 RTS 的读者去仔细读读。本篇算是我在读完以后做的一个笔记，以及一些总结，供读者参考。">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css" type="text/css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+##ga('create', '[object Object]', 'auto');
+ga('create', 'UA-62501686-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Giskard&#39;s CFD Learning Tricks</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">CFD and Scientific Computing</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/atom.xml">Rss</a>
+        
+          <a class="main-nav-link" href="/about">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="q" value="site:http://xiaopingqiu.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-RTS1" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2016/03/12/RTS1/" class="article-date">
+  <time datetime="2016-03-12T05:06:48.000Z" itemprop="datePublished">2016-03-12</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/OpenFAOM/">OpenFAOM</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      OpenFOAM 中的 Run Time Selection 机制
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><a href="http://www.sourceflux.de/blog/series/rts-2/" target="_blank" rel="external">source flux 博客</a> 曾经出过一个解释 Run Time Selection(RTS) 机制的系列博文，推荐想理解 RTS 的读者去仔细读读。本篇算是我在读完以后做的一个笔记，以及一些总结，供读者参考。</p>
+<a id="more"></a>
+<p>OpenFOAM 中包含各个 CFD 相关的模块，每个模块，从 C++ 的角度来看，其实都是一个类的框架。基类用作接口，一个派生类则是一个具体的模型。OpenFOAM 中的模块广泛使用 RTS 机制，因此 OpenFOAM 的求解器中，只需要设定模型的调用接口。算例具体使用的是那个模型，则是在运行时才确定的，而且可以在算例运行过程中修改选中的模型。下面通过一个 <a href="http://www.sourceflux.de/blog/run-time-type-selection-openfoam-selecting-types-based-type-name/" target="_blank" rel="external">source flux 博客</a> 提供的代码，来解读 RTS 机制的实现原理。<br>为了方便解读，这里将代码摘录如下，代码所有权归 <a href="http://www.sourceflux.de/blog/run-time-type-selection-openfoam-selecting-types-based-type-name/" target="_blank" rel="external">source flux 博客</a> 所有：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br></pre></td><td class="code"><pre><span class="line"><span class="preprocessor">#<span class="keyword">include</span> "word.H"</span></span><br><span class="line"><span class="preprocessor">#<span class="keyword">include</span> "messageStream.H"</span></span><br><span class="line"><span class="preprocessor">#<span class="keyword">include</span> "argList.H"</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> Foam;</span><br><span class="line"></span><br><span class="line"><span class="preprocessor">#<span class="keyword">include</span> "typeInfo.H"</span></span><br><span class="line"><span class="preprocessor">#<span class="keyword">include</span> "runTimeSelectionTables.H"</span></span><br><span class="line"><span class="preprocessor">#<span class="keyword">include</span> "addToRunTimeSelectionTable.H"</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Main program:</span></span><br><span class="line"><span class="keyword">class</span> AlgorithmBase</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">public</span>: </span><br><span class="line"></span><br><span class="line">        <span class="comment">// Declare the static variable typeName of the class AlgorithmBase.</span></span><br><span class="line">        TypeName (<span class="string">"base"</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Empty constructor. </span></span><br><span class="line">        AlgorithmBase () &#123;&#125;;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Word constructor.</span></span><br><span class="line">        AlgorithmBase (<span class="keyword">const</span> word&amp; algorithmName) &#123;&#125;;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Destructor: needs to be declared virtual since </span></span><br><span class="line">        <span class="keyword">virtual</span> ~AlgorithmBase() &#123;&#125;;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Macro for declaring stuff required for RTS </span></span><br><span class="line">        declareRunTimeSelectionTable</span><br><span class="line">        (</span><br><span class="line">            autoPtr, </span><br><span class="line">            AlgorithmBase, </span><br><span class="line">            Word, </span><br><span class="line">            (</span><br><span class="line">                <span class="keyword">const</span> word&amp; algorithmName</span><br><span class="line">            ),</span><br><span class="line">            (algorithmName)</span><br><span class="line">        )</span><br><span class="line"></span><br><span class="line">        <span class="comment">// static Factory Method (selector)</span></span><br><span class="line">        <span class="keyword">static</span> autoPtr&lt;AlgorithmBase&gt; New (<span class="keyword">const</span> word&amp; algorithmName)</span><br><span class="line">        &#123;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Find the Factory Method pointer in the RTS Table </span></span><br><span class="line">            <span class="comment">// (HashTable&lt;word, autoPtr&lt;AlgorithmBase&gt;(*)(word))</span></span><br><span class="line">            WordConstructorTable::iterator cstrIter =</span><br><span class="line">                WordConstructorTablePtr_-&gt;find(algorithmName);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// If the Factory Method was not found. </span></span><br><span class="line">            <span class="keyword">if</span> (cstrIter == WordConstructorTablePtr_-&gt;end())</span><br><span class="line">            &#123;</span><br><span class="line">                FatalErrorIn</span><br><span class="line">                (</span><br><span class="line">                    <span class="string">"AlgorithmBase::New(const word&amp;)"</span></span><br><span class="line">                )   &lt;&lt; <span class="string">"Unknown AlgorithmBase type "</span></span><br><span class="line">                    &lt;&lt; algorithmName &lt;&lt; nl &lt;&lt; nl</span><br><span class="line">                    &lt;&lt; <span class="string">"Valid AlgorithmBase types are :"</span> &lt;&lt; endl</span><br><span class="line">                    &lt;&lt; WordConstructorTablePtr_-&gt;sortedToc()</span><br><span class="line">                    &lt;&lt; <span class="built_in">exit</span>(FatalError);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Call the "constructor" and return the autoPtr&lt;AlgorithmBase&gt;</span></span><br><span class="line">            <span class="keyword">return</span> cstrIter()(algorithmName);</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Make the class callable (function object) </span></span><br><span class="line">        <span class="function"><span class="keyword">virtual</span> <span class="keyword">void</span> <span class="title">operator</span><span class="params">()</span><span class="params">()</span> </span><br><span class="line">        </span>&#123;</span><br><span class="line">            <span class="comment">// Overridable default implementation</span></span><br><span class="line">            Info &lt;&lt; <span class="string">"AlgorithmBase::operator()()"</span> &lt;&lt; endl;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">defineTypeNameAndDebug(AlgorithmBase, <span class="number">0</span>);</span><br><span class="line">defineRunTimeSelectionTable(AlgorithmBase, Word);</span><br><span class="line">addToRunTimeSelectionTable(AlgorithmBase, AlgorithmBase, Word);</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> AlgorithmNew</span><br><span class="line">:</span><br><span class="line">    <span class="keyword">public</span> AlgorithmBase</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">public</span>: </span><br><span class="line"></span><br><span class="line">        <span class="comment">// Declare the static variable typeName of the class AlgorithmNew.</span></span><br><span class="line">        TypeName (<span class="string">"new"</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Empty constructor. </span></span><br><span class="line">        AlgorithmNew () &#123;&#125;;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Word constructor.</span></span><br><span class="line">        AlgorithmNew (<span class="keyword">const</span> word&amp; algorithmName) &#123;&#125;;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Make the class callable (function object) </span></span><br><span class="line">        <span class="function"><span class="keyword">virtual</span> <span class="keyword">void</span> <span class="title">operator</span><span class="params">()</span><span class="params">()</span></span><br><span class="line">        </span>&#123;</span><br><span class="line">            Info &lt;&lt; <span class="string">"AlgorithmNew::operator()()"</span> &lt;&lt; endl;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">defineTypeNameAndDebug(AlgorithmNew, <span class="number">0</span>);</span><br><span class="line">addToRunTimeSelectionTable(AlgorithmBase, AlgorithmNew , Word);</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> AlgorithmAdditional</span><br><span class="line">:</span><br><span class="line">    <span class="keyword">public</span> AlgorithmNew </span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">public</span>: </span><br><span class="line"></span><br><span class="line">        <span class="comment">// Declare the static variable typeName of the class AlgorithmAdditional.</span></span><br><span class="line">        TypeName (<span class="string">"additional"</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Empty constructor. </span></span><br><span class="line">        AlgorithmAdditional () &#123;&#125;;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Word constructor.</span></span><br><span class="line">        AlgorithmAdditional (<span class="keyword">const</span> word&amp; algorithmName) &#123;&#125;;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Make the class callable (function object) </span></span><br><span class="line">        <span class="function"><span class="keyword">virtual</span> <span class="keyword">void</span> <span class="title">operator</span><span class="params">()</span><span class="params">()</span></span><br><span class="line">        </span>&#123;</span><br><span class="line">            <span class="comment">// Call base operator explicitly.</span></span><br><span class="line">            AlgorithmNew::<span class="keyword">operator</span>()();</span><br><span class="line">            <span class="comment">// Perform additional operations.</span></span><br><span class="line">            Info &lt;&lt; <span class="string">"AlgorithmAdditional::operator()()"</span> &lt;&lt; endl;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">defineTypeNameAndDebug(AlgorithmAdditional, <span class="number">0</span>);</span><br><span class="line">addToRunTimeSelectionTable(AlgorithmBase, AlgorithmAdditional , Word);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> *argv[])</span></span><br><span class="line"></span>&#123;</span><br><span class="line">    argList::addOption</span><br><span class="line">    (</span><br><span class="line">        <span class="string">"algorithmName"</span>,</span><br><span class="line">        <span class="string">"name of the run-time selected algorithm"</span></span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="function">argList <span class="title">args</span><span class="params">(argc, argv)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (args.optionFound(<span class="string">"algorithmName"</span>))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// Get the name of the algorithm from the arguments passed to the</span></span><br><span class="line">        <span class="comment">// application. </span></span><br><span class="line">        <span class="keyword">const</span> word algorithmName = args.option(<span class="string">"algorithmName"</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// RTS call. </span></span><br><span class="line">        autoPtr&lt;AlgorithmBase&gt; algorithmPtr = AlgorithmBase::New(algorithmName);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Get the reference to the algorithm from the smart pointer.</span></span><br><span class="line">        AlgorithmBase&amp; algorithm = algorithmPtr(); </span><br><span class="line"></span><br><span class="line">        <span class="comment">// Call the algorithm.</span></span><br><span class="line">        algorithm(); </span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        FatalErrorIn</span><br><span class="line">        (</span><br><span class="line">            <span class="string">"main()"</span></span><br><span class="line">        )   &lt;&lt; <span class="string">"Please use with the 'algorithmName' option."</span> &lt;&lt; endl</span><br><span class="line">            &lt;&lt; <span class="built_in">exit</span>(FatalError);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Info&lt;&lt; <span class="string">"\nEnd\n"</span> &lt;&lt; endl;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在解读原理之前，先来看看这段代码。可以发现，RTS 机制的实现跟几个函数的调用有关： <code>declareRunTimeSelectionTable</code>， <code>defineRunTimeSelectionTable</code>， <code>defineTypeNameAndDebug</code>， <code>addToRunTimeSelectionTable</code>。规律可以总结如下：</p>
+<ol>
+<li>基类类体里调用 <code>TypeName</code> 和 <code>declareRunTimeSelectionTable</code> 两个函数，类体外面调用 <code>defineTypeNameAndDebug</code> ， <code>defineRunTimeSelectionTable</code> 和 <code>addToRunTimeSelectionTable</code> 三个函数；</li>
+<li>基类中需要一个静态 <code>New</code> 函数作为 <code>selector</code>。 </li>
+<li>派生类类体中需要调用 <code>TypeName</code> 函数，类体外调用 <code>defineRunTimeSelectionTable</code> 和 <code>addToRunTimeSelectionTable</code> 两个宏函数。</li>
+</ol>
+<p>以上函数，经过搜索，发现都是定义在 <code>runTimeSelectionTables.H</code> 和 <code>addToRunTimeSelectionTable.H</code> 两个头文件中，而且，这些函数都是宏函数。</p>
+<p>看来，理解 RTS 的第一步就需要仔细看看这几个宏函数。</p>
+<p>先来看基类中的宏函数 <code>declareRunTimeSelectionTable</code> ，根据 <a href="">source flux 的博文</a>，这个宏函数针对前面的那段代码的展开结果为：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> autoPtr&lt; AlgorithmBase &gt; (*WordConstructorPtr)( <span class="keyword">const</span> word&amp; algorithmName );</span><br><span class="line">   </span><br><span class="line"><span class="keyword">typedef</span> HashTable&lt; WordConstructorPtr, word, <span class="built_in">string</span>::hash &gt; WordConstructorTable;</span><br><span class="line"><span class="keyword">static</span> WordConstructorTable* WordConstructorTablePtr_;</span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">constructWordConstructorTables</span><span class="params">()</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">destroyWordConstructorTables</span><span class="params">()</span></span>;</span><br><span class="line"><span class="keyword">template</span>&lt; <span class="keyword">class</span> AlgorithmBaseType &gt;</span><br><span class="line"><span class="keyword">class</span> addWordConstructorToTable</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">static</span> autoPtr&lt; AlgorithmBase &gt; New ( <span class="keyword">const</span> word&amp; algorithmName )</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> autoPtr&lt; AlgorithmBase &gt;(<span class="keyword">new</span> AlgorithmBaseType (algorithmName));</span><br><span class="line">    &#125;</span><br><span class="line">    addWordConstructorToTable ( <span class="keyword">const</span> word&amp; lookup = AlgorithmBaseType::typeName )</span><br><span class="line">    &#123;</span><br><span class="line">        constructWordConstructorTables();</span><br><span class="line">        <span class="keyword">if</span> (!WordConstructorTablePtr_-&gt;insert(lookup, New))</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">std</span>::<span class="built_in">cerr</span>&lt;&lt; <span class="string">"Duplicate entry "</span></span><br><span class="line">                &lt;&lt; lookup &lt;&lt; <span class="string">" in runtime selection table "</span></span><br><span class="line">                &lt;&lt; <span class="string">"AlgorithmBase"</span> &lt;&lt; <span class="built_in">std</span>::endl;</span><br><span class="line">            error::safePrintStack(<span class="built_in">std</span>::<span class="built_in">cerr</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    ~addWordConstructorToTable()</span><br><span class="line">    &#123;</span><br><span class="line">        destroyWordConstructorTables();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">template</span>&lt; <span class="keyword">class</span> AlgorithmBaseType &gt;</span><br><span class="line"><span class="keyword">class</span> addRemovableWordConstructorToTable</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">const</span> word&amp; lookup_;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">static</span> autoPtr&lt; AlgorithmBase &gt; New ( <span class="keyword">const</span> word&amp; algorithmName )</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> autoPtr&lt; AlgorithmBase &gt;(<span class="keyword">new</span> AlgorithmBaseType (algorithmName));</span><br><span class="line">    &#125;</span><br><span class="line">    addRemovableWordConstructorToTable ( <span class="keyword">const</span> word&amp; lookup = AlgorithmBaseType::typeName )</span><br><span class="line">    : lookup_(lookup)</span><br><span class="line">    &#123;</span><br><span class="line">        constructWordConstructorTables();</span><br><span class="line">        WordConstructorTablePtr_-&gt;<span class="built_in">set</span>(lookup, New);</span><br><span class="line">    &#125;</span><br><span class="line">   </span><br><span class="line">    ~addRemovableWordConstructorToTable()</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (WordConstructorTablePtr_)</span><br><span class="line">        &#123;</span><br><span class="line">            WordConstructorTablePtr_-&gt;erase(lookup_);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>注意，由于 <code>declareRunTimeSelectionTable</code> 是在基类类体里调用的，所以，以上内容都是在类体里的。这相当于在类体了定义了两个 <code>typedef</code>，一个静态数据成员，两个静态函数，还有两个类。<br>先来看这两个 <code>typedef</code> 。第一个，定义的是一个函数指针，这样定义的结果是， <code>WordConstructorPtr</code> 代表一个指向参数为 <code>const word&amp;</code>，返回类型为 <code>autoPtr&lt; AlgorithmBase &gt;</code> 的函数指针。第二个好理解，将一个 key 和 value 分别为 <code>word</code> 和 <code>WordConstructorPtr</code> 的 <code>hashTable</code> 定义了一个别名 <code>WordConstructorTable</code> 。<br>静态数据成员 <code>WordConstructorTablePtr_</code> 是一个 <code>WordConstructorTable</code> 类型的指针。<br>两个静态成员函数，这里只是声明了，并且注意到在下面定义的两个类中用到了这两个函数。</p>
+<p>继续看 <code>defineRunTimeSelectionTable(AlgorithmBase, Word)</code>。这个宏展开的结果为：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">AlgorithmBase::WordConstructorTable* AlgorithmBase::WordConstructorTablePtr_ = __null;</span><br><span class="line">    <span class="keyword">void</span> AlgorithmBase::constructWordConstructorTables() &#123;</span><br><span class="line">        <span class="keyword">static</span> <span class="keyword">bool</span> constructed = <span class="keyword">false</span>;</span><br><span class="line">        <span class="keyword">if</span> (!constructed) &#123;</span><br><span class="line">            constructed = <span class="keyword">true</span>;</span><br><span class="line">            AlgorithmBase::WordConstructorTablePtr_ = <span class="keyword">new</span> AlgorithmBase::WordConstructorTable;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">void</span> AlgorithmBase::destroyWordConstructorTables() &#123;</span><br><span class="line">        <span class="keyword">if</span> (AlgorithmBase::WordConstructorTablePtr_) &#123;</span><br><span class="line">            <span class="keyword">delete</span> AlgorithmBase::WordConstructorTablePtr_;</span><br><span class="line">            AlgorithmBase::WordConstructorTablePtr_ = __null;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br></pre></td></tr></table></figure></p>
+<p>这个宏函数的主要功能，是对 <code>declareRunTimeSelectionTable</code> 中定义的静态数据成员和两个静态函数进行了定义。首先对静态数据成员 <code>WordConstructorTablePtr_</code> 初始化为 <code>__null</code>，然后 <code>constructWordConstructorTables</code> 函数将 <code>WordConstructorTablePtr_</code> 指向一个动态分配的 <code>WordConstructorTable</code> 。 <code>destroyWordConstructorTables</code> 则是对指针 <code>WordConstructorTablePtr_</code> 进行销毁。</p>
+<p>接着， <code>addToRunTimeSelectionTable(AlgorithmBase, AlgorithmBase, Word)</code> ，这宏函数展开以后其实就一句话：<br><figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="rule"><span class="attribute">AlgorithmBase</span>:<span class="value">:addWordConstructorToTable&lt; AlgorithmBase &gt; addAlgorithmBaseWordConstructorToAlgorithmBaseTable_</span></span>;</span><br></pre></td></tr></table></figure></p>
+<p>这个语句，定义了一个 <code>addWordConstructorToTable</code> 的对象，仅此而已。但是，注意在创建一个类的对象的时候，是要调用该类的构造函数的。回头看 <code>addWordConstructorToTable</code> 类的构造函数，有意思的地方出现了。这个类的构造函数中，首先调用了 <code>constructWordConstructorTables</code> 函数，即对指针 <code>WordConstructorTablePtr_</code> 进行了初始化。然后，对 <code>WordConstructorTablePtr_</code> 进行 <code>insert</code> 操作，即，往其指向的 <code>hashTable</code> 插入 <code>key-value</code> 对。这里的 key 是创建对象 <code>addAlgorithmBaseWordConstructorToAlgorithmBaseTable_</code> 时代入的模板参数对应的 类的 <code>typeName</code>（这一句很长很绕，需要好好理解，因为很重要！），value 则是  <code>New</code> 函数。这个 <code>New</code> 函数，指的是定义在 <code>addWordConstructorToTable</code> 中的 <code>New</code> 函数。这个 <code>New</code> 函数非常重要，再写一遍：<br><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> autoPtr&lt; AlgorithmBase &gt; <span class="keyword">New</span> ( <span class="keyword">const</span> word&amp; algorithmName )</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> autoPtr&lt; AlgorithmBase &gt;(<span class="keyword">new</span> AlgorithmBaseType (algorithmName));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这个<code>New</code> 函数，返回的是一个 <code>AlgorithmBaseType</code>（这里是 AlgorithmBase ） 类型的临时对象的指针！对应这里的情形，现在可以知道这个 <code>insert</code> 操作将创建一个 “类的typeName — 返回类的临时对象的引用的函数” 映射对，并增加到 <code>WordConstructorTablePtr_</code> 中（看来 <code>ddToRunTimeSelectionTable</code> 中创建一个 <code>addWordConstructorToTable</code> 类的对象，居然目的是为了调用其构造函数。）。如果 <code>insert</code> 操作失败（原因是想要插入的 key 与 <code>hashTable</code> 已有的重复了，所以每一个类都需要不同的 typeName！），就会报条目重复的错。</p>
+<p>好了，看完了基类相关的，在往下看派生类。前文已讲，派生类只需要在类体里调用 <code>TypeName</code>，然后在类体外调用 <code>addToRunTimeSelectionTable</code> 。对于派生类 <code>AlgorithmNew</code>，我们来看其具体的调用语句是<br><figure class="highlight lisp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">addToRunTimeSelectionTable<span class="list">(<span class="keyword">AlgorithmBase</span>, AlgorithmNew , Word)</span><span class="comment">;</span></span><br></pre></td></tr></table></figure></p>
+<p>展开的结果应该是<br><figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="rule"><span class="attribute">AlgorithmBase</span>:<span class="value">:addWordConstructorToTable&lt; AlgorithmNew &gt; addAlgorithmNewWordConstructorToAlgorithmBaseTable_</span></span>;</span><br></pre></td></tr></table></figure></p>
+<p>注意，这里又创建了一个 <code>addWordConstructorToTable</code> 类的对象，只是这里代入的模板参数是 <code>AlgorithmNew</code> 。于是，调用类的构造函数时代入的模板参数也就变了，所以这时 <code>New</code> 函数返回的将是 <code>AlgorithmNew</code> 类的临时对象的指针。并且， AlgorithmNew 这个名字与其对应的 <code>New</code> 函数组成的映射对，也被 <code>insert</code> 到 <code>WordConstructorTablePtr_</code> 里面。</p>
+<p>而 <code>AlgorithmAdditional</code> 这个类，虽然是继承自 <code>AlgorithmNew</code> ，但是也是间接继承 <code>AlgorithmBase</code> 。并且，在 <code>AlgorithmAdditional</code> 类的类体之后调用的宏函数 <code>addToRunTimeSelectionTable(AlgorithmBase, AlgorithmAdditional , Word)</code>  ，依然是将构建的映射对添加到了同一个 <code>hashTable</code> 里。</p>
+<p>最后，再来看一下 <code>selector</code>，即基类中定义的 <code>New</code> 函数。这个函数的返回值类型为 <code>autoPtr&lt;AlgorithmBase&gt;</code> ，参数为跟类的 <code>typeName</code> 一样，都是 <code>word&amp;</code>。这个函数里面，首先定义了一个 <code>hashTable</code> 的迭代器 <code>cstrIter</code> ，利用迭代器来遍历搜索，看 <code>WordConstructorTable</code> 里面是否能找到参数 <code>algorithmName</code> 相符的 key 值，如果找不到，那就报错退出，并输出当前的 <code>WordConstructorTable</code> 中可选的项的名称（即 WordConstructorTablePtr_-&gt;sortedToc()）；如果找到了，那就返回这个 key 对应的 value。而 <code>WordConstructorTable</code> 的 value 是一个函数指针，所以 <code>cstrIter()</code> 返回的是 <code>algorithmName</code> 对应的那个 <code>New</code> 函数（不要跟基类 <code>AlgorithmBase</code> 中作为 selector 的 <code>New</code> 函数搞混了！）。进一步看， <code>cstrIter()(algorithmName)</code> 则表示的是函数调用了，传给函数的参数正是 <code>algorithmName</code>！<br><strong>所以， <code>cstrIter()(algorithmName)</code> 返回的是 <code>autoPtr&lt;AlgorithmBase&gt;</code> ，其指向的是 <code>typeName = algorithmName</code> 的类的对象！</strong><br>这样就实现了 <code>New</code> 函数作为 selector 的功能！</p>
+<p>所以，RTS 机制的本质可以总结如下：</p>
+<ol>
+<li>基类里定义一个 <code>hashTable</code>，其 key 为类的 <code>typeName</code> ，value 为一个函数指针，这个函数指针指向的函数的返回值是基类类型的 <code>autoPtr</code> ，并且这个 <code>autoPtr</code> 指向类的一个临时对象（用 C++ 的 <code>new</code> 关键字创建 ）。</li>
+<li>每创建一个派生类，就需要创建一个这样的函数（函数名一样，但是代入的模板参数不一样，相当于一个新的函数），且该函数中会创建一个派生类的临时对象。函数的返回值则是指向当前派生类的临时对象的基类 <code>autoPtr</code>。<code>。此外，派生类的</code>typeName<code>和该函数组成的映射对，会增加到基类中定义的</code>hashTable` 中。</li>
+<li>类及其派生类编译成库，在编译过程中，会得到一个 <code>hashTable</code> ，其中包含了所有的派生类。</li>
+<li>在需要调用这些类的地方，只需要定义基类的 <code>autoPtr</code>，并用基类中定义的 <code>New</code> 函数来初始化，即 <code>autoPtr&lt;AlgorithmBase&gt; algorithmPtr = AlgorithmBase::New(algorithmName);</code>。这样， <code>New</code> 函数就能根据调用的时候所提供的参数，来从 <code>hashTable</code> 中选择对应的派生类。</li>
+</ol>
+<p>经过以上四步，就实现了 RTS 机制。</p>
+<p>参考：<a href="http://www.sourceflux.de/blog/series/rts-2/" target="_blank" rel="external">source flux 的系列博文</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://xiaopingqiu.github.io/2016/03/12/RTS1/" data-id="cilos8pmh002sbwmbwx8rf79r" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/RTS/">RTS</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2016/03/12/RTS2/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          湍流模型中的 RTS 机制分析
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2016/03/06/separationOfDeclarationAndDefiniton/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">为什么要将声明和定义分离</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+<section id="comments">
+  <!-- 多说评论框 start -->
+  <div class="ds-thread" data-thread-key="post-RTS1" data-title="OpenFOAM 中的 Run Time Selection 机制" data-url="http://xiaopingqiu.github.io/2016/03/12/RTS1/"></div>
+  <!-- 多说评论框 end -->
+  <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+  <script type="text/javascript">
+  var duoshuoQuery = {short_name:"xiaopingqiu"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+  <!-- 多说公共JS代码 end -->
+</section>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a><span class="category-list-count">2</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/C/OpenFOAM/">OpenFOAM</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFAOM/">OpenFAOM</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/">OpenFOAM</a><span class="category-list-count">19</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/swak4Foam/">swak4Foam</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/Paraview/">Paraview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/test/">test</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/vim/">vim</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Boundary-conditions/">Boundary conditions</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/">C++</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CentOS/">CentOS</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Explained/">Code Explained</a><span class="tag-list-count">13</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a><span class="tag-list-count">19</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Postprocessing/">Postprocessing</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Preprocessing/">Preprocessing</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RTS/">RTS</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TIL/">TIL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/groovyBC/">groovyBC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/paraview/">paraview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/test/">test</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/turbulence-model/">turbulence model</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vim/">vim</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Boundary-conditions/" style="font-size: 10px;">Boundary conditions</a><a href="/tags/C/" style="font-size: 12.5px;">C++</a><a href="/tags/CentOS/" style="font-size: 10px;">CentOS</a><a href="/tags/Code-Explained/" style="font-size: 17.5px;">Code Explained</a><a href="/tags/OpenFOAM/" style="font-size: 20px;">OpenFOAM</a><a href="/tags/Postprocessing/" style="font-size: 15px;">Postprocessing</a><a href="/tags/Preprocessing/" style="font-size: 10px;">Preprocessing</a><a href="/tags/RTS/" style="font-size: 12.5px;">RTS</a><a href="/tags/TIL/" style="font-size: 10px;">TIL</a><a href="/tags/Windows/" style="font-size: 10px;">Windows</a><a href="/tags/groovyBC/" style="font-size: 10px;">groovyBC</a><a href="/tags/paraview/" style="font-size: 10px;">paraview</a><a href="/tags/test/" style="font-size: 10px;">test</a><a href="/tags/turbulence-model/" style="font-size: 12.5px;">turbulence model</a><a href="/tags/vim/" style="font-size: 10px;">vim</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/12/">十二月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/11/">十一月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/10/">十月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/09/">九月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/08/">八月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">六月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a><span class="archive-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recents</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2016/03/12/RTS2/">湍流模型中的 RTS 机制分析</a>
+          </li>
+        
+          <li>
+            <a href="/2016/03/12/RTS1/">OpenFOAM 中的 Run Time Selection 机制</a>
+          </li>
+        
+          <li>
+            <a href="/2016/03/06/separationOfDeclarationAndDefiniton/">为什么要将声明和定义分离</a>
+          </li>
+        
+          <li>
+            <a href="/2016/03/06/OpenFOAM-singlePhase-turbulenceModel2/">OpenFOAM 中的单相流湍流模型之SpalartAllmaras</a>
+          </li>
+        
+          <li>
+            <a href="/2015/12/12/timeVaryingBC1/">两个简单的随时间变化的边界条件</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2016 Giskard Q.<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+<script src="//dn-lbstatics.qbox.me/lbservice/busuanzi/2.0/busuanzi.mini.js"/></script>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/atom.xml" class="mobile-nav-link">Rss</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css" type="text/css">
+  <script src="/fancybox/jquery.fancybox.pack.js" type="text/javascript"></script>
+
+
+<script src="/js/script.js" type="text/javascript"></script>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-62501686-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+  </div>
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+</body>
+</html>

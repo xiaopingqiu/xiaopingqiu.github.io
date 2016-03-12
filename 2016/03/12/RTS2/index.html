@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>湍流模型中的 RTS 机制分析 | Giskard&#39;s CFD Learning Tricks</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="有了上一篇博文的基础，就可以来填一个坑了，即分析 OpenFOAM 中湍流模型框架中的 RTS 。上一篇博文，使用的程序比较简单，这里通过一个实际使用 RTS 机制的例子来加深对 RTS 的理解。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="湍流模型中的 RTS 机制分析">
+<meta property="og:url" content="http://xiaopingqiu.github.io/2016/03/12/RTS2/index.html">
+<meta property="og:site_name" content="Giskard's CFD Learning Tricks">
+<meta property="og:description" content="有了上一篇博文的基础，就可以来填一个坑了，即分析 OpenFOAM 中湍流模型框架中的 RTS 。上一篇博文，使用的程序比较简单，这里通过一个实际使用 RTS 机制的例子来加深对 RTS 的理解。">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="湍流模型中的 RTS 机制分析">
+<meta name="twitter:description" content="有了上一篇博文的基础，就可以来填一个坑了，即分析 OpenFOAM 中湍流模型框架中的 RTS 。上一篇博文，使用的程序比较简单，这里通过一个实际使用 RTS 机制的例子来加深对 RTS 的理解。">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css" type="text/css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+##ga('create', '[object Object]', 'auto');
+ga('create', 'UA-62501686-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Giskard&#39;s CFD Learning Tricks</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">CFD and Scientific Computing</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/atom.xml">Rss</a>
+        
+          <a class="main-nav-link" href="/about">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="q" value="site:http://xiaopingqiu.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-RTS2" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2016/03/12/RTS2/" class="article-date">
+  <time datetime="2016-03-12T06:25:54.000Z" itemprop="datePublished">2016-03-12</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      湍流模型中的 RTS 机制分析
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>有了上一篇博文的基础，就可以来填一个<a href="http://xiaopingqiu.github.io/2015/11/25/OpenFOAM-singlePhase-turbulenceModel/" target="_blank" rel="external">坑</a>了，即分析 OpenFOAM 中湍流模型框架中的 RTS 。上一篇博文，使用的程序比较简单，这里通过一个实际使用 RTS 机制的例子来加深对 RTS 的理解。</p>
+<a id="more"></a>
+<p>经过前面对那段简单代码的分析，可以知道， <code>declareRunTimeSelectionTable</code> 宏函数的主要功能是声明了一个 <code>hashTable</code>，并定义了一个指向这个<code>hashTable</code> 的指针， 然后还声明了几个辅助的类。 <code>defineRunTimeSelectionTable</code> 这个宏函数的主要作用是对 <code>declareRunTimeSelectionTable</code> 中的 <code>hashTable</code> 指针进行了初始化。 <code>addToRunTimeSelectionTable</code> 的主要作用是将当前类的类名以及返回当前类的对象的一个函数分别作为 <code>hashTable</code> 的 key 和 value 插入到 <code>hashTable</code> 中。下面来看这些宏函数在湍流模型框架中是怎么使用的。</p>
+<h5 id="1-_turbulenceModel_类">1. turbulenceModel 类</h5><p>类体中，调用 <code>declareRunTimeNewSelectionTable</code> 宏函数<br><figure class="highlight lisp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"> declareRunTimeNewSelectionTable</span><br><span class="line"> <span class="list">(</span><br><span class="line">    <span class="keyword">autoPtr</span>,</span><br><span class="line">    turbulenceModel,</span><br><span class="line">    turbulenceModel,</span><br><span class="line">    <span class="list">(</span><br><span class="line">        <span class="keyword">const</span> volVectorField&amp; U,</span><br><span class="line">        const surfaceScalarField&amp; phi,</span><br><span class="line">        transportModel&amp; transport,</span><br><span class="line">        const word&amp; turbulenceModelName</span><br><span class="line">    )</span>,</span><br><span class="line">    <span class="list">(<span class="keyword">U</span>, phi, transport, turbulenceModelName)</span></span><br><span class="line">)</span><span class="comment">;</span></span><br></pre></td></tr></table></figure></p>
+<p>注意这里用的是 <code>declareRunTimeNewSelectionTable</code>！与 <code>declareRunTimeSelectionTable</code> 区别在于，<code>declareRunTimeNewSelectionTable</code> 这个宏函数定义的插入到 <code>hashTable</code> 中的那个函数，返回值不是派生类的对象，而是派生类中的 <code>New</code> 函数的返回值！<br><figure class="highlight livescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">static autoPtr&lt; baseType &gt; New<span class="comment">##baseType argList                      \</span></span><br><span class="line">&#123;                                                                     <span class="string">\</span></span><br><span class="line">    <span class="keyword">return</span> autoPtr&lt; baseType &gt;(baseType<span class="comment">##Type::New parList.ptr());    \</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">......</span><br><span class="line"><span class="keyword">if</span>                                                                <span class="string">\</span></span><br><span class="line">(                                                                 <span class="string">\</span></span><br><span class="line">   !argNames<span class="comment">##ConstructorTablePtr_-&gt;insert                        \</span></span><br><span class="line">    (                                                             <span class="string">\</span></span><br><span class="line">        lookup,                                                   <span class="string">\</span></span><br><span class="line">        New<span class="comment">##baseType                                             \</span></span><br><span class="line">    )                                                             <span class="string">\</span></span><br><span class="line">)                                                                 <span class="string">\</span></span><br></pre></td></tr></table></figure></p>
+<p>这说明，这里的派生类 <code>RASModel</code> 将不会作为一个具体的湍流模型来使用。而是用来选择 <code>RAS</code>类型的具体湍流模型的一个跳板。</p>
+<p>类体外，调用<br><figure class="highlight lisp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">defineTypeNameAndDebug<span class="list">(<span class="keyword">turbulenceModel</span>, <span class="number">0</span>)</span><span class="comment">;</span></span><br><span class="line">defineRunTimeSelectionTable<span class="list">(<span class="keyword">turbulenceModel</span>, turbulenceModel)</span><span class="comment">;</span></span><br></pre></td></tr></table></figure></p>
+<p>注意，这里没有调用 <code>addToRunTimeSelectionTable</code> 宏函数， <code>turbulenceModel</code> 类是基类，也不会作为具体的湍流模型来调用，所以不需要将它自己添加到 <code>hashTable</code>。</p>
+<h5 id="2-_RASModel">2. RASModel</h5><p><code>turbulenceModel</code> 类下一层的派生类是 <code>RASModel</code> 和 <code>LESModel</code> 。先来看 <code>RASModel</code>，这个类类体里调用了 <code>declareRunTimeSelectionTable</code> 。<br><figure class="highlight lisp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">declareRunTimeSelectionTable</span><br><span class="line"><span class="list">(</span><br><span class="line">    <span class="keyword">autoPtr</span>,</span><br><span class="line">    RASModel,</span><br><span class="line">    dictionary,</span><br><span class="line">    <span class="list">(</span><br><span class="line">        <span class="keyword">const</span> volVectorField&amp; U,</span><br><span class="line">        const surfaceScalarField&amp; phi,</span><br><span class="line">        transportModel&amp; transport,</span><br><span class="line">        const word&amp; turbulenceModelName</span><br><span class="line">    )</span>,</span><br><span class="line">    <span class="list">(<span class="keyword">U</span>, phi, transport, turbulenceModelName)</span></span><br><span class="line">)</span><span class="comment">;</span></span><br></pre></td></tr></table></figure></p>
+<p>类体外调用了<br><figure class="highlight lisp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">defineTypeNameAndDebug<span class="list">(<span class="keyword">RASModel</span>, <span class="number">0</span>)</span><span class="comment">;</span></span><br><span class="line">defineRunTimeSelectionTable<span class="list">(<span class="keyword">RASModel</span>, dictionary)</span><span class="comment">;</span></span><br><span class="line">addToRunTimeSelectionTable<span class="list">(<span class="keyword">turbulenceModel</span>, RASModel, turbulenceModel)</span><span class="comment">;</span></span><br></pre></td></tr></table></figure></p>
+<p>根据前面的分析，这里 RASModel 又创建了一个新的 <code>hashTable</code>， 用的是 <code>declareRunTimeSelectionTable</code> 和 <code>defineRunTimeSelectionTable(RASModel, dictionary);</code> ，同时，RASModel类 本身又添加到了 <code>turbulenceModel</code> 中建立的 <code>hashTable</code> 里： <code>addToRunTimeSelectionTable(turbulenceModel, RASModel, turbulenceModel);</code> </p>
+<p><code>RASModel</code> 类之下的派生类，就是具体的湍流模型了，这里以 <code>kEpsilon</code> 模型为例：</p>
+<ul>
+<li>kEpsilon<br>具体的湍流模型，如<code>kEpsilon</code> ，只需要添加到上面基类中创建的 <code>hashTable</code> 中，就能保证其能被调用到。<figure class="highlight lisp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">addToRunTimeSelectionTable<span class="list">(<span class="keyword">RASModel</span>, kEpsilon, dictionary)</span><span class="comment">;</span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>这里是添加到了 RASModel 中创建的 <code>hashTable</code> 里。</p>
+<h5 id="3-_LESModel">3. LESModel</h5><p><code>LESModel</code> 类也是继承自 <code>turbulenceModel</code> 的，所以其处理方法跟 <code>RASModel</code> 是一样的。不过 <code>LES</code> 类的模型的继承关系略比 <code>RAS</code> 类的复杂一点（参看<a href="http://xiaopingqiu.github.io/2015/11/25/OpenFOAM-singlePhase-turbulenceModel/" target="_blank" rel="external">这篇</a>中的 LES 模型继承关系图）。在这个图中，中间层的 <code>GenEddyVisc</code> 等4个虚线框中的类不是作为具体的湍流模型来调用的，这里有必要看一下这样的中间类在 RTS 机制中是怎么处理的。检查这几个类的代码，可以发现 <code>GenEddyVisc</code> 和 <code>GenSGSStress</code> 中只是在类体外调用了 <code>defineTypeNameWithName(GenEddyVisc, &quot;GenEddyVisc&quot;);</code> ， <code>scaleSimilarity</code> 在类体中调用了 <code>TypeName</code>，类体外调用了 <code>defineTypeNameAndDebug</code> ，<code>DESModel</code> 中没有任何处理。可见这些类只是对 <code>typeName</code> 做了处理，并没有调用 <code>addToRunTimeSelectionTable</code> 。<br>同 <code>RASModel</code> 一样， <code>LESModel</code> 之下派生的具体的湍流模型则需要调用 <code>addToRunTimeSelectionTable</code> 来将自己添加到 <code>LESModel</code> 中定义的 <code>hashTable</code> 中。</p>
+<p>由上可知，湍流模型的调用过程大致是这样的：<br>求解器里创建一个 <code>turbulenceModel</code> 类型的 <code>autoPtr</code>，并调用 <code>turbulenceModel::New</code> 来初始化。 <code>turbulenceModel::New</code> 从 turbulenceProperties 文件中读取关键字，假设读取到 simulationType 为 <code>RASModel</code> ，则 <code>turbulenceModel::New</code> 的 <code>cstrIter()</code> 返回的是 <code>RASModel::New</code>，于是 <code>cstrIter()(U, phi, transport, turbulenceModelName)</code> 则是在调用 <code>RASModel::New</code>。然后， <code>RASModel::New</code> 从 RASProperties 文件里读取关键字，并根据读取到的内容，从 <code>RASModel</code> 类中创建的 <code>hashTable</code> 里查找对应的湍流模型，假设从 RASProperties 中读取到的是 <code>kEpsilon</code>， 则返回一个 <code>kEpsilon</code> 模型的对象。最终结果是，求解器里创建的<code>turbulenceModel</code> 类型的 <code>autoPtr</code> 指向了 <code>kEpsilon</code> 类的对象，这就实现了对 <code>kEpsilon</code> 模型的调用。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://xiaopingqiu.github.io/2016/03/12/RTS2/" data-id="cilos8pm8002lbwmbkkl66jim" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/RTS/">RTS</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/turbulence-model/">turbulence model</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2016/03/12/RTS1/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">OpenFOAM 中的 Run Time Selection 机制</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+<section id="comments">
+  <!-- 多说评论框 start -->
+  <div class="ds-thread" data-thread-key="post-RTS2" data-title="湍流模型中的 RTS 机制分析" data-url="http://xiaopingqiu.github.io/2016/03/12/RTS2/"></div>
+  <!-- 多说评论框 end -->
+  <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+  <script type="text/javascript">
+  var duoshuoQuery = {short_name:"xiaopingqiu"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+  <!-- 多说公共JS代码 end -->
+</section>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a><span class="category-list-count">2</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/C/OpenFOAM/">OpenFOAM</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFAOM/">OpenFAOM</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/">OpenFOAM</a><span class="category-list-count">19</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/swak4Foam/">swak4Foam</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/Paraview/">Paraview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/test/">test</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/vim/">vim</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Boundary-conditions/">Boundary conditions</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/">C++</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CentOS/">CentOS</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Explained/">Code Explained</a><span class="tag-list-count">13</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a><span class="tag-list-count">19</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Postprocessing/">Postprocessing</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Preprocessing/">Preprocessing</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RTS/">RTS</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TIL/">TIL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/groovyBC/">groovyBC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/paraview/">paraview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/test/">test</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/turbulence-model/">turbulence model</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vim/">vim</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Boundary-conditions/" style="font-size: 10px;">Boundary conditions</a><a href="/tags/C/" style="font-size: 12.5px;">C++</a><a href="/tags/CentOS/" style="font-size: 10px;">CentOS</a><a href="/tags/Code-Explained/" style="font-size: 17.5px;">Code Explained</a><a href="/tags/OpenFOAM/" style="font-size: 20px;">OpenFOAM</a><a href="/tags/Postprocessing/" style="font-size: 15px;">Postprocessing</a><a href="/tags/Preprocessing/" style="font-size: 10px;">Preprocessing</a><a href="/tags/RTS/" style="font-size: 12.5px;">RTS</a><a href="/tags/TIL/" style="font-size: 10px;">TIL</a><a href="/tags/Windows/" style="font-size: 10px;">Windows</a><a href="/tags/groovyBC/" style="font-size: 10px;">groovyBC</a><a href="/tags/paraview/" style="font-size: 10px;">paraview</a><a href="/tags/test/" style="font-size: 10px;">test</a><a href="/tags/turbulence-model/" style="font-size: 12.5px;">turbulence model</a><a href="/tags/vim/" style="font-size: 10px;">vim</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/12/">十二月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/11/">十一月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/10/">十月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/09/">九月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/08/">八月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">六月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a><span class="archive-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recents</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2016/03/12/RTS2/">湍流模型中的 RTS 机制分析</a>
+          </li>
+        
+          <li>
+            <a href="/2016/03/12/RTS1/">OpenFOAM 中的 Run Time Selection 机制</a>
+          </li>
+        
+          <li>
+            <a href="/2016/03/06/separationOfDeclarationAndDefiniton/">为什么要将声明和定义分离</a>
+          </li>
+        
+          <li>
+            <a href="/2016/03/06/OpenFOAM-singlePhase-turbulenceModel2/">OpenFOAM 中的单相流湍流模型之SpalartAllmaras</a>
+          </li>
+        
+          <li>
+            <a href="/2015/12/12/timeVaryingBC1/">两个简单的随时间变化的边界条件</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2016 Giskard Q.<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+<script src="//dn-lbstatics.qbox.me/lbservice/busuanzi/2.0/busuanzi.mini.js"/></script>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/atom.xml" class="mobile-nav-link">Rss</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css" type="text/css">
+  <script src="/fancybox/jquery.fancybox.pack.js" type="text/javascript"></script>
+
+
+<script src="/js/script.js" type="text/javascript"></script>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-62501686-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+  </div>
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+</body>
+</html>
