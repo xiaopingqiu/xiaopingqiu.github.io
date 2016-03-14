@@ -60,7 +60,7 @@
     <link href="http://xiaopingqiu.github.io/2016/03/12/RTS1/"/>
     <id>http://xiaopingqiu.github.io/2016/03/12/RTS1/</id>
     <published>2016-03-12T05:06:48.000Z</published>
-    <updated>2016-03-12T08:09:54.775Z</updated>
+    <updated>2016-03-14T03:00:20.798Z</updated>
     <content type="html"><![CDATA[<p><a href="http://www.sourceflux.de/blog/series/rts-2/" target="_blank" rel="external">source flux 博客</a> 曾经出过一个解释 Run Time Selection(RTS) 机制的系列博文，推荐想理解 RTS 的读者去仔细读读。本篇算是我在读完以后做的一个笔记，以及一些总结，供读者参考。</p>
 <a id="more"></a>
 <p>OpenFOAM 中包含各个 CFD 相关的模块，每个模块，从 C++ 的角度来看，其实都是一个类的框架。基类用作接口，一个派生类则是一个具体的模型。OpenFOAM 中的模块广泛使用 RTS 机制，因此 OpenFOAM 的求解器中，只需要设定模型的调用接口。算例具体使用的是那个模型，则是在运行时才确定的，而且可以在算例运行过程中修改选中的模型。下面通过一个 <a href="http://www.sourceflux.de/blog/run-time-type-selection-openfoam-selecting-types-based-type-name/" target="_blank" rel="external">source flux 博客</a> 提供的代码，来解读 RTS 机制的实现原理。<br>为了方便解读，这里将代码摘录如下，代码所有权归 <a href="http://www.sourceflux.de/blog/run-time-type-selection-openfoam-selecting-types-based-type-name/" target="_blank" rel="external">source flux 博客</a> 所有：</p>
@@ -105,7 +105,7 @@
     
       <category term="RTS" scheme="http://xiaopingqiu.github.io/tags/RTS/"/>
     
-      <category term="OpenFAOM" scheme="http://xiaopingqiu.github.io/categories/OpenFAOM/"/>
+      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/categories/OpenFOAM/"/>
     
   </entry>
   
@@ -114,7 +114,7 @@
     <link href="http://xiaopingqiu.github.io/2016/03/06/separationOfDeclarationAndDefiniton/"/>
     <id>http://xiaopingqiu.github.io/2016/03/06/separationOfDeclarationAndDefiniton/</id>
     <published>2016-03-06T12:59:44.000Z</published>
-    <updated>2016-03-06T13:31:04.891Z</updated>
+    <updated>2016-03-14T02:59:46.281Z</updated>
     <content type="html"><![CDATA[<p>OpenFOAM 中的类基本都遵循类的声明和定义分开在不同文件的规则。具体来说，一般是类的声明放在 “xxx.H”，类的成员函数的具体定义 “xxx.C”，如果有内联函数(inline)，则还有 “xxxI.H”，并且，”xxx.H” 文件的最后会有 <code>#include   &quot;xxxI.H&quot;</code>。这么做不仅是一种代码规范，真正的目的应该是为了防止重复定义的问题。本篇博文用一个简单的例子来说明这个问题。</p>
 <a id="more"></a>
 <p>为了防止混淆，先说明一下概念：</p>
@@ -198,8 +198,6 @@
       <category term="Code Explained" scheme="http://xiaopingqiu.github.io/tags/Code-Explained/"/>
     
       <category term="C++" scheme="http://xiaopingqiu.github.io/categories/C/"/>
-    
-      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/categories/C/OpenFOAM/"/>
     
   </entry>
   
@@ -303,7 +301,7 @@
     <link href="http://xiaopingqiu.github.io/2015/11/25/swak4Foam-alpha-water/"/>
     <id>http://xiaopingqiu.github.io/2015/11/25/swak4Foam-alpha-water/</id>
     <published>2015-11-25T12:33:10.000Z</published>
-    <updated>2015-11-25T12:46:34.806Z</updated>
+    <updated>2016-03-14T03:00:46.003Z</updated>
     <content type="html"><![CDATA[<p>swak4Foam 的 <code>groovyBC</code> 边界条件提供了一种很灵活的用表达式定义边界条件的方法。但是，从 OpenFOAM-2.3 开始，两相流求解器如 <code>interFoam</code> 和 <code>twoPhaseEulerFoam</code> 开始采用类似于 <code>alpha.water</code> 的场，这种场名默认情况下 <code>groovyBC</code> 是无法正确识别的，因为 <code>.</code> 在 swak4Foam 表达式中有特殊的作用。<br>所幸的是，开发人员也早就意识到这个问题了，并给出了解决方案，那就是用 <code>aliases</code>。这个东西真是不知道就很难，知道了就很简单，下面举一个我实际用过的例子：</p>
 <figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">solid_inlet_left</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="title">type</span>               groovyBC;</span><br><span class="line">        <span class="title">valueExpression</span>    <span class="string">"-inVel*normal()"</span></span><br><span class="line">        value              uniform (<span class="number">0</span> <span class="number">0</span> <span class="number">0</span>);</span><br><span class="line">        <span class="title">variables</span> (</span><br><span class="line">            <span class="string">"A=sum(area());"</span></span><br><span class="line">            <span class="string">"outFlow&#123;outlet_left&#125;=sum(Uparticles&amp;normal()*area()*alphaparticles);"</span></span><br><span class="line">            <span class="string">"myFlow=outFlow/alphaparticles;"</span></span><br><span class="line">            <span class="string">"inVel=myFlow/A;"</span></span><br><span class="line">            );</span><br><span class="line">        <span class="title">aliases</span> &#123;</span><br><span class="line">            <span class="title">Uparticles</span>            U.particles;</span><br><span class="line">            <span class="title">alphaparticles</span>        alpha.particles;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
 <p>我想我应该不用再解释什么。</p>
@@ -319,9 +317,7 @@
     
       <category term="groovyBC" scheme="http://xiaopingqiu.github.io/tags/groovyBC/"/>
     
-      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/categories/OpenFOAM/"/>
-    
-      <category term="swak4Foam" scheme="http://xiaopingqiu.github.io/categories/OpenFOAM/swak4Foam/"/>
+      <category term="swak4Foam" scheme="http://xiaopingqiu.github.io/categories/swak4Foam/"/>
     
   </entry>
   

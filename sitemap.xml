@@ -2,6 +2,21 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://xiaopingqiu.github.io/2015/11/25/swak4Foam-alpha-water/</loc>
+    <lastmod>2016-03-14T03:00:46.003Z</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://xiaopingqiu.github.io/2016/03/12/RTS1/</loc>
+    <lastmod>2016-03-14T03:00:20.798Z</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://xiaopingqiu.github.io/2016/03/06/separationOfDeclarationAndDefiniton/</loc>
+    <lastmod>2016-03-14T02:59:46.281Z</lastmod>
+  </url>
+  
+  <url>
     <loc>http://xiaopingqiu.github.io/2016/03/12/RTS2/</loc>
     <lastmod>2016-03-12T08:21:00.646Z</lastmod>
   </url>
@@ -12,18 +27,8 @@
   </url>
   
   <url>
-    <loc>http://xiaopingqiu.github.io/2016/03/12/RTS1/</loc>
-    <lastmod>2016-03-12T08:09:54.775Z</lastmod>
-  </url>
-  
-  <url>
     <loc>http://xiaopingqiu.github.io/2016/03/06/OpenFOAM-singlePhase-turbulenceModel2/</loc>
     <lastmod>2016-03-06T13:35:35.300Z</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://xiaopingqiu.github.io/2016/03/06/separationOfDeclarationAndDefiniton/</loc>
-    <lastmod>2016-03-06T13:31:04.891Z</lastmod>
   </url>
   
   <url>
@@ -44,11 +49,6 @@
   <url>
     <loc>http://xiaopingqiu.github.io/2015/09/19/kineticTheoryModelSubModels/</loc>
     <lastmod>2015-11-26T13:38:11.789Z</lastmod>
-  </url>
-  
-  <url>
-    <loc>http://xiaopingqiu.github.io/2015/11/25/swak4Foam-alpha-water/</loc>
-    <lastmod>2015-11-25T12:46:34.806Z</lastmod>
   </url>
   
   <url>
