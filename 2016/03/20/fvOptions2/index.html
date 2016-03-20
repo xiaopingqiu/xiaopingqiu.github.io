@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>fvOptions 之 semiImplicitSource | Giskard&#39;s CFD Learning Tricks</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="上篇浅析了 fvOptions 框架的结构，这篇来看一个具体的源项类： semiImplicitSource 。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="fvOptions 之 semiImplicitSource">
+<meta property="og:url" content="http://xiaopingqiu.github.io/2016/03/20/fvOptions2/index.html">
+<meta property="og:site_name" content="Giskard's CFD Learning Tricks">
+<meta property="og:description" content="上篇浅析了 fvOptions 框架的结构，这篇来看一个具体的源项类： semiImplicitSource 。">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="fvOptions 之 semiImplicitSource">
+<meta name="twitter:description" content="上篇浅析了 fvOptions 框架的结构，这篇来看一个具体的源项类： semiImplicitSource 。">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css" type="text/css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+##ga('create', '[object Object]', 'auto');
+ga('create', 'UA-62501686-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Giskard&#39;s CFD Learning Tricks</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">CFD and Scientific Computing</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/atom.xml">Rss</a>
+        
+          <a class="main-nav-link" href="/about">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="q" value="site:http://xiaopingqiu.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-fvOptions2" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2016/03/20/fvOptions2/" class="article-date">
+  <time datetime="2016-03-20T07:24:41.000Z" itemprop="datePublished">2016-03-20</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      fvOptions 之 semiImplicitSource
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>上篇浅析了 fvOptions 框架的结构，这篇来看一个具体的源项类： <code>semiImplicitSource</code> 。</p>
+<a id="more"></a>
+<p>先来看看这个源项代码中的关键部分。</p>
+<ul>
+<li>SemiImplicitSource.C<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br></pre></td><td class="code"><pre><span class="line"><span class="preprocessor">#<span class="keyword">include</span> "SemiImplicitSource.H"</span></span><br><span class="line"><span class="preprocessor">#<span class="keyword">include</span> "fvMesh.H"</span></span><br><span class="line"><span class="preprocessor">#<span class="keyword">include</span> "fvMatrices.H"</span></span><br><span class="line"><span class="preprocessor">#<span class="keyword">include</span> "DimensionedField.H"</span></span><br><span class="line"><span class="preprocessor">#<span class="keyword">include</span> "fvmSup.H"</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Type&gt;</span><br><span class="line"><span class="keyword">const</span> Foam::wordList Foam::fv::SemiImplicitSource&lt;Type&gt;::volumeModeTypeNames_</span><br><span class="line">(</span><br><span class="line">    IStringStream(<span class="string">"(absolute specific)"</span>)()  <span class="comment">// 初始化 volumeModeTypeNames_，这里有两种模式， `absolute` 和 `specific` ，具体含义下面会解释。 </span></span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Type&gt;</span><br><span class="line"><span class="keyword">typename</span> Foam::fv::SemiImplicitSource&lt;Type&gt;::volumeModeType</span><br><span class="line">Foam::fv::SemiImplicitSource&lt;Type&gt;::wordToVolumeModeType <span class="comment">// 将字符串转换成 volumeModeType</span></span><br><span class="line">(</span><br><span class="line">    <span class="keyword">const</span> word&amp; vmtName</span><br><span class="line">) <span class="keyword">const</span></span><br><span class="line">&#123;</span><br><span class="line">    forAll(volumeModeTypeNames_, i)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (vmtName == volumeModeTypeNames_[i])</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">return</span> volumeModeType(i);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    FatalErrorIn</span><br><span class="line">    (</span><br><span class="line">        <span class="string">"SemiImplicitSource&lt;Type&gt;::volumeModeType"</span></span><br><span class="line">        <span class="string">"SemiImplicitSource&lt;Type&gt;::wordToVolumeModeType(const word&amp;)"</span></span><br><span class="line">    )   &lt;&lt; <span class="string">"Unknown volumeMode type "</span> &lt;&lt; vmtName</span><br><span class="line">        &lt;&lt; <span class="string">". Valid volumeMode types are:"</span> &lt;&lt; nl &lt;&lt; volumeModeTypeNames_</span><br><span class="line">        &lt;&lt; <span class="built_in">exit</span>(FatalError);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> volumeModeType(<span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Type&gt;</span><br><span class="line">Foam::word Foam::fv::SemiImplicitSource&lt;Type&gt;::volumeModeTypeToWord</span><br><span class="line">(</span><br><span class="line">    <span class="keyword">const</span> volumeModeType&amp; vmtType</span><br><span class="line">) <span class="keyword">const</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (vmtType &gt; volumeModeTypeNames_.size())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">"UNKNOWN"</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> volumeModeTypeNames_[vmtType];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Type&gt;</span><br><span class="line"><span class="keyword">void</span> Foam::fv::SemiImplicitSource&lt;Type&gt;::setFieldData(<span class="keyword">const</span> dictionary&amp; dict)</span><br><span class="line">&#123;</span><br><span class="line">    fieldNames_.setSize(dict.toc().size());</span><br><span class="line">    injectionRate_.setSize(fieldNames_.size());</span><br><span class="line"></span><br><span class="line">    applied_.setSize(fieldNames_.size(), <span class="keyword">false</span>);</span><br><span class="line"></span><br><span class="line">    label i = <span class="number">0</span>;</span><br><span class="line">    forAllConstIter(dictionary, dict, iter)</span><br><span class="line">    &#123;</span><br><span class="line">        fieldNames_[i] = iter().keyword();</span><br><span class="line">        dict.lookup(iter().keyword()) &gt;&gt; injectionRate_[i];</span><br><span class="line">        i++;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Set volume normalisation</span></span><br><span class="line">    <span class="keyword">if</span> (volumeMode_ == vmAbsolute)</span><br><span class="line">    &#123;</span><br><span class="line">        VDash_ = V_;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Type&gt;</span><br><span class="line">Foam::fv::SemiImplicitSource&lt;Type&gt;::SemiImplicitSource</span><br><span class="line">(</span><br><span class="line">    <span class="keyword">const</span> word&amp; name,</span><br><span class="line">    <span class="keyword">const</span> word&amp; modelType,</span><br><span class="line">    <span class="keyword">const</span> dictionary&amp; dict,</span><br><span class="line">    <span class="keyword">const</span> fvMesh&amp; mesh</span><br><span class="line">)</span><br><span class="line">:</span><br><span class="line">    option(name, modelType, dict, mesh),</span><br><span class="line">    volumeMode_(vmAbsolute), volumeMode 初始值为 vmAbsolute，也就是字典里的 <span class="function">absolute</span><br><span class="line">    <span class="title">VDash_</span><span class="params">(1.0)</span>, <span class="comment">// VDash 初始值为 1.0</span></span><br><span class="line">    <span class="title">injectionRate_</span><span class="params">()</span></span><br><span class="line"></span>&#123;</span><br><span class="line">    read(dict);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Type&gt;</span><br><span class="line"><span class="keyword">void</span> Foam::fv::SemiImplicitSource&lt;Type&gt;::addSup <span class="comment">// 这个是最关键的函数，求解器里的 fvOptions(T)，最终就是转换为调用这个函数。</span></span><br><span class="line">(</span><br><span class="line">    fvMatrix&lt;Type&gt;&amp; eqn,</span><br><span class="line">    <span class="keyword">const</span> label fieldI</span><br><span class="line">)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (debug)</span><br><span class="line">    &#123;</span><br><span class="line">        Info&lt;&lt; <span class="string">"SemiImplicitSource&lt;"</span> &lt;&lt; pTraits&lt;Type&gt;::typeName</span><br><span class="line">            &lt;&lt; <span class="string">"&gt;::addSup for source "</span> &lt;&lt; name_ &lt;&lt; endl;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// psi 表示方程中的未知量，比如，eqn(fvm::ddt(T))，则psi其实就相当于T，其量纲也与T的量纲一致。</span></span><br><span class="line">    <span class="keyword">const</span> GeometricField&lt;Type, fvPatchField, volMesh&gt;&amp; psi = eqn.psi();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建一个场 Su，其量纲为方程eqn的量纲除以体积的量纲。注意，经测试，假设eqn为（fvm::ddt(T)），则eqn的量纲为k.m^3/s。</span></span><br><span class="line">    DimensionedField&lt;Type, volMesh&gt; Su</span><br><span class="line">    (</span><br><span class="line">        IOobject</span><br><span class="line">        (</span><br><span class="line">            name_ + fieldNames_[fieldI] + <span class="string">"Su"</span>,</span><br><span class="line">            mesh_.time().timeName(),</span><br><span class="line">            mesh_,</span><br><span class="line">            IOobject::NO_READ,</span><br><span class="line">            IOobject::NO_WRITE</span><br><span class="line">        ),</span><br><span class="line">        mesh_,</span><br><span class="line">        dimensioned&lt;Type&gt;</span><br><span class="line">        (</span><br><span class="line">            <span class="string">"zero"</span>,</span><br><span class="line">            eqn.dimensions()/dimVolume,</span><br><span class="line">            pTraits&lt;Type&gt;::zero</span><br><span class="line">        ),</span><br><span class="line">        <span class="keyword">false</span></span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 这一句的意思是，将属于cells_这个集合的网格的Su赋值为fvoptions里所设置的第一个参数的值除以体积VDash。这里的VDash,如果模式为absolute，则值为cells_这个集合的网格体积之和，如果模式为specific，则其值为1. </span></span><br><span class="line">    <span class="comment">// UUIndirectList&lt;Type&gt;(Su, cells_)这一句是利用Su和cells为参数，构建一个UUIndirectList类的临时对象，并调用这个类的重载的“=”操作符对Su进行重新赋值。</span></span><br><span class="line">    </span><br><span class="line">    UIndirectList&lt;Type&gt;(Su, cells_) = injectionRate_[fieldI].first()/VDash_;</span><br><span class="line"></span><br><span class="line">    DimensionedField&lt;scalar, volMesh&gt; Sp</span><br><span class="line">    (</span><br><span class="line">        IOobject</span><br><span class="line">        (</span><br><span class="line">            name_ + fieldNames_[fieldI] + <span class="string">"Sp"</span>,</span><br><span class="line">            mesh_.time().timeName(),</span><br><span class="line">            mesh_,</span><br><span class="line">            IOobject::NO_READ,</span><br><span class="line">            IOobject::NO_WRITE</span><br><span class="line">        ),</span><br><span class="line">        mesh_,</span><br><span class="line">        dimensioned&lt;scalar&gt;</span><br><span class="line">        (</span><br><span class="line">            <span class="string">"zero"</span>,</span><br><span class="line">            Su.dimensions()/psi.dimensions(),</span><br><span class="line">            <span class="number">0.0</span></span><br><span class="line">        ),</span><br><span class="line">        <span class="keyword">false</span></span><br><span class="line">    );</span><br><span class="line">    </span><br><span class="line">    UIndirectList&lt;scalar&gt;(Sp, cells_) = injectionRate_[fieldI].second()/VDash_;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// fvMatrix&lt;Type&gt; 类中对“+=”操作符进行了重载，所以，eqn与Su的相加，相当于eqn+Su*mesh.V()，要不然eqn与Su的量纲不一致。</span></span><br><span class="line">    eqn += Su + fvm::SuSp(Sp, psi);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>下面用一个例子来说明 <code>semiImplicitSource</code> 的作用。前提到 <code>scalarTransportFoam</code> 是使用 fvOptions 的一个最简单的求解器，这里对该求解器进一步简化，只保留瞬变项，对流和扩散项都删去，来验证 <code>semiImplicitSource</code> 的作用。<br>修改之后的 <code>TEqn</code> 为<br><figure class="highlight lisp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">tmp TEqn</span><br><span class="line"><span class="list">(</span><br><span class="line">    <span class="keyword">fvm</span>:<span class="keyword">:ddt</span><span class="list">(<span class="keyword">T</span>)</span>  == fvOptions<span class="list">(<span class="keyword">T</span>)</span></span><br><span class="line">)</span><span class="comment">;</span></span><br></pre></td></tr></table></figure></p>
+<p>然后，<code>fvOptions</code> 词典文件的设置如下：<br><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">firstHeatSource</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="title">type</span> scalarSemiImplicitSource;</span><br><span class="line">    <span class="title">active</span>          <span class="built_in">true</span>;</span><br><span class="line">    <span class="title">selectionMode</span>   cellZone;</span><br><span class="line">    <span class="title">cellZone</span>        boxSourceZone;</span><br><span class="line">    <span class="title">scalarSemiImplicitSourceCoeffs</span> </span><br><span class="line">    &#123;</span><br><span class="line">        <span class="title">volumeMode</span> absolute;</span><br><span class="line">        <span class="title">injectionRateSuSp</span> </span><br><span class="line">        &#123;</span><br><span class="line">            <span class="title">T</span> (<span class="number">0</span>.<span class="number">05</span> <span class="number">0</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>上述设置，相当于求解如下方程<br>$$<br>\frac{\partial T}{\partial t}=S_u + S_p\cdot T<br>$$<br>其中 $S_u=0.05, S_p = 0$ 。<br>反观上面对代码的分析，可知对于当前的设置，$S_u$ 的量纲为 <code>TEqn</code> 的量纲除以体积量纲，$S_p$ 的量为 $S_u$ 量纲除以 <code>T</code> 的量纲，这与上面给出的方程是一致的。<br>但是，要注意， <code>SemiImplicitSource</code> 有两个模式：absolute 和 specific，区别在于代码里的 <code>VDash</code> 的取值不一样。对于 absolute 模式，<code>VDash = V</code>，即所选的 cellZone 的体积；对于 specific 模式，<code>VDash = 1.0</code>。而代码里的 <code>Su</code> 和 <code>Sp</code> 的值都是用在<code>fvOptions</code> 词典文件设置的值除以 <code>VDash</code> 。<br>所以，确切地说，求解的应该是如下积分方程：<br>$$<br>\int_V \frac{\partial T}{\partial t} dV - \int_V \nabla \cdot (D_T \nabla T) dV = \int_V (\frac{S_u}{V_{Dash}}+\frac{S_p}{V_{Dash}}T )dV<br>$$<br>其中 $V_{Dash}$ 是选定的 cellZone 的体积。<br>为了验证以上的推演，作了如下两个测试：</p>
+<ul>
+<li>源项参数设置为<code>T (0.01 0)</code>，源项作用的区域为一个体积为$V_{Dash}=0.001$ 的 cellZone，为了消除热量传递，设置 $D_T = 0$，初始整个区域的 T 均为0， 模拟时间为1 s。<br>按照上述的推演，如果是 <code>absolute</code> 模式，最终 1 s 时选定的 cellZone 的温度将是 $T=t\cdot \frac{S_u}{V_{Dash}}=1s\cdot\frac{0.01 k/s}{0.001}=10k$；如果是 <code>specific</code> 模式，那么最终1 s 时选定的 cellZone 的温度将是 $T=1s\cdot\frac{0.01 k/s}{1.0}=0.01k$。以上结果在测试算例中得到了证实。</li>
+<li>源项参数设置为<code>T (1.0 2.0)</code>，同样设置 $D_T = 0$。这种情况下，可以先求微分方程<br>$$\frac{\partial T}{\partial t}=x+yT$$<br>的解，经简单计算得到<br>$$T=\frac{e^{yt}\cdot e^{yc}-x}{y}$$<br>$c$ 为任意常数。<br>若 $T|\,_{t=0}=0k$，则可以得到定解为<br>$$T=\frac{e^{yt}\cdot x-x}{y}$$<br>若使用<code>specific</code> 模式，则根据当前的设置得到1 s时的解为<br>$$T=\frac{e^{2\cdot 1}\cdot 1 -1}{2}=3.194528 k$$<br>算例测试结果为：</li>
+<li>时间离散格式:Euler，$\Delta T=0.001s$，$T=3.20193k$；</li>
+<li>时间离散格式：Euler，$\Delta T=0.0001s$，$T=3.19527k$，可见减小时间步后结果与解析解吻合度提高了很多。</li>
+<li>时间离散格式：CrankNicolson，$\Delta T=0.001s$，$T=3.19454k$。可见用高阶的时间离散格式，在同样时间步下能得到误差更小的结果。</li>
+</ul>
+<p>同样，如果用<code>absolute</code> 模式，且源项设置为 <code>T (0.001 0.002)</code> ，应该能得到一样的结果，实际上算例测试正是如此。由此可以认为推演得到了证实。</p>
+<p>至此，<code>SemiImplicitSource</code> 这个源项的核心部分就算是明了了。可是，现在测试的是非常简单的情形，如果在求解多个方程，且有多个方程里都加入了源项的情况下，该怎么给不同的方程设置不一样的源项呢？要解决这个问题，需要先理解清楚 <code>fvOptions</code> 的调用过程。</p>
+<h5 id="fvOptions_源项的调用过程">fvOptions 源项的调用过程</h5><p>下面至下而上地来看看 fvOptions 的调用过程。</p>
+<p><code>TEqn</code>里，有一个调用 <code>fvOptions</code> 的语句： <code>fvOptions(T)</code>，上一篇讲过， <code>fvOptions</code> 的定义为<br><figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="rule"><span class="attribute">fv</span>:<span class="value">:IOoptionList <span class="function">fvOptions</span>(mesh)</span></span>;</span><br></pre></td></tr></table></figure></p>
+<p>这就很明显了：建立一个 <code>IOoptionList</code> 类的对象 <code>fvOptions</code>。由此可知，求解器里的 <code>fvOptions</code> 是一个对象的名字，因此 <code>fvOptions(T)</code> 这种用法也只可能是对象调用类中重载的 <code>()</code> 运算符了。从前面的分析，可知 <code>IOoptionList</code> 本身很简单，仅是作为一个接口来用的，所以 <code>()</code> 与算符的重载要去其父类中去找。 <code>IOoptionList</code> 的作用是，从 “constant”（优先）或者 “system” 目录读取 <code>fvOptions</code> 文件，并作为 <code>IOobject</code> 类的对象传递给父类 <code>optionList</code> （从构造函数的成员初始化列表 <code>optionList(mesh, *this)</code> ）</p>
+<hr>
+<p>接下来，就该进入 <code>optionList</code> 类了。这个类里，所有可能出现在求解器代码里函数都有了，包括 <code>correct</code> ， <code>constrain</code> ， <code>makeRelative</code> ， <code>makeAbsolute</code> ， <code>relative</code> 以及 <code>()</code> 运算符的重载。但是，注意这里并没有具体的代码实现，而是通过类似<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">forAll(*<span class="keyword">this</span>, i)</span><br><span class="line">&#123;</span><br><span class="line">   <span class="keyword">this</span>-&gt;<span class="keyword">operator</span>[](i).makeAbsolute(phi);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>调用其他地方的函数。 <code>optionList</code> 的一个重要使命是，统计 <code>fvOptions</code> 文件里定义了多少个源项，并将每一个源项都作为一个储存起来，然后再根据词典的内容创建特定的源项。核心在于 <code>reset</code> 函数。为了说明这一点，先从构造函数看起<br><figure class="highlight lisp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">reset<span class="list">(<span class="keyword">optionsDict</span><span class="list">(<span class="keyword">dict</span>)</span>)</span><span class="comment">;</span></span><br></pre></td></tr></table></figure></p>
+<p>可见构造函数里调用了 <code>reset</code> 函数，并且用 <code>optionsDict</code> 函数的返回值作为 <code>reset</code> 函数的参数。前文讲到， <code>IOoptionList</code> 类将 <code>fvOptions</code> 文件的内容以 <code>IOobject</code> 的形式传递给父类 <code>optionList</code>，所以，这里的参数 <code>dict</code> 可以理解为就是<code>fvOptions</code> 文件的内容。<code>optionsDict</code> 函数的代码如下：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> Foam::dictionary&amp; Foam::fv::optionList::optionsDict</span><br><span class="line">(</span><br><span class="line">    <span class="keyword">const</span> dictionary&amp; dict</span><br><span class="line">) <span class="keyword">const</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (dict.found(<span class="string">"options"</span>))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> dict.subDict(<span class="string">"options"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> dict;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>可见，这个函数去 <code>fvOptions</code> 文件里查找关键字 <code>options</code>，如果找到，就将 <code>options</code> 关键字对应的 subDict 内容返回，否则直接返回 <code>fvOptions</code> 文件的内容。举例说，形如<br><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">firstHeatSource</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="title">type</span> scalarSemiImplicitSource;</span><br><span class="line">    <span class="title">active</span>          <span class="built_in">true</span>;</span><br><span class="line">    <span class="title">selectionMode</span>   cellZone;</span><br><span class="line">    <span class="title">cellZone</span>        boxSourceZone;</span><br><span class="line">    <span class="title">scalarSemiImplicitSourceCoeffs</span> </span><br><span class="line">    &#123;</span><br><span class="line">        <span class="title">volumeMode</span> absolute;</span><br><span class="line">        <span class="title">injectionRateSuSp</span> </span><br><span class="line">        &#123;</span><br><span class="line">            <span class="title">T</span> (<span class="number">0</span>.<span class="number">001</span> <span class="number">0</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>的，直接返回，因为这就构成了一个 dictionary；而形如<br><figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">options</span><br><span class="line">&#123;</span><br><span class="line">    massSource1</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">type</span>            scalarSemiImplicitSource;</span><br><span class="line">        <span class="label">$injector1</span>;</span><br><span class="line"></span><br><span class="line">        scalarSemiImplicitSourceCoeffs</span><br><span class="line">        &#123;</span><br><span class="line">            volumeMode      absolute;</span><br><span class="line">            injectionRateSuSp</span><br><span class="line">            &#123;</span><br><span class="line">                thermo:rho.air     (1e-3 0); <span class="comment">// kg/s</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    momentumSource1</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">type</span>            vectorSemiImplicitSource;</span><br><span class="line">        <span class="label">$injector1</span>;</span><br><span class="line"></span><br><span class="line">        vectorSemiImplicitSourceCoeffs</span><br><span class="line">        &#123;</span><br><span class="line">            volumeMode      absolute;</span><br><span class="line">            injectionRateSuSp</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">U</span>.air           ((0 -1e-2 0) 0); <span class="comment">// kg*m/s^2</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    energySource1</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">type</span>            scalarSemiImplicitSource;</span><br><span class="line">        <span class="label">$injector1</span>;</span><br><span class="line"></span><br><span class="line">        scalarSemiImplicitSourceCoeffs</span><br><span class="line">        &#123;</span><br><span class="line">            volumeMode      absolute;</span><br><span class="line">            injectionRateSuSp</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">e</span>.air      (500 0); <span class="comment">// kg*m^2/s^3</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>的，则将options下的每一个 subDict 作为 dictionary 返回。注意，这里的 <code>dictionary</code> 类可以理解为一个容器，每一个<br><figure class="highlight lasso"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">xxxxx</span><br><span class="line">&#123;</span><br><span class="line">    <span class="attribute">...</span><span class="attribute">...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>都可以作为容器里的一个成员，容器的容量（size）等于总的成员数，每一个成员，其实就对应一个源项。<br>于是，我们知道 <code>optionsDict</code> 返回了一个有一定数目成员的容器。再来看 <code>reset</code> 函数<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> Foam::fv::optionList::reset(<span class="keyword">const</span> dictionary&amp; dict)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// Count number of active fvOptions</span></span><br><span class="line">    label count = <span class="number">0</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 遍历 dict 容器，确定其成员的数目，即确定定义了几个源项。</span></span><br><span class="line">    forAllConstIter(dictionary, dict, iter) </span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (iter().isDict())</span><br><span class="line">        &#123;</span><br><span class="line">            count++;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>-&gt;setSize(count); <span class="comment">// setSize 是 PtrList 类的成员，顾名思义，PtrList 是一个 List。PtrList&lt;option&gt; 类的成员是 options 类的对象。</span></span><br><span class="line">    </span><br><span class="line">    label i = <span class="number">0</span>;</span><br><span class="line">    <span class="comment">// 遍历 dict 容器，根据每一个 dict 容器的成员来建立对应的 option 类的对象，这通过调用 option 类的 New 函数来实现。这是使用 RuntimeSelection 机制的类的很常规的做法。</span></span><br><span class="line">    forAllConstIter(dictionary, dict, iter)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (iter().isDict())</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">const</span> word&amp; name = iter().keyword(); <span class="comment">// keyword 返回的是类似 energySource1 这样的，是这个源项的一个名字</span></span><br><span class="line">            <span class="keyword">const</span> dictionary&amp; sourceDict = iter().dict();</span><br><span class="line"></span><br><span class="line">            <span class="keyword">this</span>-&gt;<span class="built_in">set</span> <span class="comment">// set 函数，肯定毫无疑问也是从 PtrList 类中继承而来的</span></span><br><span class="line">            (</span><br><span class="line">                i++,</span><br><span class="line">                option::New(name, sourceDict, mesh_) <span class="comment">// 调用 option 类的 New 函数</span></span><br><span class="line">            );</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>注意，最重要的是， <code>reset</code> 里实现了对父类 <code>PtrList&lt;option&gt;</code> 的初始化。<br>理解了这些，再来看 <code>correct</code> 以及 <code>()</code> 操作符重载中的代码，就好理解了：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 本来 *this 应该是 optionList 类的指针，这里先作个隐式转换，转成 PtrList&lt;option&gt; 类的指针。前面reset函数已经对 PtrList&lt;option&gt; 进行了初始化，使其读入了每一个源项。所以，这里的循环就是对每一个源项进行循环，然后调用对应的函数。operator[]肯定也是在PtrList类中定义的，i 指的是 PtrList 类的第 i 个成员，这里 PtrList 的每一个成员都是一个 option 类的对象，所以，makeAbsolute 函数是定义在 option 类中的函数。</span></span><br><span class="line">forAll(*<span class="keyword">this</span>, i)</span><br><span class="line">&#123;</span><br><span class="line">   <span class="keyword">this</span>-&gt;<span class="keyword">operator</span>[](i).makeAbsolute(phi);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>根据上面的理解，一个很自然的推论是，定义在 <code>fvOptions</code> 文件中的源项，其作用是叠加的。也就是说，上述的 <code>fvOptions(T)</code>，对定义在 <code>fvOptions</code> 文件中的每一个源项，都会调用一次。经测试，<br><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"> <span class="title">firstHeatSource</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="title">type</span> scalarSemiImplicitSource;</span><br><span class="line">    <span class="title">active</span>          <span class="built_in">true</span>;</span><br><span class="line">    <span class="title">selectionMode</span>   cellZone;</span><br><span class="line">    <span class="title">cellZone</span>        boxSourceZone;</span><br><span class="line">    <span class="title">scalarSemiImplicitSourceCoeffs</span> </span><br><span class="line">    &#123;</span><br><span class="line">        <span class="title">volumeMode</span> absolute;</span><br><span class="line">        <span class="title">injectionRateSuSp</span> </span><br><span class="line">        &#123;</span><br><span class="line">            <span class="title">T</span> (<span class="number">0</span>.<span class="number">001</span> <span class="number">0</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">        </span><br><span class="line"><span class="title">secondHeatSource</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="title">type</span> scalarSemiImplicitSource;</span><br><span class="line">    <span class="title">active</span>          <span class="built_in">true</span>;</span><br><span class="line">    <span class="title">selectionMode</span>   cellZone;</span><br><span class="line">    <span class="title">cellZone</span>        boxSourceZone;</span><br><span class="line">    <span class="title">scalarSemiImplicitSourceCoeffs</span> </span><br><span class="line">    &#123;</span><br><span class="line">        <span class="title">volumeMode</span> absolute;</span><br><span class="line">        <span class="title">injectionRateSuSp</span> </span><br><span class="line">        &#123;</span><br><span class="line">            <span class="title">T</span> (<span class="number">0</span>.<span class="number">0</span> <span class="number">0</span>.<span class="number">002</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>与<br><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">secondHeatSource</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="title">type</span> scalarSemiImplicitSource;</span><br><span class="line">    <span class="title">active</span>          <span class="built_in">true</span>;</span><br><span class="line">    <span class="title">selectionMode</span>   cellZone;</span><br><span class="line">    <span class="title">cellZone</span>        boxSourceZone;</span><br><span class="line">    <span class="title">scalarSemiImplicitSourceCoeffs</span> </span><br><span class="line">    &#123;</span><br><span class="line">        <span class="title">volumeMode</span> absolute;</span><br><span class="line">        <span class="title">injectionRateSuSp</span> </span><br><span class="line">        &#123;</span><br><span class="line">            <span class="title">T</span> (<span class="number">0</span>.<span class="number">0001</span> <span class="number">0</span>.<span class="number">002</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>的作用是一样的，这证实了源项的作用确实是叠加的。<br>此外，还要注意一点，那就是 <code>optionList</code> 类中重载的 <code>()</code> 运算符，其实是在调用 option 类中的 <code>addSup</code> 函数，并且其返回值是 fvMatrix 类的对象。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Type&gt;</span><br><span class="line">Foam::tmp&lt;Foam::fvMatrix&lt;Type&gt; &gt; Foam::fv::optionList::<span class="keyword">operator</span>()</span><br><span class="line">(</span><br><span class="line">    GeometricField&lt;Type, fvPatchField, volMesh&gt;&amp; fld,</span><br><span class="line">    <span class="keyword">const</span> word&amp; fieldName</span><br><span class="line">)</span><br><span class="line">&#123;</span><br><span class="line">    checkApplied();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> dimensionSet ds = fld.dimensions()/dimTime*dimVolume;</span><br><span class="line"></span><br><span class="line">    tmp&lt;fvMatrix&lt;Type&gt; &gt; tmtx(<span class="keyword">new</span> fvMatrix&lt;Type&gt;(fld, ds));</span><br><span class="line">    fvMatrix&lt;Type&gt;&amp; mtx = tmtx();</span><br><span class="line"></span><br><span class="line">    forAll(*<span class="keyword">this</span>, i)</span><br><span class="line">    &#123;</span><br><span class="line">        option&amp; source = <span class="keyword">this</span>-&gt;<span class="keyword">operator</span>[](i);</span><br><span class="line"></span><br><span class="line">        label fieldI = source.applyToField(fieldName);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (fieldI != -<span class="number">1</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            source.setApplied(fieldI);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (source.isActive())</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">if</span> (debug)</span><br><span class="line">                &#123;</span><br><span class="line">                    Info&lt;&lt; <span class="string">"Applying source "</span> &lt;&lt; source.name() &lt;&lt; <span class="string">" to field "</span></span><br><span class="line">                        &lt;&lt; fieldName &lt;&lt; endl;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                source.addSup(mtx, fieldI);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> tmtx;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<hr>
+<p>理解了以上这些，就可以进入 <code>option</code> 类了。<br>option 类是所有具体的源项类的基类，这个类里处理了所有源项都需要处理的部分，比如确定起始时间，选择源项作用的区域，这些都是在构造函数里完成的，主要是通过调用 <code>setSelection</code> 和 <code>setCellSet</code> 两个函数。这里需要注意的是数据成员 <code>cells_</code>， <code>V_</code>  以及 <code>fieldNames_</code>，分别定义源项作用区域的网格id （这里源项的作用区域是以 cell 为基础来指定的，即便是 points 模式，实际上源项作用的区域仍然是 points 所在的 cell。）， 选定区域的体积以及需要开启源项作用的场名（有时候，求解器的多个 Eqn 里有fvOptions，但是实际算例中只想针对特定的场开启源项，这可以通过指定 fieldNames_ 来实现）。</p>
+<p>注意 fieldNames 在 <code>option</code> 类中并没有初始化，需要在具体的源项类中指定。此外，<code>makeRelative</code> 等在求解器中实际调用的函数，在 <code>option</code> 类中也并没有进行具体的实现（但不是声明为纯虚函数，仅仅是函数体为空的而已，这里的结果不适合用纯虚函数）</p>
+<p>以 <code>SemiImplicitSource</code> 为例，主要去看 <code>addSup</code> 函数，这个函数，关键的一个参数是<code>fieldI</code>，这个参数，指的是fieldName<em>这个List的 <code>applyToField</code> 函数的返回值，用来判断一个field是否要启用源项。fieldName</em>这个List，是在  <code>SemiImplicitSource</code> 类的 <code>setFieldData</code> 函数中赋值的，通过读取 <code>SemiImplicitSourceCoeffs</code> 中的参数来决定。但是这个fieldName_ 的确定方法根据不同的类有不同的做法，要具体分析。<br>到此，<code>fvOpptions</code> 源项的调用途径就打通了，接下来可以继续具体分析特定的源项了。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://xiaopingqiu.github.io/2016/03/20/fvOptions2/" data-id="cim0detv1001xskmbjuuy62dk" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/fvOptions/">fvOptions</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2016/03/20/fvOptions1/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">fvOptions 浅析</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+<section id="comments">
+  <!-- 多说评论框 start -->
+  <div class="ds-thread" data-thread-key="post-fvOptions2" data-title="fvOptions 之 semiImplicitSource" data-url="http://xiaopingqiu.github.io/2016/03/20/fvOptions2/"></div>
+  <!-- 多说评论框 end -->
+  <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+  <script type="text/javascript">
+  var duoshuoQuery = {short_name:"xiaopingqiu"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+  <!-- 多说公共JS代码 end -->
+</section>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/">OpenFOAM</a><span class="category-list-count">21</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Paraview/">Paraview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/swak4Foam/">swak4Foam</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/test/">test</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/vim/">vim</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Boundary-conditions/">Boundary conditions</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/">C++</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CentOS/">CentOS</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Explained/">Code Explained</a><span class="tag-list-count">15</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a><span class="tag-list-count">19</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Postprocessing/">Postprocessing</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Preprocessing/">Preprocessing</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RTS/">RTS</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TIL/">TIL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/fvOptions/">fvOptions</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/groovyBC/">groovyBC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/paraview/">paraview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/test/">test</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/turbulence-model/">turbulence model</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vim/">vim</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Boundary-conditions/" style="font-size: 10px;">Boundary conditions</a><a href="/tags/C/" style="font-size: 12.5px;">C++</a><a href="/tags/CentOS/" style="font-size: 10px;">CentOS</a><a href="/tags/Code-Explained/" style="font-size: 17.5px;">Code Explained</a><a href="/tags/OpenFOAM/" style="font-size: 20px;">OpenFOAM</a><a href="/tags/Postprocessing/" style="font-size: 15px;">Postprocessing</a><a href="/tags/Preprocessing/" style="font-size: 10px;">Preprocessing</a><a href="/tags/RTS/" style="font-size: 12.5px;">RTS</a><a href="/tags/TIL/" style="font-size: 10px;">TIL</a><a href="/tags/Windows/" style="font-size: 10px;">Windows</a><a href="/tags/fvOptions/" style="font-size: 12.5px;">fvOptions</a><a href="/tags/groovyBC/" style="font-size: 10px;">groovyBC</a><a href="/tags/paraview/" style="font-size: 10px;">paraview</a><a href="/tags/test/" style="font-size: 10px;">test</a><a href="/tags/turbulence-model/" style="font-size: 12.5px;">turbulence model</a><a href="/tags/vim/" style="font-size: 10px;">vim</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/12/">十二月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/11/">十一月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/10/">十月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/09/">九月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/08/">八月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">六月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a><span class="archive-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recents</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2016/03/20/fvOptions2/">fvOptions 之 semiImplicitSource</a>
+          </li>
+        
+          <li>
+            <a href="/2016/03/20/fvOptions1/">fvOptions 浅析</a>
+          </li>
+        
+          <li>
+            <a href="/2016/03/12/RTS2/">湍流模型中的 RTS 机制分析</a>
+          </li>
+        
+          <li>
+            <a href="/2016/03/12/RTS1/">OpenFOAM 中的 Run Time Selection 机制</a>
+          </li>
+        
+          <li>
+            <a href="/2016/03/06/separationOfDeclarationAndDefiniton/">为什么要将声明和定义分离</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2016 Giskard Q.<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+<script src="//dn-lbstatics.qbox.me/lbservice/busuanzi/2.0/busuanzi.mini.js"/></script>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/atom.xml" class="mobile-nav-link">Rss</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css" type="text/css">
+  <script src="/fancybox/jquery.fancybox.pack.js" type="text/javascript"></script>
+
+
+<script src="/js/script.js" type="text/javascript"></script>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-62501686-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+  </div>
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+</body>
+</html>
