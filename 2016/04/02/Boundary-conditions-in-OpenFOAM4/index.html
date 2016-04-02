@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>OpenFOAM 中的边界条件（四） | Giskard&#39;s CFD Learning Tricks</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="JohnsonJackson 边界条件本篇来看用于气固两相流模拟的 JohnsonJackson 边界条件。这组边界条件用于设定双流体模型中固相在壁面的速度和颗粒温度。根据 N. Reuge 2008, CES，壁面上的固相速度和颗粒温度可以表示为：其中，$u_m$ 指的是 m 相在壁面切向上的滑移速度。下面来看 OpenFOAM 中对这两个边界条件的实现">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenFOAM 中的边界条件（四）">
+<meta property="og:url" content="http://xiaopingqiu.github.io/2016/04/02/Boundary-conditions-in-OpenFOAM4/index.html">
+<meta property="og:site_name" content="Giskard's CFD Learning Tricks">
+<meta property="og:description" content="JohnsonJackson 边界条件本篇来看用于气固两相流模拟的 JohnsonJackson 边界条件。这组边界条件用于设定双流体模型中固相在壁面的速度和颗粒温度。根据 N. Reuge 2008, CES，壁面上的固相速度和颗粒温度可以表示为：其中，$u_m$ 指的是 m 相在壁面切向上的滑移速度。下面来看 OpenFOAM 中对这两个边界条件的实现">
+<meta property="og:image" content="/image/boundaryConditions/JJ.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="OpenFOAM 中的边界条件（四）">
+<meta name="twitter:description" content="JohnsonJackson 边界条件本篇来看用于气固两相流模拟的 JohnsonJackson 边界条件。这组边界条件用于设定双流体模型中固相在壁面的速度和颗粒温度。根据 N. Reuge 2008, CES，壁面上的固相速度和颗粒温度可以表示为：其中，$u_m$ 指的是 m 相在壁面切向上的滑移速度。下面来看 OpenFOAM 中对这两个边界条件的实现">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css" type="text/css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+##ga('create', '[object Object]', 'auto');
+ga('create', 'UA-62501686-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Giskard&#39;s CFD Learning Tricks</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">CFD and Scientific Computing</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/atom.xml">Rss</a>
+        
+          <a class="main-nav-link" href="/about">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="q" value="site:http://xiaopingqiu.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-Boundary-conditions-in-OpenFOAM4" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2016/04/02/Boundary-conditions-in-OpenFOAM4/" class="article-date">
+  <time datetime="2016-04-02T10:16:39.000Z" itemprop="datePublished">2016-04-02</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      OpenFOAM 中的边界条件（四）
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h4 id="JohnsonJackson_边界条件">JohnsonJackson 边界条件</h4><p>本篇来看用于气固两相流模拟的 JohnsonJackson 边界条件。这组边界条件用于设定双流体模型中固相在壁面的速度和颗粒温度。根据 <a href="http://www.sciencedirect.com/science/article/pii/S0009250908003904" target="_blank" rel="external">N. Reuge 2008, CES</a>，壁面上的固相速度和颗粒温度可以表示为：<br><img src="/image/boundaryConditions/JJ.png" alt="Alt text"><br>其中，$u_m$ 指的是 m 相在壁面切向上的滑移速度。<br>下面来看 OpenFOAM 中对这两个边界条件的实现</p>
+<a id="more"></a>
+<p>在看 JohnsonJackson 边界条件之前，先要看一下 <code>partialSlip</code> 边界。</p>
+<h5 id="partialSlip">partialSlip</h5><p><code>partialSlipFvPatchField</code> 继承自 <code>transformFvPatchField</code><br><figure class="highlight nimrod"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;class <span class="type">Type</span>&gt;</span><br><span class="line">class partialSlipFvPatchField</span><br><span class="line">:</span><br><span class="line">    public transformFvPatchField&lt;<span class="type">Type</span>&gt;</span><br><span class="line">&#123;</span><br><span class="line">    // <span class="type">Private</span> data</span><br><span class="line"></span><br><span class="line">        //- <span class="type">Fraction</span> (<span class="number">0</span>-<span class="number">1</span>) <span class="keyword">of</span> value used <span class="keyword">for</span> boundary condition</span><br><span class="line">        scalarField valueFraction_;</span><br><span class="line">        ......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>其定义了一个标量形式的 <code>valueFraction_</code> 。</p>
+<ul>
+<li>evaluate 函数<figure class="highlight lasso"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">template<span class="subst">&lt;</span>class <span class="keyword">Type</span><span class="subst">&gt;</span></span><br><span class="line"><span class="literal">void</span> Foam<span class="tag">::partialSlipFvPatchField</span><span class="subst">&lt;</span><span class="keyword">Type</span><span class="subst">&gt;</span><span class="tag">::evaluate</span></span><br><span class="line">(</span><br><span class="line">    const Pstream<span class="tag">::commsTypes</span></span><br><span class="line">)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="subst">!</span>this<span class="subst">-&gt;</span>updated())</span><br><span class="line">    &#123;</span><br><span class="line">        this<span class="subst">-&gt;</span>updateCoeffs();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    tmp<span class="subst">&lt;</span>vectorField<span class="subst">&gt;</span> nHat <span class="subst">=</span> this<span class="subst">-&gt;</span>patch()<span class="built_in">.</span>nf();</span><br><span class="line"></span><br><span class="line">    Field<span class="subst">&lt;</span><span class="keyword">Type</span><span class="subst">&gt;</span><span class="tag">::operator</span><span class="subst">=</span></span><br><span class="line">    (</span><br><span class="line">        (<span class="number">1.0</span> <span class="subst">-</span> valueFraction_)</span><br><span class="line">       <span class="subst">*</span>transform(I <span class="subst">-</span> sqr(nHat), this<span class="subst">-&gt;</span>patchInternalField())</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    transformFvPatchField<span class="subst">&lt;</span><span class="keyword">Type</span><span class="subst">&gt;</span><span class="tag">::evaluate</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>与 <code>basicSymmetry</code> 相比，只是多了一项 <code>1.0 - valueFraction_</code> 。当 <code>valueFraction_ = 0</code> 时，其与 <code>basicSymmetry</code> 是一样的。</p>
+<ul>
+<li>snGradTransformDiag<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">class</span> Type&gt;</span><br><span class="line">Foam::tmp&lt;Foam::Field&lt;Type&gt; &gt;</span><br><span class="line">Foam::partialSlipFvPatchField&lt;Type&gt;::snGradTransformDiag() <span class="keyword">const</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">const</span> vectorField <span class="title">nHat</span><span class="params">(<span class="keyword">this</span>-&gt;patch()</span>.<span class="title">nf</span><span class="params">()</span>)</span>;</span><br><span class="line">    <span class="function">vectorField <span class="title">diag</span><span class="params">(nHat.size()</span>)</span>;</span><br><span class="line"></span><br><span class="line">    diag.replace(<span class="built_in">vector</span>::X, mag(nHat.component(<span class="built_in">vector</span>::X)));</span><br><span class="line">    diag.replace(<span class="built_in">vector</span>::Y, mag(nHat.component(<span class="built_in">vector</span>::Y)));</span><br><span class="line">    diag.replace(<span class="built_in">vector</span>::Z, mag(nHat.component(<span class="built_in">vector</span>::Z)));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span></span><br><span class="line">        valueFraction_*pTraits&lt;Type&gt;::one</span><br><span class="line">      + (<span class="number">1.0</span> - valueFraction_)</span><br><span class="line">       *transformFieldMask&lt;Type&gt;(<span class="built_in">pow</span>&lt;<span class="built_in">vector</span>, pTraits&lt;Type&gt;::rank&gt;(diag));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>当 <code>valueFraction_ = 0</code> 时，这里的返回值与 <code>basicSymmetry</code> 也是一样的。</p>
+<ul>
+<li>snGrad<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">template&lt;class <span class="constant">Type&gt;</span></span><br><span class="line"><span class="constant">Foam:</span><span class="symbol">:tmp&lt;Foam</span><span class="symbol">:</span><span class="symbol">:Field&lt;Type&gt;</span> &gt;</span><br><span class="line"><span class="constant">Foam:</span><span class="symbol">:partialSlipFvPatchField&lt;Type&gt;</span><span class="symbol">:</span><span class="symbol">:snGrad</span>() const</span><br><span class="line">&#123;</span><br><span class="line">    tmp&lt;vectorField&gt; nHat = this-&gt;patch().nf();</span><br><span class="line">    const <span class="constant">Field&lt;Type&gt;</span> pif(this-&gt;patchInternalField());</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span></span><br><span class="line">    (</span><br><span class="line">        (<span class="number">1.0</span> - valueFraction<span class="constant">_</span>)*transform(<span class="constant">I </span>- sqr(nHat), pif) - pif</span><br><span class="line">    )*this-&gt;patch().deltaCoeffs();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p><a href="http://cfd.direct/openfoam/user-guide/boundaries/" target="_blank" rel="external">User guide</a> 里说这个边界是 <code>slip</code> 和 <code>zeroGradient</code> 的混合。 <code>valueFraction_ = 0</code> 时， <code>partialSlip</code> 与 <code>slip</code> 等价，这一点上面说明了。不过， 另一个极端，<code>valueFraction_ = 1</code> 时，却似乎不是跟 <code>zeroGradient</code> 等价。至少， <code>evaluate</code> 函数在<code>valueFraction_ = 1</code> 时与 <code>zeroGradient</code> 中的是不一样的。</p>
+<p>这里提到了 <code>slip</code> 这个边界，顺便再说一下， <code>slip</code> 边界继承自 <code>basicSymmetry</code> ，而且没有增加任何新的定义，所以， <code>slip</code> 与  <code>basicSymmetry</code> 的效果是等价的。对于标量， <code>slip</code> 与 <code>zeroGradient</code> 一样；对于矢量，以速度为例， <code>slip</code> 定义的边界上的速度值等于边界所属网格的速度的平行边界的分量，即<br>$$<br>u_p = u_C - (\mathbf{I}-\overrightarrow{n} \otimes \overrightarrow{n})\cdot u_C<br>$$</p>
+<h5 id="JohnsonJacksonParticleSlip">JohnsonJacksonParticleSlip</h5><p>这个边界条件继承自 <code>partialSlip</code>，在此基础上额外定义了镜面反弹系数 <code>specularityCoefficient_</code> 。代码的核心在 <code>updateCoeffs</code> 函数<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> Foam::JohnsonJacksonParticleSlipFvPatchVectorField::updateCoeffs()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (updated())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// lookup the fluid model and the phase</span></span><br><span class="line">    <span class="keyword">const</span> twoPhaseSystem&amp; fluid = db().lookupObject&lt;twoPhaseSystem&gt;</span><br><span class="line">    (</span><br><span class="line">        <span class="string">"phaseProperties"</span></span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> phaseModel&amp; phased</span><br><span class="line">    (</span><br><span class="line">        fluid.phase1().name() == dimensionedInternalField().group()</span><br><span class="line">      ? fluid.phase1()</span><br><span class="line">      : fluid.phase2()</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="comment">// lookup all the fields on this patch</span></span><br><span class="line">    <span class="keyword">const</span> fvPatchScalarField&amp; alpha</span><br><span class="line">    (</span><br><span class="line">        patch().lookupPatchField&lt;volScalarField, scalar&gt;</span><br><span class="line">        (</span><br><span class="line">            phased.volScalarField::name()</span><br><span class="line">        )</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> fvPatchScalarField&amp; gs0</span><br><span class="line">    (</span><br><span class="line">        patch().lookupPatchField&lt;volScalarField, scalar&gt;</span><br><span class="line">        (</span><br><span class="line">            IOobject::groupName(<span class="string">"gs0"</span>, phased.name())</span><br><span class="line">        )</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> scalarField nu</span><br><span class="line">    (</span><br><span class="line">        patch().lookupPatchField&lt;volScalarField, scalar&gt;</span><br><span class="line">        (</span><br><span class="line">            IOobject::groupName(<span class="string">"nut"</span>, phased.name())</span><br><span class="line">        )</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    word ThetaName(IOobject::groupName(<span class="string">"Theta"</span>, phased.name()));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> fvPatchScalarField&amp; Theta</span><br><span class="line">    (</span><br><span class="line">        db().foundObject&lt;volScalarField&gt;(ThetaName)</span><br><span class="line">      ? patch().lookupPatchField&lt;volScalarField, scalar&gt;(ThetaName)</span><br><span class="line">      : alpha</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="comment">// lookup the packed volume fraction</span></span><br><span class="line">    dimensionedScalar alphaMax</span><br><span class="line">    (</span><br><span class="line">        <span class="string">"alphaMax"</span>,</span><br><span class="line">        dimless,</span><br><span class="line">        db()</span><br><span class="line">       .lookupObject&lt;IOdictionary&gt;</span><br><span class="line">        (</span><br><span class="line">            IOobject::groupName(<span class="string">"turbulenceProperties"</span>, phased.name())</span><br><span class="line">        )</span><br><span class="line">       .subDict(<span class="string">"RAS"</span>)</span><br><span class="line">       .subDict(<span class="string">"kineticTheoryCoeffs"</span>)</span><br><span class="line">       .lookup(<span class="string">"alphaMax"</span>)</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="comment">// calculate the slip value fraction</span></span><br><span class="line">    scalarField c</span><br><span class="line">    (</span><br><span class="line">        constant::mathematical::pi</span><br><span class="line">       *alpha</span><br><span class="line">       *gs0</span><br><span class="line">       *specularityCoefficient_.value()</span><br><span class="line">       *sqrt(3.0*Theta)</span><br><span class="line">       /max(6.0*nu*alphaMax.value(), SMALL)</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>-&gt;valueFraction() = c/(c + patch().deltaCoeffs());</span><br><span class="line"></span><br><span class="line">    partialSlipFvPatchVectorField::updateCoeffs();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这个函数主要的功能是重定义了继承自 <code>partialSlip</code> 中的 <code>valueFraction_</code>。结合 <code>partialSlip</code> 中的定义，可以知道最终 <code>JohnsonJacksonParticleSlip</code> 定义的边界速度的值为<br>$$<br>u_m=(1-\frac{c}{c+\Delta}) \cdot (\mathbf{I}-\overrightarrow{n}\otimes\overrightarrow{n})\cdot u_c<br>$$<br>其中 $u_c$ 为邻近壁面网格的 m 相的速度。<code>c</code> 的定义为：<br>$$<br>c=\frac{\pi \varepsilon_m g_0 \phi\sqrt{3\Theta}}{6.0\nu_m\varepsilon_m^{max}}<br>$$<br>对照上述公式(34)，根据 $c$ 的定义，这里可以把公式(34)简写为<br>$$<br>\frac{\partial u_m}{\partial x}=-cu_m<br>$$<br>写成差分形式，即<br>$$<br>(u_m-u_{ct})\cdot \Delta=-cu_m<br>$$<br>于是得到<br>$$<br>u_m = \frac{\Delta}{c+\Delta}u_{ct}<br>$$<br>若 $u_{ct}$ 定义为邻近壁面网格的速度壁面切向分量，则公式(34)与代码是一致的。</p>
+<h5 id="JohnsonJacksonParticleTheta">JohnsonJacksonParticleTheta</h5><p>这个边界条件继承自 <code>mixed</code> ，此外新增了两个数据成员： <code>specularityCoefficient_</code> 和 <code>restitutionCoefficient_</code> 。核心的函数也是 <code>updateCoeffs</code> 。<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> Foam::JohnsonJacksonParticleThetaFvPatchScalarField::updateCoeffs()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (updated())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// lookup the fluid model and the phase</span></span><br><span class="line">    <span class="keyword">const</span> twoPhaseSystem&amp; fluid = db().lookupObject&lt;twoPhaseSystem&gt;</span><br><span class="line">    (</span><br><span class="line">        <span class="string">"phaseProperties"</span></span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> phaseModel&amp; phased</span><br><span class="line">    (</span><br><span class="line">        fluid.phase1().name() == dimensionedInternalField().group()</span><br><span class="line">      ? fluid.phase1()</span><br><span class="line">      : fluid.phase2()</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="comment">// lookup all the fields on this patch</span></span><br><span class="line">    <span class="keyword">const</span> fvPatchScalarField&amp; alpha</span><br><span class="line">    (</span><br><span class="line">        patch().lookupPatchField&lt;volScalarField, scalar&gt;</span><br><span class="line">        (</span><br><span class="line">            phased.volScalarField::name()</span><br><span class="line">        )</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> fvPatchVectorField&amp; U</span><br><span class="line">    (</span><br><span class="line">        patch().lookupPatchField&lt;volVectorField, vector&gt;</span><br><span class="line">        (</span><br><span class="line">            IOobject::groupName(<span class="string">"U"</span>, phased.name())</span><br><span class="line">        )</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> fvPatchScalarField&amp; gs0</span><br><span class="line">    (</span><br><span class="line">        patch().lookupPatchField&lt;volScalarField, scalar&gt;</span><br><span class="line">        (</span><br><span class="line">            IOobject::groupName(<span class="string">"gs0"</span>, phased.name())</span><br><span class="line">        )</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> fvPatchScalarField&amp; kappa</span><br><span class="line">    (</span><br><span class="line">        patch().lookupPatchField&lt;volScalarField, scalar&gt;</span><br><span class="line">        (</span><br><span class="line">            IOobject::groupName(<span class="string">"kappa"</span>, phased.name())</span><br><span class="line">        )</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> scalarField Theta(patchInternalField());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// lookup the packed volume fraction</span></span><br><span class="line">    dimensionedScalar alphaMax</span><br><span class="line">    (</span><br><span class="line">        <span class="string">"alphaMax"</span>,</span><br><span class="line">        dimless,</span><br><span class="line">        db()</span><br><span class="line">       .lookupObject&lt;IOdictionary&gt;</span><br><span class="line">        (</span><br><span class="line">            IOobject::groupName(<span class="string">"turbulenceProperties"</span>, phased.name())</span><br><span class="line">        )</span><br><span class="line">       .subDict(<span class="string">"RAS"</span>)</span><br><span class="line">       .subDict(<span class="string">"kineticTheoryCoeffs"</span>)</span><br><span class="line">       .lookup(<span class="string">"alphaMax"</span>)</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="comment">// calculate the reference value and the value fraction</span></span><br><span class="line">    <span class="keyword">if</span> (restitutionCoefficient_.value() != <span class="number">1.0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">this</span>-&gt;refValue() =</span><br><span class="line">            (<span class="number">2.0</span>/<span class="number">3.0</span>)</span><br><span class="line">           *specularityCoefficient_.value()</span><br><span class="line">           *magSqr(U)</span><br><span class="line">           /(scalar(<span class="number">1</span>) - sqr(restitutionCoefficient_.value()));</span><br><span class="line"></span><br><span class="line">        <span class="keyword">this</span>-&gt;refGrad() = <span class="number">0.0</span>;</span><br><span class="line"></span><br><span class="line">        scalarField c</span><br><span class="line">        (</span><br><span class="line">             constant::mathematical::pi</span><br><span class="line">            *alpha</span><br><span class="line">            *gs0</span><br><span class="line">            *(scalar(1) - sqr(restitutionCoefficient_.value()))</span><br><span class="line">            *sqrt(3.0*Theta)</span><br><span class="line">            /max(4.0*kappa*alphaMax.value(), SMALL)</span><br><span class="line">        );</span><br><span class="line"></span><br><span class="line">        <span class="keyword">this</span>-&gt;valueFraction() = c/(c + patch().deltaCoeffs());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// for a restitution coefficient of 1, the boundary degenerates to a fixed</span></span><br><span class="line">    <span class="comment">// gradient condition</span></span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">this</span>-&gt;refValue() = <span class="number">0.0</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">this</span>-&gt;refGrad() =</span><br><span class="line">            pos(alpha - SMALL)</span><br><span class="line">           *constant::mathematical::pi</span><br><span class="line">           *specularityCoefficient_.value()</span><br><span class="line">           *alpha</span><br><span class="line">           *gs0</span><br><span class="line">           *sqrt(3.0*Theta)</span><br><span class="line">           *magSqr(U)</span><br><span class="line">           /max(6.0*kappa*alphaMax.value(), SMALL);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">this</span>-&gt;valueFraction() = <span class="number">0.0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    mixedFvPatchScalarField::updateCoeffs();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这里分两种情况，即 <code>restitutionCoefficient_</code> 是否等于1。其实从公式(35)也能看出来，$e_w=1$ 与 $e_w \neq 1$ 是不一样的。</p>
+<ul>
+<li><p>$e_w\neq 1$<br>这时，重定义了 <code>refValue</code> 和 <code>valueFraction</code>。利用辅助变量 $c$ 的定义，可以将公式(35)简化如下：<br>$$<br>\frac{\partial \Theta_m}{\partial x}=c \cdot refValue - c \cdot \Theta_m<br>$$<br>写成差分形式<br>$$<br>(\Theta_m-\Theta_c) \cdot \Delta = c\cdot refValue - c \cdot \Theta_m<br>$$<br>得<br>$$<br>\Theta_m=\frac{c}{c+\Delta}\cdot refValue + \frac{\Delta}{c+\Delta} \cdot \Theta_c<br>$$<br>其中 $\Theta_c$ 为邻近壁面网格的颗粒温度。<br>根据 <code>mixed</code> 的定义，壁面的值应当是 <code>valureFraction * refValue + (1-valueFraction)*(patchInternalField() + refGrad/delta)</code>。 这里将 <code>refGrad</code> 赋值为0，就与公式一致了。</p>
+</li>
+<li><p>$e_w = 1$<br>这种情况下， <code>JohnsonJacksonParticleTheta</code> 就退化为简单的 <code>fixedGradient</code> 了。若 $ \varepsilon_m $ 特别小，则为零梯度，否则，固定梯度，梯度值等于公式(35)的右边第一项。</p>
+</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://xiaopingqiu.github.io/2016/04/02/Boundary-conditions-in-OpenFOAM4/" data-id="cimiznxga003rg4mbv8ttk77x" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Boundary-conditions/">Boundary conditions</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2016/04/02/Boundary-conditions-in-OpenFOAM3/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">OpenFOAM 中的边界条件（三）</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+<section id="comments">
+  <!-- 多说评论框 start -->
+  <div class="ds-thread" data-thread-key="post-Boundary-conditions-in-OpenFOAM4" data-title="OpenFOAM 中的边界条件（四）" data-url="http://xiaopingqiu.github.io/2016/04/02/Boundary-conditions-in-OpenFOAM4/"></div>
+  <!-- 多说评论框 end -->
+  <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+  <script type="text/javascript">
+  var duoshuoQuery = {short_name:"xiaopingqiu"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+  <!-- 多说公共JS代码 end -->
+</section>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/">OpenFOAM</a><span class="category-list-count">25</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Paraview/">Paraview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/swak4Foam/">swak4Foam</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/test/">test</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/vim/">vim</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Boundary-conditions/">Boundary conditions</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/">C++</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CentOS/">CentOS</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Explained/">Code Explained</a><span class="tag-list-count">15</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a><span class="tag-list-count">19</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Postprocessing/">Postprocessing</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Preprocessing/">Preprocessing</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RTS/">RTS</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TIL/">TIL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/fvOptions/">fvOptions</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/groovyBC/">groovyBC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/paraview/">paraview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/test/">test</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/turbulence-model/">turbulence model</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vim/">vim</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Boundary-conditions/" style="font-size: 16px;">Boundary conditions</a><a href="/tags/C/" style="font-size: 12px;">C++</a><a href="/tags/CentOS/" style="font-size: 10px;">CentOS</a><a href="/tags/Code-Explained/" style="font-size: 18px;">Code Explained</a><a href="/tags/OpenFOAM/" style="font-size: 20px;">OpenFOAM</a><a href="/tags/Postprocessing/" style="font-size: 14px;">Postprocessing</a><a href="/tags/Preprocessing/" style="font-size: 10px;">Preprocessing</a><a href="/tags/RTS/" style="font-size: 12px;">RTS</a><a href="/tags/TIL/" style="font-size: 10px;">TIL</a><a href="/tags/Windows/" style="font-size: 10px;">Windows</a><a href="/tags/fvOptions/" style="font-size: 12px;">fvOptions</a><a href="/tags/groovyBC/" style="font-size: 10px;">groovyBC</a><a href="/tags/paraview/" style="font-size: 10px;">paraview</a><a href="/tags/test/" style="font-size: 10px;">test</a><a href="/tags/turbulence-model/" style="font-size: 12px;">turbulence model</a><a href="/tags/vim/" style="font-size: 10px;">vim</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">四月 2016</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/12/">十二月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/11/">十一月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/10/">十月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/09/">九月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/08/">八月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">六月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a><span class="archive-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recents</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2016/04/02/Boundary-conditions-in-OpenFOAM4/">OpenFOAM 中的边界条件（四）</a>
+          </li>
+        
+          <li>
+            <a href="/2016/04/02/Boundary-conditions-in-OpenFOAM3/">OpenFOAM 中的边界条件（三）</a>
+          </li>
+        
+          <li>
+            <a href="/2016/04/02/Boundary-conditions-in-OpenFOAM2/">OpenFOAM 中的边界条件（二）</a>
+          </li>
+        
+          <li>
+            <a href="/2016/04/02/Boundary-conditions-in-OpenFOAM1/">OpenFOAM 中的边界条件（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2016/03/20/fvOptions2/">fvOptions 之 semiImplicitSource</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2016 Giskard Q.<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+<script src="//dn-lbstatics.qbox.me/lbservice/busuanzi/2.0/busuanzi.mini.js"/></script>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/atom.xml" class="mobile-nav-link">Rss</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css" type="text/css">
+  <script src="/fancybox/jquery.fancybox.pack.js" type="text/javascript"></script>
+
+
+<script src="/js/script.js" type="text/javascript"></script>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-62501686-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+  </div>
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+</body>
+</html>
