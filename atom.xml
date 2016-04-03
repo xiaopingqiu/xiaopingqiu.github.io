@@ -207,7 +207,7 @@
     <link href="http://xiaopingqiu.github.io/2016/04/02/Boundary-conditions-in-OpenFOAM1/"/>
     <id>http://xiaopingqiu.github.io/2016/04/02/Boundary-conditions-in-OpenFOAM1/</id>
     <published>2016-04-02T07:29:24.000Z</published>
-    <updated>2016-04-02T08:40:23.972Z</updated>
+    <updated>2016-04-03T07:27:24.175Z</updated>
     <content type="html"><![CDATA[<p>本系列解读 OpenFOAM 中边界条件的实现。主要关心一些几个问题：</p>
 <ol>
 <li>OpenFOAM 中边界条件是怎样与有限体积离散部分交互的？</li>
@@ -216,7 +216,7 @@
 </ol>
 <p>本篇先阐述第一个问题。</p>
 <a id="more"></a>
-<p>从有限体积离散的角度来看，离散过程中，可能要用到的边界信息包括两类：一是某个场在边界上的值，另一是某个场在边界上的梯度。前者在对流项的离散中需要用到，举例说<br>$$<br>\int_v \nabla \cdot (\rho \mathbf{U} \phi) dV = \sum_f m_f \phi_f<br>$$<br>当组成体积元的面中有边界面时，需要用到这些边界面上的值 $\phi_f$。<br>而在扩散项的离散过程中<br>$$<br>\int_v \nabla \cdot (\Gamma \nabla \phi) dV = \sum_f (\Gamma \nabla \phi)_f \cdot \mathbf{S}_f<br>$$<br>这时，如果组成体积元的某个面是边界面，就需要该边界面上 $\phi$ 的梯度值 $\phi_f$ 了。</p>
+<p>从有限体积离散的角度来看，离散过程中，可能要用到的边界信息包括两类：一是某个场在边界上的值，另一是某个场在边界上的梯度。前者在对流项的离散中需要用到，举例说<br>$$<br>\int_v \nabla \cdot (\rho \mathbf{U} \phi) dV = \sum_f m_f \phi_f<br>$$<br>当组成体积元的面中有边界面时，需要用到这些边界面上的值 $\phi_f$。<br>而在扩散项的离散过程中<br>$$<br>\int_v \nabla \cdot (\Gamma \nabla \phi) dV = \sum_f (\Gamma \nabla \phi)_f \cdot \mathbf{S}_f<br>$$<br>这时，如果组成体积元的某个面是边界面，就需要该边界面上 $\phi$ 的梯度值 $\nabla \phi_f$ 了。</p>
 <p>边界上的某个场值，或者梯度值，其计算方法可以用如下通式表示<br>$$<br>\begin{align}<br>\phi_f &amp; = A_1 \phi_C + B_1 \\<br>\nabla \phi_f &amp; = A_2 \phi_C + B_2<br>\end{align}<br>$$<br>这里，$ \phi_C$ 表示 $\phi$ 在邻近边界的网格中心的值，$A_1$ ，$B_1$，$A_2$，$B_2$ 是系数。</p>
 <p>OpenFOAM 中的边界条件类中，有四个函数分别对应上面四个系数：<code>valueInternalCoeffs</code> 对应 $A_1$，<code>valueBoundaryCoeffs</code> 对应 $B_1$，<code>gradientInternalCoeffs</code> 对应 $A_2$，<code>gradientBoundaryCoeffs</code> 对应 $B_2$。<br>所以，看懂 OpenFOAM 中的边界条件，很关键的一步就是看懂这四个函数的定义。</p>
 <p>此外，还有一个函数，<code>updateCoeffs</code>， 也很重要。这个函数负责对边界条件进行显式地更新。浏览一下 OpenFOAM 边界条件的代码，会发现很多边界条件都是在 <code>updateCoeffs</code> 这个函数中进行边界值的计算的。</p>
