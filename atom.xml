@@ -4,7 +4,7 @@
   <subtitle><![CDATA[CFD and Scientific Computing]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://xiaopingqiu.github.io/"/>
-  <updated>2016-04-02T10:36:54.860Z</updated>
+  <updated>2016-04-03T03:42:14.824Z</updated>
   <id>http://xiaopingqiu.github.io/</id>
   
   <author>
@@ -19,8 +19,8 @@
     <link href="http://xiaopingqiu.github.io/2016/04/02/Boundary-conditions-in-OpenFOAM4/"/>
     <id>http://xiaopingqiu.github.io/2016/04/02/Boundary-conditions-in-OpenFOAM4/</id>
     <published>2016-04-02T10:16:39.000Z</published>
-    <updated>2016-04-02T10:36:54.860Z</updated>
-    <content type="html"><![CDATA[<h4 id="JohnsonJackson_边界条件">JohnsonJackson 边界条件</h4><p>本篇来看用于气固两相流模拟的 JohnsonJackson 边界条件。这组边界条件用于设定双流体模型中固相在壁面的速度和颗粒温度。根据 <a href="http://www.sciencedirect.com/science/article/pii/S0009250908003904" target="_blank" rel="external">N. Reuge 2008, CES</a>，壁面上的固相速度和颗粒温度可以表示为：<br><img src="/image/boundaryConditions/JJ.png" alt="Alt text"><br>其中，$u_m$ 指的是 m 相在壁面切向上的滑移速度。<br>下面来看 OpenFOAM 中对这两个边界条件的实现</p>
+    <updated>2016-04-03T03:42:14.824Z</updated>
+    <content type="html"><![CDATA[<h4 id="JohnsonJackson_边界条件">JohnsonJackson 边界条件</h4><p>本篇来看用于气固两相流模拟的 JohnsonJackson 边界条件。这组边界条件用于设定双流体模型中固相在壁面的速度和颗粒温度。根据 <a href="http://www.sciencedirect.com/science/article/pii/S0009250908003904" target="_blank" rel="external">N. Reuge 2008, CES</a>，壁面上的固相速度和颗粒温度可以表示为：<br><img src="/image/boundaryConditions/JJ.png" alt="JohnsonJackson boundary conditions"><br>其中，$u_m$ 指的是 m 相在壁面切向上的滑移速度。<br>下面来看 OpenFOAM 中对这两个边界条件的实现</p>
 <a id="more"></a>
 <p>在看 JohnsonJackson 边界条件之前，先要看一下 <code>partialSlip</code> 边界。</p>
 <h5 id="partialSlip">partialSlip</h5><p><code>partialSlipFvPatchField</code> 继承自 <code>transformFvPatchField</code><br><figure class="highlight nimrod"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;class <span class="type">Type</span>&gt;</span><br><span class="line">class partialSlipFvPatchField</span><br><span class="line">:</span><br><span class="line">    public transformFvPatchField&lt;<span class="type">Type</span>&gt;</span><br><span class="line">&#123;</span><br><span class="line">    // <span class="type">Private</span> data</span><br><span class="line"></span><br><span class="line">        //- <span class="type">Fraction</span> (<span class="number">0</span>-<span class="number">1</span>) <span class="keyword">of</span> value used <span class="keyword">for</span> boundary condition</span><br><span class="line">        scalarField valueFraction_;</span><br><span class="line">        ......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
@@ -53,7 +53,7 @@
 </ul>
 ]]></content>
     <summary type="html">
-    <![CDATA[<h4 id="JohnsonJackson_边界条件">JohnsonJackson 边界条件</h4><p>本篇来看用于气固两相流模拟的 JohnsonJackson 边界条件。这组边界条件用于设定双流体模型中固相在壁面的速度和颗粒温度。根据 <a href="http://www.sciencedirect.com/science/article/pii/S0009250908003904">N. Reuge 2008, CES</a>，壁面上的固相速度和颗粒温度可以表示为：<br><img src="/image/boundaryConditions/JJ.png" alt="Alt text"><br>其中，$u_m$ 指的是 m 相在壁面切向上的滑移速度。<br>下面来看 OpenFOAM 中对这两个边界条件的实现</p>]]>
+    <![CDATA[<h4 id="JohnsonJackson_边界条件">JohnsonJackson 边界条件</h4><p>本篇来看用于气固两相流模拟的 JohnsonJackson 边界条件。这组边界条件用于设定双流体模型中固相在壁面的速度和颗粒温度。根据 <a href="http://www.sciencedirect.com/science/article/pii/S0009250908003904">N. Reuge 2008, CES</a>，壁面上的固相速度和颗粒温度可以表示为：<br><img src="/image/boundaryConditions/JJ.png" alt="JohnsonJackson boundary conditions"><br>其中，$u_m$ 指的是 m 相在壁面切向上的滑移速度。<br>下面来看 OpenFOAM 中对这两个边界条件的实现</p>]]>
     
     </summary>
     
