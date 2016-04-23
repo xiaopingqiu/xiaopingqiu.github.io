@@ -132,7 +132,7 @@ ga('send', 'pageview');
 <p>所以，RTS 机制的本质可以总结如下：</p>
 <ol>
 <li>基类里定义一个 <code>hashTable</code>，其 key 为类的 <code>typeName</code> ，value 为一个函数指针，这个函数指针指向的函数的返回值是基类类型的 <code>autoPtr</code> ，并且这个 <code>autoPtr</code> 指向类的一个临时对象（用 C++ 的 <code>new</code> 关键字创建 ）。</li>
-<li>每创建一个派生类，就需要创建一个这样的函数（函数名一样，但是代入的模板参数不一样，相当于一个新的函数），且该函数中会创建一个派生类的临时对象。函数的返回值则是指向当前派生类的临时对象的基类 <code>autoPtr</code>。<code>。此外，派生类的</code>typeName<code>和该函数组成的映射对，会增加到基类中定义的</code>hashTable` 中。</li>
+<li>每创建一个派生类，就需要创建一个这样的函数（函数名一样，但是代入的模板参数不一样，相当于一个新的函数），且该函数中会创建一个派生类的临时对象。函数的返回值则是指向当前派生类的临时对象的基类 <code>autoPtr</code>。此外，派生类的 <code>typeName</code> 和该函数组成的映射对，会增加到基类中定义的 <code>hashTable</code> 中。</li>
 <li>类及其派生类编译成库，在编译过程中，会得到一个 <code>hashTable</code> ，其中包含了所有的派生类。</li>
 <li>在需要调用这些类的地方，只需要定义基类的 <code>autoPtr</code>，并用基类中定义的 <code>New</code> 函数来初始化，即 <code>autoPtr&lt;AlgorithmBase&gt; algorithmPtr = AlgorithmBase::New(algorithmName);</code>。这样， <code>New</code> 函数就能根据调用的时候所提供的参数，来从 <code>hashTable</code> 中选择对应的派生类。</li>
 </ol>
