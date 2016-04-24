@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>OpenFOAM 中的壁面函数（二） | Giskard&#39;s CFD Learning Tricks</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="这篇来看看计算湍动能 $k$ 的壁面函数。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenFOAM 中的壁面函数（二）">
+<meta property="og:url" content="http://xiaopingqiu.github.io/2016/04/25/wallFunctions2/index.html">
+<meta property="og:site_name" content="Giskard's CFD Learning Tricks">
+<meta property="og:description" content="这篇来看看计算湍动能 $k$ 的壁面函数。">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="OpenFOAM 中的壁面函数（二）">
+<meta name="twitter:description" content="这篇来看看计算湍动能 $k$ 的壁面函数。">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css" type="text/css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+##ga('create', '[object Object]', 'auto');
+ga('create', 'UA-62501686-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Giskard&#39;s CFD Learning Tricks</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">CFD and Scientific Computing</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/atom.xml">Rss</a>
+        
+          <a class="main-nav-link" href="/about">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="q" value="site:http://xiaopingqiu.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-wallFunctions2" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2016/04/25/wallFunctions2/" class="article-date">
+  <time datetime="2016-04-24T16:43:29.000Z" itemprop="datePublished">2016-04-25</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      OpenFOAM 中的壁面函数（二）
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>这篇来看看计算湍动能 $k$ 的壁面函数。</p>
+<a id="more"></a>
+<h5 id="2-_湍流动能_$k$_的壁面函数">2. 湍流动能 $k$ 的壁面函数</h5><p>OpenFOAM 中提供了两种 $k$ 的壁面函数， <code>kqRWallFunction</code> 和 <code>kLowReWallFunction</code> 。</p>
+<ul>
+<li><p><code>kqRWallFunction</code><br>其实就是 <code>zeroGradient</code> ，无需多言。</p>
+</li>
+<li><p><code>kLowReWallFunction</code><br>这个壁面函数应该是可以用于低雷诺数模型的。该壁面函数继承自 <code>fixedValue</code> ：</p>
+<figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> kLowReWallFunctionFvPatchScalarField</span><br><span class="line">:</span><br><span class="line">    public fixedValueFvPatchField&lt;<span class="keyword">scalar</span>&gt;</span><br><span class="line">&#123;</span><br><span class="line">protected:</span><br><span class="line">       <span class="comment">//- Cmu coefficient</span></span><br><span class="line">        <span class="keyword">scalar</span> Cmu_;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//- Von Karman constant</span></span><br><span class="line">        <span class="keyword">scalar</span> kappa_;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//- E coefficient</span></span><br><span class="line">        <span class="keyword">scalar</span> E_;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//- Ceps2 coefficient</span></span><br><span class="line">        <span class="keyword">scalar</span> Ceps2_;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//- Y+ at the edge of the laminar sublayer</span></span><br><span class="line">        <span class="keyword">scalar</span> yPlusLam_;</span><br><span class="line">        ......</span><br><span class="line">        </span><br><span class="line">kLowReWallFunctionFvPatchScalarField::kLowReWallFunctionFvPatchScalarField</span><br><span class="line">(</span><br><span class="line">    <span class="keyword">const</span> fvPatch&amp; p,</span><br><span class="line">    <span class="keyword">const</span> DimensionedField&lt;<span class="keyword">scalar</span>, volMesh&gt;&amp; <span class="keyword">iF</span>,</span><br><span class="line">    <span class="keyword">const</span> dictionary&amp; dict</span><br><span class="line">)</span><br><span class="line">:</span><br><span class="line">    fixedValueFvPatchField&lt;<span class="keyword">scalar</span>&gt;(p, <span class="keyword">iF</span>, dict),</span><br><span class="line">    Cmu_(dict.lookupOrDefault&lt;<span class="keyword">scalar</span>&gt;(<span class="string">"Cmu"</span>, 0.09)),</span><br><span class="line">    kappa_(dict.lookupOrDefault&lt;<span class="keyword">scalar</span>&gt;(<span class="string">"kappa"</span>, 0.41)),</span><br><span class="line">    E_(dict.lookupOrDefault&lt;<span class="keyword">scalar</span>&gt;(<span class="string">"E"</span>, 9.8)),</span><br><span class="line">    Ceps2_(dict.lookupOrDefault&lt;<span class="keyword">scalar</span>&gt;(<span class="string">"Ceps2"</span>, 1.9)),</span><br><span class="line">    yPlusLam_(yPlusLam(kappa_, E_))</span><br><span class="line">    &#123;</span><br><span class="line">        checkType();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>核心的函数是以下两个：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line">scalar kLowReWallFunctionFvPatchScalarField::yPlusLam</span><br><span class="line">(</span><br><span class="line">    <span class="keyword">const</span> scalar kappa,</span><br><span class="line">    <span class="keyword">const</span> scalar E</span><br><span class="line">)</span><br><span class="line">&#123;</span><br><span class="line">    scalar ypl = <span class="number">11.0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;<span class="number">10</span>; i++)</span><br><span class="line">    &#123;</span><br><span class="line">        ypl = <span class="built_in">log</span>(max(E*ypl, <span class="number">1</span>))/kappa;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> ypl;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">void</span> kLowReWallFunctionFvPatchScalarField::updateCoeffs()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (updated())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> label patchI = patch().index();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> turbulenceModel&amp; turbulence =</span><br><span class="line">        db().lookupObject&lt;turbulenceModel&gt;(<span class="string">"turbulenceModel"</span>);</span><br><span class="line">    <span class="keyword">const</span> scalarField&amp; y = turbulence.y()[patchI];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> tmp&lt;volScalarField&gt; tk = turbulence.k();</span><br><span class="line">    <span class="keyword">const</span> volScalarField&amp; k = tk();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> tmp&lt;volScalarField&gt; tnu = turbulence.nu();</span><br><span class="line">    <span class="keyword">const</span> scalarField&amp; nuw = tnu().boundaryField()[patchI];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> scalar Cmu25 = pow025(Cmu_);</span><br><span class="line"></span><br><span class="line">    scalarField&amp; kw = *<span class="keyword">this</span>; <span class="comment">// 更新 kw 相当于更新壁面上的 k 值。</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Set k wall values</span></span><br><span class="line">    forAll(kw, faceI)</span><br><span class="line">    &#123;</span><br><span class="line">        label faceCellI = patch().faceCells()[faceI];</span><br><span class="line"></span><br><span class="line">        scalar uTau = Cmu25*<span class="built_in">sqrt</span>(k[faceCellI]);</span><br><span class="line"></span><br><span class="line">        scalar yPlus = uTau*y[faceI]/nuw[faceI];</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (yPlus &gt; yPlusLam_)</span><br><span class="line">        &#123;</span><br><span class="line">            scalar Ck = -<span class="number">0.416</span>;</span><br><span class="line">            scalar Bk = <span class="number">8.366</span>;</span><br><span class="line">            kw[faceI] = Ck/kappa_*<span class="built_in">log</span>(yPlus) + Bk;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        &#123;</span><br><span class="line">            scalar C = <span class="number">11.0</span>;</span><br><span class="line">            scalar Cf = (<span class="number">1.0</span>/sqr(yPlus + C) + <span class="number">2.0</span>*yPlus/pow3(C) - <span class="number">1.0</span>/sqr(C));</span><br><span class="line">            kw[faceI] = <span class="number">2400.0</span>/sqr(Ceps2_)*Cf;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        kw[faceI] *= sqr(uTau);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    fixedValueFvPatchField&lt;scalar&gt;::updateCoeffs();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// TODO: perform averaging for cells sharing more than one boundary face</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>先在函数里计算 <code>ypl</code> 的值， <code>updateCoeffs</code> 函数里根据 <code>yPlus</code> 与这个 <code>ypl</code> 的值来相对大小而采取不同的方法来计算壁面上的 $k_w$。 <code>ypl</code> 的计算是一个迭代过程<br>$$<br>ypl = \frac{\log(\max(E*ypl,1.0))}{\kappa}<br>$$<br>初始值为 <code>ypl = 11.0</code>，迭代10次，最终结果应该是 <code>ypl = 11.5301073043272</code>。<br>$y^+$ 定义为：<br>$$<br>u_\tau = C_\mu^{1/4 }\sqrt{k_c} \<br>y^+ = \frac{u_\tau \cdot y}{\nu_w}<br>$$<br>壁面上的k计算方法如下：如果 $y^+ &gt; ypl$，则<br>$$<br>k^+ _w = \frac{C_k}{\kappa}\ln(y^+) + B_k<br>$$<br>否则<br>$$<br>k^+ _w = \frac{2400}{C_{eps2}^2}\cdot \left[ \frac{1}{(y^+ + C)^2} + \frac{2y^+}{C^3} - \frac{1}{C^2}\right ]<br>$$<br>最终，壁面上的值为 $k_w=k^+ _w u_\tau ^2 =k^+ _w C_\mu^{1/2}k_c$ 。<br>以上公式中，下标 $c$ 表示壁面单元所述网格的值，下标 $w$ 表示当前壁面上的值。<br>这个壁面函数参考文献 “Kalitzin, G., Medic, G., Iaccarino, G., Durbin, P., 2005. Near-wall behavior of RANS turbulence models and implications for wall functions. J. Comput. Phys. 204, 265–291. doi:10.1016/j.jcp.2004.10.018”，是为 $v^2\text{-}f$ 模型设计的。 </p>
+<h5 id="$v^2$_和_$f$_的壁面函数">$v^2$ 和 $f$ 的壁面函数</h5><p>上面提到了 $v^2\text{-}f$ 模型，所以这里顺便来看看$v^2$ 和 $f$ 的壁面函数。这里参考的也是上面提到的那篇参考文献。</p>
+<ul>
+<li>$v^2$ 的壁函数<figure class="highlight perl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">forAll(v2, faceI)</span><br><span class="line">    &#123;</span><br><span class="line">        label faceCellI = patch().faceCells()[faceI];</span><br><span class="line"></span><br><span class="line">        <span class="keyword">scalar</span> uTau = Cmu25*<span class="keyword">sqrt</span>(k[faceCellI]);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">scalar</span> yPlus = uTau*<span class="keyword">y</span>[faceI]/nuw[faceI];</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (yPlus &gt; yPlusLam<span class="number">_</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">scalar</span> Cv2 = <span class="number">0</span>.<span class="number">193</span>;</span><br><span class="line">            <span class="keyword">scalar</span> Bv2 = -<span class="number">0</span>.<span class="number">94</span>;</span><br><span class="line">            v2[faceI] = Cv2/kappa<span class="number">_</span>*<span class="keyword">log</span>(yPlus) + Bv2;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">scalar</span> Cv2 = <span class="number">0</span>.<span class="number">193</span>;</span><br><span class="line">            v2[faceI] = Cv2*pow4(yPlus);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        v2[faceI] *= <span class="keyword">s</span><span class="string">qr(uTau)</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    fixedValueFvPatchField&lt;<span class="keyword">scalar</span>&gt;::updateCoeffs();</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p><code>yPlus &gt; yPlusLam_</code> 时，<br>$$<br>v^2 = u_\tau^2 \cdot \left[ \frac{C_{v2}}{\kappa}\ln(y^+) + B_{v2} \right]<br>$$<br>与文献中的无量纲形式 $(\overline{v^2})^{^+} = \frac{C_{v2}}{\kappa}\ln(y^+) + B_{v2} $ 一致。</p>
+<p><code>yPlus &lt; yPlusLam\_</code> 时，<br>$$<br>v^2 = u_\tau^2 \cdot C_{v2}(y^+)^2<br>$$<br>与无量纲形式 $(\overline{v^2})^{^+} = C_{v2}(y^+)^2$ 一致。</p>
+<ul>
+<li>$f$ 的壁函数<figure class="highlight perl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">forAll(f, faceI)</span><br><span class="line">    &#123;</span><br><span class="line">        label faceCellI = patch().faceCells()[faceI];</span><br><span class="line"></span><br><span class="line">        <span class="keyword">scalar</span> uTau = Cmu25*<span class="keyword">sqrt</span>(k[faceCellI]);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">scalar</span> yPlus = uTau*<span class="keyword">y</span>[faceI]/nuw[faceI];</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (yPlus &gt; yPlusLam<span class="number">_</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">scalar</span> N = <span class="number">6.0</span>;</span><br><span class="line">            <span class="keyword">scalar</span> v2c = v2[faceCellI];</span><br><span class="line">            <span class="keyword">scalar</span> epsc = epsilon[faceCellI];</span><br><span class="line">            <span class="keyword">scalar</span> kc = k[faceCellI];</span><br><span class="line"></span><br><span class="line">            f[faceI] = N*v2c*epsc/(<span class="keyword">s</span><span class="string">qr(kc)</span> + ROOTVSMALL);</span><br><span class="line">            f[faceI] /= <span class="keyword">s</span><span class="string">qr(uTau)</span> + ROOTVSMALL;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        &#123;</span><br><span class="line">            f[faceI] = <span class="number">0</span>.<span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p><code>yPlus &gt; yPlusLam_</code> 时，<br>$$<br>f = \frac{N \cdot v^2\cdot \varepsilon}{k^2 u_\tau^2}<br>$$<br>这似乎与文献中的无量纲形式<br>$$<br>f^+ = N \frac{(\overline{v^2})^{^+}}{(k^+)^2}\varepsilon^+<br>$$<br>不一致！是 bug 还是我推导出错了？存疑…</p>
+<p><code>yPlus &lt; yPlusLam_</code> 时，文献给出的公式是<br>$$<br>f^+ = \frac{-4(6-N)(\overline{v^2})^{^+}}{\varepsilon^+ (y^+)^4}<br>$$<br>当 <code>N=6</code> 时，可以得到 $f^+ = 0$ 。</p>
+<p>按理说，$v^2$ 和 $f$ 应该跟 $\varepsilon$ 和 $\omega$ 那样，计算第一层网格内的值，并且考虑一个网格有多个边界面的情形。OpenFOAM 目前计算的是每一个边界面元上的值，不知道这两种方式对结果有多大影响。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://xiaopingqiu.github.io/2016/04/25/wallFunctions2/" data-id="cinet0yjn000854mb0lfw9m53" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/wall-functions/">wall functions</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2016/04/25/wallFunctions3/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          OpenFOAM 中的壁面函数（三）
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2016/04/25/wallFunctions1/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">OpenFOAM 中的壁面函数（一）</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+<section id="comments">
+  <!-- 多说评论框 start -->
+  <div class="ds-thread" data-thread-key="post-wallFunctions2" data-title="OpenFOAM 中的壁面函数（二）" data-url="http://xiaopingqiu.github.io/2016/04/25/wallFunctions2/"></div>
+  <!-- 多说评论框 end -->
+  <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+  <script type="text/javascript">
+  var duoshuoQuery = {short_name:"xiaopingqiu"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+  <!-- 多说公共JS代码 end -->
+</section>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/">OpenFOAM</a><span class="category-list-count">33</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Paraview/">Paraview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/swak4Foam/">swak4Foam</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/test/">test</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/vim/">vim</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Boundary-conditions/">Boundary conditions</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/">C++</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CentOS/">CentOS</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Explained/">Code Explained</a><span class="tag-list-count">23</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a><span class="tag-list-count">19</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Postprocessing/">Postprocessing</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Preprocessing/">Preprocessing</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RTS/">RTS</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TIL/">TIL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/fvOptions/">fvOptions</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/groovyBC/">groovyBC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/paraview/">paraview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/test/">test</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/turbulence-model/">turbulence model</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vim/">vim</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/wall-functions/">wall functions</a><span class="tag-list-count">4</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Boundary-conditions/" style="font-size: 15px;">Boundary conditions</a><a href="/tags/C/" style="font-size: 11.67px;">C++</a><a href="/tags/CentOS/" style="font-size: 10px;">CentOS</a><a href="/tags/Code-Explained/" style="font-size: 20px;">Code Explained</a><a href="/tags/OpenFOAM/" style="font-size: 18.33px;">OpenFOAM</a><a href="/tags/Postprocessing/" style="font-size: 13.33px;">Postprocessing</a><a href="/tags/Preprocessing/" style="font-size: 10px;">Preprocessing</a><a href="/tags/RTS/" style="font-size: 11.67px;">RTS</a><a href="/tags/TIL/" style="font-size: 10px;">TIL</a><a href="/tags/Windows/" style="font-size: 10px;">Windows</a><a href="/tags/fvOptions/" style="font-size: 11.67px;">fvOptions</a><a href="/tags/groovyBC/" style="font-size: 10px;">groovyBC</a><a href="/tags/paraview/" style="font-size: 10px;">paraview</a><a href="/tags/test/" style="font-size: 10px;">test</a><a href="/tags/turbulence-model/" style="font-size: 16.67px;">turbulence model</a><a href="/tags/vim/" style="font-size: 10px;">vim</a><a href="/tags/wall-functions/" style="font-size: 13.33px;">wall functions</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">四月 2016</a><span class="archive-list-count">12</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/12/">十二月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/11/">十一月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/10/">十月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/09/">九月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/08/">八月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">六月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a><span class="archive-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recents</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2016/04/25/wallFunctions4/">OpenFOAM 中的壁面函数（四）</a>
+          </li>
+        
+          <li>
+            <a href="/2016/04/25/wallFunctions3/">OpenFOAM 中的壁面函数（三）</a>
+          </li>
+        
+          <li>
+            <a href="/2016/04/25/wallFunctions2/">OpenFOAM 中的壁面函数（二）</a>
+          </li>
+        
+          <li>
+            <a href="/2016/04/25/wallFunctions1/">OpenFOAM 中的壁面函数（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2016/04/25/TurbulenceModel-30-macro/">OpenFOAM-3.0 的湍流模型（四）</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2016 Giskard Q.<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+<script src="//dn-lbstatics.qbox.me/lbservice/busuanzi/2.0/busuanzi.mini.js"/></script>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/atom.xml" class="mobile-nav-link">Rss</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css" type="text/css">
+  <script src="/fancybox/jquery.fancybox.pack.js" type="text/javascript"></script>
+
+
+<script src="/js/script.js" type="text/javascript"></script>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-62501686-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+  </div>
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+</body>
+</html>

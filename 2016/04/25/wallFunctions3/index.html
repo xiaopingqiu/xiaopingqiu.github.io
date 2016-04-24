@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>OpenFOAM 中的壁面函数（三） | Giskard&#39;s CFD Learning Tricks</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="这篇来看看计算湍动能 $\varepsilon$  和 $\omage$ 的壁面函数。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenFOAM 中的壁面函数（三）">
+<meta property="og:url" content="http://xiaopingqiu.github.io/2016/04/25/wallFunctions3/index.html">
+<meta property="og:site_name" content="Giskard's CFD Learning Tricks">
+<meta property="og:description" content="这篇来看看计算湍动能 $\varepsilon$  和 $\omage$ 的壁面函数。">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="OpenFOAM 中的壁面函数（三）">
+<meta name="twitter:description" content="这篇来看看计算湍动能 $\varepsilon$  和 $\omage$ 的壁面函数。">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css" type="text/css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+##ga('create', '[object Object]', 'auto');
+ga('create', 'UA-62501686-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Giskard&#39;s CFD Learning Tricks</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">CFD and Scientific Computing</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/atom.xml">Rss</a>
+        
+          <a class="main-nav-link" href="/about">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="q" value="site:http://xiaopingqiu.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-wallFunctions3" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2016/04/25/wallFunctions3/" class="article-date">
+  <time datetime="2016-04-24T16:43:34.000Z" itemprop="datePublished">2016-04-25</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      OpenFOAM 中的壁面函数（三）
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>这篇来看看计算湍动能 $\varepsilon$  和 $\omage$ 的壁面函数。</p>
+<a id="more"></a>
+<h5 id="3-_湍动能耗散_$\varepsilon$_的壁面函数">3. 湍动能耗散 $\varepsilon$ 的壁面函数</h5><p>本篇来看看 OpenFOAM 中的 <code>epsilonWallFunction</code>，共有两个： <code>epsilonWallFunction</code> 和 <code>epsilonLowReWallFunction</code>。</p>
+<ul>
+<li>(1). epsilonWallFunction</li>
+</ul>
+<p><code>epsilonWallFunction</code> 代码比前面的 <code>kqRWallFunction</code> 复杂多了，主要原因在于这里需要得到的是 <code>epsilon</code> 在临近网格的值，而且，需要考虑包含两个边界面的网格。这里先来梳理代码的脉络，然后再看具体的计算细节。<br>外部调用的主要是 <code>updateCoeffs()</code> 函数，所以，从这个函数看起。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> epsilonWallFunctionFvPatchScalarField::updateCoeffs()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (updated())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">const</span> turbulenceModel&amp; turbulence =</span><br><span class="line">        db().lookupObject&lt;turbulenceModel&gt;(turbulenceModel::typeName);</span><br><span class="line"></span><br><span class="line">    setMaster();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (patch().index() == master_)</span><br><span class="line">    &#123;</span><br><span class="line">        createAveragingWeights();</span><br><span class="line">        calculateTurbulenceFields(turbulence, G(<span class="keyword">true</span>), epsilon(<span class="keyword">true</span>));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">const</span> scalarField&amp; G0 = <span class="keyword">this</span>-&gt;G();</span><br><span class="line">    <span class="keyword">const</span> scalarField&amp; epsilon0 = <span class="keyword">this</span>-&gt;epsilon();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">typedef</span> DimensionedField&lt;scalar, volMesh&gt; FieldType;</span><br><span class="line"></span><br><span class="line">    FieldType&amp; G =</span><br><span class="line">        <span class="keyword">const_cast</span>&lt;FieldType&amp;&gt;</span><br><span class="line">        (</span><br><span class="line">            db().lookupObject&lt;FieldType&gt;(turbulence.GName())</span><br><span class="line">        );</span><br><span class="line">    <span class="comment">//这里是获取内部场，所以，修改这里的引用 "epsilon",相当于修改 epsilon 的内部场值。</span></span><br><span class="line">    FieldType&amp; epsilon = <span class="keyword">const_cast</span>&lt;FieldType&amp;&gt;(dimensionedInternalField());</span><br><span class="line"></span><br><span class="line">    forAll(*<span class="keyword">this</span>, faceI)</span><br><span class="line">    &#123;</span><br><span class="line">        label cellI = patch().faceCells()[faceI];</span><br><span class="line"></span><br><span class="line">        G[cellI] = G0[cellI];</span><br><span class="line">        epsilon[cellI] = epsilon0[cellI];</span><br><span class="line">    &#125;</span><br><span class="line">    fvPatchField&lt;scalar&gt;::updateCoeffs();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p> 一步一步来看。首先是调用了 <code>setMaster()</code> 函数，来看看这个函数以及相关的一个函数 <code>epsilonPatch</code> 的代码：<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> epsilonWallFunctionFvPatchScalarField::setMaster()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (master_ != -<span class="number">1</span>) <span class="comment">// 如果当前处理的边界的 master_ != -1，说明它已被处理过，直接返回</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">const</span> volScalarField&amp; epsilon =</span><br><span class="line">        <span class="keyword">static_cast</span>&lt;<span class="keyword">const</span> volScalarField&amp;&gt;(<span class="keyword">this</span>-&gt;dimensionedInternalField());</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> volScalarField::GeometricBoundaryField&amp; bf = epsilon.boundaryField();</span><br><span class="line"></span><br><span class="line">    label master = -<span class="number">1</span>;</span><br><span class="line">    forAll(bf, patchI)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (isA&lt;epsilonWallFunctionFvPatchScalarField&gt;(bf[patchI]))</span><br><span class="line">        &#123;</span><br><span class="line">            epsilonWallFunctionFvPatchScalarField&amp; epf = epsilonPatch(patchI);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (master == -<span class="number">1</span>) <span class="comment">// 只有头一个被处理的边界满足这个条件</span></span><br><span class="line">            &#123;</span><br><span class="line">                master = patchI;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            epf.master() = master; <span class="comment">// 这意味着所有边界的 master_ 数据成员都将赋值为头一个被处理的边界的编号，即第一个被处理的边界是master</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">epsilonWallFunctionFvPatchScalarField&amp;</span><br><span class="line">epsilonWallFunctionFvPatchScalarField::epsilonPatch(<span class="keyword">const</span> label patchI)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">const</span> volScalarField&amp; epsilon =</span><br><span class="line">        <span class="keyword">static_cast</span>&lt;<span class="keyword">const</span> volScalarField&amp;&gt;(<span class="keyword">this</span>-&gt;dimensionedInternalField());</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> volScalarField::GeometricBoundaryField&amp; bf = epsilon.boundaryField();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> epsilonWallFunctionFvPatchScalarField&amp; epf =</span><br><span class="line">        refCast&lt;<span class="keyword">const</span> epsilonWallFunctionFvPatchScalarField&gt;(bf[patchI]);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">const_cast</span>&lt;epsilonWallFunctionFvPatchScalarField&amp;&gt;(epf);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p> 从上述代码可以看出， <code>epsilonPatch</code> 函数需要一个参数，这个参数的含义是某一个边界的序号，返回的是指向这个边界的一个 <code>epsilonWallFunctionFvPatchScalarField</code> 类型的引用。<br>在此基础上，再来看 <code>setMaster</code>。先判断当前边界的数据成员 <code>master_</code> 是否不等于-1，如果成立则不做任何操作，直接返回；否则，先获取到 <code>epsilon</code> 的所有边界，存在变量 <code>bf</code> 中，然后，遍历 <code>bf</code> ，如果边界的类型是 <code>epsilonWallFunctionFvPatchScalarField</code>，则判断临时变量 <code>master</code> 是否等于 <code>-1</code>，等于则将边界的序号 <code>patchI</code>  赋值给 <code>master</code>，并临时变量 <code>master</code> 的值赋给 <code>patchI</code> 对应边界的数据成员 <code>master_</code>。 举个例子，假设有一个算例，有两个边界上使用了 <code>epsilonWallFunctionFvPatchScalarField</code> 类型的边界条件，两个边界的编号分别是 <code>patchI = 0</code> 和 <code>patchI = 1</code>。则在上述循环过程中，当 <code>patchI = 0</code>时， <code>master == -1</code> 肯定成立。于是，<code>patchI = 0</code> 对应边界的数据成员 <code>master_</code> 被赋值为0；而当遍历到 <code>patchI = 1</code> 时， 此时<code>master = 0</code>，所以，结果是 <code>patchI = 1</code> 的边界的数据成员 <code>master_</code> 也被赋值为0。 </p>
+<p> 继续向下看，如果 <code>patch.index() == master_</code> ，则调用两个函数。这个怎么理解呢？还以上面的那个简单例子来说明。注意，在外部调用边界条件的时候，也是会依次调用一个场的所有边界的边界条件的。在这里的简单例子中，有两个边界的类型是 <code>epsilonWallFunctionFvPatchScalarField</code> ，所以，我们假设调用 <code>patchI = 0</code> 对应的边界时，由于初始化时数据成员 <code>master_</code> 赋值为 <code>-1</code> ，所以，调用 <code>patchI = 0</code> 的边界时， <code>setMaster</code> 函数中的操作会进行。而根据上面的分析，调用 <code>patchI = 0</code> 的边界时， <code>setMaster</code> 函数同时也将 <code>patchI = 1</code> 边界的数据成员 <code>master_</code> 赋值为 <code>0</code>了，所以，在外部调用 <code>patchI = 1</code> 的边界时， <code>setMaster</code> 函数将不作任何操作，直接返回。同样的，在外部调用 <code>patchI = 0</code> 的边界时，<code>patch.index() == master_</code> 条件是成立的，所以 <code>createAveragingWeights()</code> 和 <code>calculateTurbulenceFields(turbulence, G(true), epsilon(true));</code> 两个语句将会执行；而在外部调用 <code>patchI = 1</code> 边界时，由于 <code>patch.index() == master_</code> 不成立，这两个语句将不执行。</p>
+<p> 再继续往前看， <code>const scalarField&amp; G0 = this-&gt;G();    const scalarField&amp; epsilon0 = this-&gt;epsilon();</code> ，这里是将成员函数 <code>G</code> 和 <code>epsilon</code> 的返回值分别赋给变量 <code>G0</code> 和 <code>epsilon0</code>。开看一下成员函数的定义<br><figure class="highlight swift"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">scalarField&amp; epsilonWallFunctionFvPatchScalarField::<span class="type">G</span>(bool <span class="keyword">init</span>)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (patch().index() == master_) <span class="comment">// 只有头一个被处理的边界满足这个条件</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">init</span>) <span class="comment">// init 缺省值是 false </span></span><br><span class="line">        &#123;</span><br><span class="line">            <span class="type">G_</span> = <span class="number">0.0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="type">G_</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> epsilonPatch(master_).<span class="type">G</span>(); <span class="comment">// 对于不是 master 的边界，返回master边界的数据成员 G_</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">scalarField&amp; epsilonWallFunctionFvPatchScalarField::epsilon(bool <span class="keyword">init</span>)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (patch().index() == master_)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">init</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            epsilon_ = <span class="number">0.0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> epsilon_;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> epsilonPatch(master_).epsilon(<span class="keyword">init</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>类似的，对于 <code>patchI = 0</code>， <code>patch().index() == master_</code> ，所以返回值为 <code>patchI = 0</code> 边界的数据成员 <code>G_</code> 或  <code>epsilon_</code> (<code>init</code> 的缺省值是 <code>false</code>)；而对于 <code>patchI = 1</code>边界，返回的是 <code>patchI = master_</code> 对应边界的数据成员 <code>G_</code> 或  <code>epsilon_</code>，而根据上面的分析， <code>patchI= 1</code> 的边界的数据成员 <code>master_ = 0</code>，因此， <code>patchI = 1</code> 的边界的成员函数返回的是 <code>patchI = 0</code>边界的相应的数据成员。</p>
+<p>再往下的内容就很简单了，只是将得到的 <code>G0</code> 和 <code>epsilon0</code> 的值分别赋给当前边界的临近边界网格而已。</p>
+<p>到此，代码的框架就基本清晰了，小结一下就是，如果对于某个算例，有多个边界上需要用到 <code>epsilonWallFunctionFvPatchScalarField</code> 类型的边界条件，则，编号更小的那个边界将会被设置成 <code>master</code>。所有的相关计算都在调用 <code>master</code> 边界的时候进行，非 <code>master</code> 的边界，则只需要从 <code>master</code> 那里读取结果即可！ </p>
+<p>接下来看看外部调用 <code>master</code> 边界的时候，具体做了哪些计算，主要就是看 <code>createAveragingWeights()</code> 和 <code>calculateTurbulenceFields(turbulence, G(true), epsilon(true));</code> 这两条语句了。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> epsilonWallFunctionFvPatchScalarField::createAveragingWeights()</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">const</span> volScalarField&amp; epsilon =</span><br><span class="line">        <span class="keyword">static_cast</span>&lt;<span class="keyword">const</span> volScalarField&amp;&gt;(<span class="keyword">this</span>-&gt;dimensionedInternalField());</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> volScalarField::GeometricBoundaryField&amp; bf = epsilon.boundaryField();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> fvMesh&amp; mesh = epsilon.mesh();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (initialised_ &amp;&amp; !mesh.changing())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function">volScalarField <span class="title">weights</span></span><br><span class="line">    <span class="params">(</span><br><span class="line">        IOobject</span><br><span class="line">        (</span><br><span class="line">            "weights",</span><br><span class="line">            mesh.time()</span>.<span class="title">timeName</span><span class="params">()</span>,</span><br><span class="line">            mesh,</span><br><span class="line">            IOobject::NO_READ,</span><br><span class="line">            IOobject::NO_WRITE,</span><br><span class="line">            <span class="keyword">false</span> <span class="comment">// do not register</span></span><br><span class="line">        ),</span><br><span class="line">        mesh,</span><br><span class="line">        <span class="title">dimensionedScalar</span><span class="params">("zero", dimless, 0.0)</span></span><br><span class="line">    )</span>;</span><br><span class="line"></span><br><span class="line">    DynamicList&lt;label&gt; epsilonPatches(bf.size());</span><br><span class="line">    <span class="comment">//遍历所有边界，如果边界类型是 epsilonWallFunctionFvPatchScalarField 则将该边界放到 epsilonPatches 这个动态 list 中。</span></span><br><span class="line">    forAll(bf, patchI)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (isA&lt;epsilonWallFunctionFvPatchScalarField&gt;(bf[patchI]))</span><br><span class="line">        &#123;</span><br><span class="line">            epsilonPatches.append(patchI);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">const</span> labelUList&amp; faceCells = bf[patchI].patch().faceCells();</span><br><span class="line">            forAll(faceCells, i)</span><br><span class="line">            &#123;</span><br><span class="line">                label cellI = faceCells[i];</span><br><span class="line">            <span class="comment">// weight 衡量的是网格cellI有多少个边界面使用了 epsilonWallFunctionFvPatchScalarField 类型的边界条件</span></span><br><span class="line">                 weights[cellI]++;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    cornerWeights_.setSize(bf.size());</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 遍历所有 epsilonWallFunctionFvPatchScalarField 类型的边界</span></span><br><span class="line">    forAll(epsilonPatches, i)</span><br><span class="line">    &#123;</span><br><span class="line">        label patchI = epsilonPatches[i];</span><br><span class="line">        <span class="keyword">const</span> fvPatchScalarField&amp; wf = weights.boundaryField()[patchI];</span><br><span class="line">    <span class="comment">//cornerWeights_存储的所有边界面的weight的倒数，边界面的weight等于其所属网格的weight。所以，如果有一个网格包含两个使用epsilonWallFunction的边界面，那么根据上面的计算，这个网格的weight将是 2，而这两个边界面的 cornerWeights_ 则都是 1/2。 </span></span><br><span class="line">        cornerWeights_[patchI] = <span class="number">1.0</span>/wf.patchInternalField();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 将数据成员 G_ 和 epsilon_ 初始化为0</span></span><br><span class="line">    G_.setSize(dimensionedInternalField().size(), <span class="number">0.0</span>);</span><br><span class="line">    epsilon_.setSize(dimensionedInternalField().size(), <span class="number">0.0</span>);</span><br><span class="line"></span><br><span class="line">    initialised_ = <span class="keyword">true</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">void</span> epsilonWallFunctionFvPatchScalarField::calculateTurbulenceFields</span><br><span class="line">(</span><br><span class="line">    <span class="keyword">const</span> turbulenceModel&amp; turbulence,</span><br><span class="line">    scalarField&amp; G0,</span><br><span class="line">    scalarField&amp; epsilon0</span><br><span class="line">)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// accumulate all of the G and epsilon contributions</span></span><br><span class="line">    <span class="comment">//cornerWeights_ 是一个二维 list，这里是遍历这个list 的第一层</span></span><br><span class="line">    forAll(cornerWeights_, patchI)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (!cornerWeights_[patchI].empty()) <span class="comment">// 如果是empty，意味着这个对应的边界不是epsilonWallFunction类型，所以就不需要考虑</span></span><br><span class="line">        &#123;</span><br><span class="line">            epsilonWallFunctionFvPatchScalarField&amp; epf = epsilonPatch(patchI);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">const</span> List&lt;scalar&gt;&amp; w = cornerWeights_[patchI];</span><br><span class="line"></span><br><span class="line">     <span class="comment">// 非 empty 则调用 calculate 函数更新 G0 和 epsilon 的值</span></span><br><span class="line">            epf.calculate(turbulence, w, epf.patch(), G0, epsilon0);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// apply zero-gradient condition for epsilon</span></span><br><span class="line">    forAll(cornerWeights_, patchI)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (!cornerWeights_[patchI].empty())</span><br><span class="line">        &#123;</span><br><span class="line">            epsilonWallFunctionFvPatchScalarField&amp; epf = epsilonPatch(patchI);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 对 epsilon 使用 零梯度边界条件，即将上面计算得到的临近壁面网格的epsilon的值存储在壁面。</span></span><br><span class="line">            epf == scalarField(epsilon0, epf.patch().faceCells());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">void</span> epsilonWallFunctionFvPatchScalarField::calculate</span><br><span class="line">(</span><br><span class="line">    <span class="keyword">const</span> turbulenceModel&amp; turbulence,</span><br><span class="line">    <span class="keyword">const</span> List&lt;scalar&gt;&amp; cornerWeights,</span><br><span class="line">    <span class="keyword">const</span> fvPatch&amp; patch,</span><br><span class="line">    scalarField&amp; G,</span><br><span class="line">    scalarField&amp; epsilon</span><br><span class="line">)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">const</span> label patchI = patch.index();</span><br><span class="line">    <span class="keyword">const</span> scalarField&amp; y = turbulence.y()[patchI];</span><br><span class="line">    <span class="keyword">const</span> scalar Cmu25 = pow025(Cmu_);</span><br><span class="line">    <span class="keyword">const</span> scalar Cmu75 = <span class="built_in">pow</span>(Cmu_, <span class="number">0.75</span>);</span><br><span class="line">    <span class="keyword">const</span> tmp&lt;volScalarField&gt; tk = turbulence.k();</span><br><span class="line">    <span class="keyword">const</span> volScalarField&amp; k = tk();</span><br><span class="line">    <span class="keyword">const</span> tmp&lt;volScalarField&gt; tnu = turbulence.nu();</span><br><span class="line">    <span class="keyword">const</span> scalarField&amp; nuw = tnu().boundaryField()[patchI];</span><br><span class="line">    <span class="keyword">const</span> tmp&lt;volScalarField&gt; tnut = turbulence.nut();</span><br><span class="line">    <span class="keyword">const</span> volScalarField&amp; nut = tnut();</span><br><span class="line">    <span class="keyword">const</span> scalarField&amp; nutw = nut.boundaryField()[patchI];</span><br><span class="line">    <span class="keyword">const</span> fvPatchVectorField&amp; Uw = turbulence.U().boundaryField()[patchI];</span><br><span class="line">    <span class="function"><span class="keyword">const</span> scalarField <span class="title">magGradUw</span><span class="params">(mag(Uw.snGrad()</span>))</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Set epsilon and G</span></span><br><span class="line">    遍历参数 patch 对应的边界的每一个面</span><br><span class="line">    forAll(nutw, faceI)</span><br><span class="line">    &#123;</span><br><span class="line">        label cellI = patch.faceCells()[faceI];</span><br><span class="line">        scalar w = cornerWeights[faceI];</span><br><span class="line">        </span><br><span class="line">        epsilon[cellI] += w*Cmu75*<span class="built_in">pow</span>(k[cellI], <span class="number">1.5</span>)/(kappa_*y[faceI]);</span><br><span class="line">        G[cellI] +=</span><br><span class="line">            w</span><br><span class="line">           *(nutw[faceI] + nuw[faceI])</span><br><span class="line">           *magGradUw[faceI]</span><br><span class="line">           *Cmu25*<span class="built_in">sqrt</span>(k[cellI])</span><br><span class="line">           /(kappa_*y[faceI]);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><code>calculate</code> 函数中进行的是实际的计算过程，主要是更新了临近壁面网格的 <code>epsilon</code> 和 <code>G</code> 的值，计算公式如下：<br>$$<br>\varepsilon_c = \frac{1}{N} \sum_{f=i}^{N}\left( \frac{c_\mu^{3/4} k_C^{3/2}}{\kappa y_i}\right) \\<br>\text{相当于} \quad \quad \quad<br>\varepsilon ^+ = \frac{1}{\kappa y^+} \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad \quad<br>$$</p>
+<p>$$<br>G_c = \frac{1}{N} \sum_{f=i}^{N}\left( \frac{(\nu + \nu_t)\cdot |\tfrac{U_i-U_c}{d}|\cdot c_\mu^{1/4} k_C^{1/2}}{\kappa y_i}\right)<br>$$<br>这里的 <code>Uw.snGrad()</code> 是 <code>fvPatchFields&lt;Type&gt;</code> 类的成员函数：<br><figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">template&lt;class <span class="constant">Type&gt;</span></span><br><span class="line"><span class="constant">Foam:</span><span class="symbol">:tmp&lt;Foam</span><span class="symbol">:</span><span class="symbol">:Field&lt;Type&gt;</span> &gt; <span class="constant">Foam:</span><span class="symbol">:fvPatchField&lt;Type&gt;</span><span class="symbol">:</span><span class="symbol">:snGrad</span>() const</span><br><span class="line">&#123;</span><br><span class="line">     <span class="keyword">return</span> patch<span class="constant">_</span>.deltaCoeffs()*(*this - patchInternalField());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>公式中下标 <code>c</code> 表示临近边界的网格， <code>i</code> 表示网格 <code>c</code> 包含的某个边界面元。<code>y</code> 和 <code>d</code> 都表示边界面元所属网格中心到该面元的垂直距离。 </p>
+<p>还有一个重要的函数， <code>manipulateMatrix</code><br><figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">void epsilonWallFunctionFvPatchScalarField::manipulateMatrix</span><br><span class="line">(</span><br><span class="line">    fvMatrix&lt;<span class="keyword">scalar</span>&gt;&amp; <span class="literal">matrix</span></span><br><span class="line">)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (manipulatedMatrix())</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">matrix</span>.setValues(patch().faceCells(), patchInternalField());</span><br><span class="line"></span><br><span class="line">    fvPatchField&lt;<span class="keyword">scalar</span>&gt;::manipulateMatrix(<span class="keyword">matrix</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这个函数的功能是修改 matrix 中的值，将当前 patch 每一个面所属网格的值更新到 matrix 中。这个函数的目的有待进一步讨论。</p>
+<ul>
+<li>(2). epsilonLowReWallFunction</li>
+</ul>
+<p><code>epsilonLowReWallFunction</code> 继承自 <code>epsilonWallFunction</code> ，在此基础上，增加了一个成员函数 <code>yPlusLam</code>，并重新定义了 <code>calculate</code> 函数<br><figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">scalar</span> epsilonLowReWallFunctionFvPatchScalarField::yPlusLam</span><br><span class="line">(</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">scalar</span> <span class="keyword">kappa</span>,</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">scalar</span> <span class="literal">E</span></span><br><span class="line">)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">scalar</span> ypl = 11.0;</span><br><span class="line">    <span class="keyword">for</span> (int i=0; i&lt;10; i++)</span><br><span class="line">    &#123;</span><br><span class="line">        ypl = <span class="literal">log</span>(<span class="literal">max</span>(<span class="keyword">E</span>*ypl, 1))/<span class="keyword">kappa</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> ypl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这个跟 <code>kLowReWallFunction</code> 里是一样的，不再赘述。<br><figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">void epsilonLowReWallFunctionFvPatchScalarField::calculate</span><br><span class="line">(</span><br><span class="line">    <span class="keyword">const</span> turbulenceModel&amp; turbulence,</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">List</span>&lt;<span class="keyword">scalar</span>&gt;&amp; cornerWeights,</span><br><span class="line">    <span class="keyword">const</span> fvPatch&amp; patch,</span><br><span class="line">    scalarField&amp; <span class="keyword">G</span>,</span><br><span class="line">    scalarField&amp; epsilon</span><br><span class="line">)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">label</span> patchI = patch.<span class="literal">index</span>();</span><br><span class="line">    <span class="keyword">const</span> scalarField&amp; y = turbulence.<span class="literal">y</span>()[patchI];</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">scalar</span> Cmu25 = pow025(Cmu_);</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">scalar</span> Cmu75 = pow(Cmu_, 0.75);</span><br><span class="line">    <span class="keyword">const</span> tmp&lt;volScalarField&gt; tk = turbulence.k();</span><br><span class="line">    <span class="keyword">const</span> volScalarField&amp; k = tk();</span><br><span class="line">    <span class="keyword">const</span> tmp&lt;volScalarField&gt; tnu = turbulence.nu();</span><br><span class="line">    <span class="keyword">const</span> scalarField&amp; nuw = tnu().boundaryField()[patchI];</span><br><span class="line">    <span class="keyword">const</span> tmp&lt;volScalarField&gt; tnut = turbulence.nut();</span><br><span class="line">    <span class="keyword">const</span> volScalarField&amp; nut = tnut();</span><br><span class="line">    <span class="keyword">const</span> scalarField&amp; nutw = nut.boundaryField()[patchI];</span><br><span class="line">    <span class="keyword">const</span> fvPatchVectorField&amp; Uw = turbulence.<span class="keyword">U</span>().boundaryField()[patchI];</span><br><span class="line">    <span class="keyword">const</span> scalarField magGradUw(mag(Uw.snGrad()));</span><br><span class="line">    </span><br><span class="line"><span class="comment">// Set epsilon and G</span></span><br><span class="line">    forAll(nutw, faceI)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">label</span> cellI = patch.faceCells()[faceI];</span><br><span class="line"></span><br><span class="line">        <span class="keyword">scalar</span> yPlus = Cmu25*<span class="literal">sqrt</span>(k[cellI])*y[faceI]/nuw[faceI];</span><br><span class="line"></span><br><span class="line">        <span class="keyword">scalar</span> w = cornerWeights[faceI];</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (yPlus &gt; yPlusLam_)</span><br><span class="line">        &#123;</span><br><span class="line">            epsilon[cellI] = w*Cmu75*pow(k[cellI], 1.5)/(kappa_*y[faceI]);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        &#123;</span><br><span class="line">            epsilon[cellI] = w*2.0*k[cellI]*nuw[faceI]/sqr(y[faceI]);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">G</span>[cellI] =</span><br><span class="line">            <span class="literal">w</span></span><br><span class="line"><span class="comment">           *(nutw[faceI] + nuw[faceI])</span></span><br><span class="line"><span class="comment">           *magGradUw[faceI]</span></span><br><span class="line"><span class="comment">           *Cmu25*sqrt(k[cellI])</span></span><br><span class="line">           /(kappa_*y[faceI]);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这里需要根据 <code>yPlus</code> 和 <code>yPlusLam_</code> 的相对大小来选择不同的计算方式。只是，上面这段来自 OpenFOAM-2.3.1 的代码是有问题的！在OpenFOAM-3.0.1 中已经修复成如下<br><figure class="highlight prolog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"> <span class="atom">forAll</span>(<span class="atom">nutw</span>, <span class="atom">facei</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="atom">label</span> <span class="atom">celli</span> = <span class="atom">patch</span>.<span class="atom">faceCells</span>()[<span class="atom">facei</span>];</span><br><span class="line"></span><br><span class="line">        <span class="atom">scalar</span> <span class="atom">yPlus</span> = <span class="name">Cmu25</span>*<span class="atom">sqrt</span>(<span class="atom">k</span>[<span class="atom">celli</span>])*<span class="atom">y</span>[<span class="atom">facei</span>]/<span class="atom">nuw</span>[<span class="atom">facei</span>];</span><br><span class="line"></span><br><span class="line">        <span class="atom">scalar</span> <span class="atom">w</span> = <span class="atom">cornerWeights</span>[<span class="atom">facei</span>];</span><br><span class="line"></span><br><span class="line">        <span class="atom">if</span> (<span class="atom">yPlus</span> &gt; <span class="atom">yPlusLam_</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="atom">epsilon0</span>[<span class="atom">celli</span>] += <span class="atom">w</span>*<span class="name">Cmu75</span>*<span class="atom">pow</span>(<span class="atom">k</span>[<span class="atom">celli</span>], <span class="number">1.5</span>)/(<span class="atom">kappa_</span>*<span class="atom">y</span>[<span class="atom">facei</span>]);</span><br><span class="line"></span><br><span class="line">            <span class="name">G0</span>[<span class="atom">celli</span>] +=</span><br><span class="line">                <span class="atom">w</span></span><br><span class="line">               *(<span class="atom">nutw</span>[<span class="atom">facei</span>] + <span class="atom">nuw</span>[<span class="atom">facei</span>])</span><br><span class="line">               *<span class="atom">magGradUw</span>[<span class="atom">facei</span>]</span><br><span class="line">               *<span class="name">Cmu25</span>*<span class="atom">sqrt</span>(<span class="atom">k</span>[<span class="atom">celli</span>])</span><br><span class="line">               /(<span class="atom">kappa_</span>*<span class="atom">y</span>[<span class="atom">facei</span>]);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="atom">else</span></span><br><span class="line">        &#123;</span><br><span class="line">            <span class="atom">epsilon0</span>[<span class="atom">celli</span>] += <span class="atom">w</span>*<span class="number">2.0</span>*<span class="atom">k</span>[<span class="atom">celli</span>]*<span class="atom">nuw</span>[<span class="atom">facei</span>]/<span class="atom">sqr</span>(<span class="atom">y</span>[<span class="atom">facei</span>]);</span><br><span class="line">            <span class="name">G0</span>[<span class="atom">celli</span>] += <span class="name">G</span>[<span class="atom">celli</span>];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p><code>yPlus &gt; yPlusLam_</code> 时，与 <code>epsilonWallFunction</code> 是一样的；<br><code>yPlus &lt; yPlusLam_</code> 时<br>$$<br>\varepsilon_c = \frac{1}{N} \sum_{f=i}^{N}\left( \frac{2\cdot k_C \nu_i}{y^2_i}\right)<br>$$<br>这个公式等价于<br>$$<br>\varepsilon ^+ = 2\frac{k^+}{(y^+)^2}<br>$$</p>
+<p><code>G</code> 则取在湍流模型中定义的值，不作修改。 不过，这里 <code>G0[celli] += G[celli]</code> 意味着假设有一个网格有两个边界面，则这个网格的中计算得到的 <code>G0</code> ，将是在湍流模型中定义的该网格中的 G 值的 2 倍，即认为每一个边界面对都该网格内的湍动能生成有贡献。</p>
+<h5 id="4-_$\omega$_的壁面函数">4. $\omega$ 的壁面函数</h5><p>OpenFOAM 中只提供了一个 <code>omegaWallFunction</code>，这个壁面函数，属于一种自动壁面函数，能自动地根据 $y^+$ 的值来在粘性层和对数层切换，过渡层则采用粘性层和对数层混合的结果。<br><code>omegaWallFunction</code> 与 <code>epsilonWallFunction</code> 类似，也是需要计算 $\omega$ 和 $P_k$ 在临近边界网格里的值，因此也需要考虑一个网格包含两个以上边界面的情况。具体处理方法跟 <code>epsilonWallFunction</code> 是一样的 ，所以这里就不重复了，只看具体的计算 $\omega$ 和 $P_k$ 的公式<br><figure class="highlight stata"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">void omegaWallFunctionFvPatchScalarField::calculate</span><br><span class="line">(</span><br><span class="line">    <span class="keyword">const</span> turbulenceModel&amp; turbulence,</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">List</span>&lt;<span class="keyword">scalar</span>&gt;&amp; cornerWeights,</span><br><span class="line">    <span class="keyword">const</span> fvPatch&amp; patch,</span><br><span class="line">    scalarField&amp; <span class="keyword">G</span>,</span><br><span class="line">    scalarField&amp; omega</span><br><span class="line">)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">label</span> patchI = patch.<span class="literal">index</span>();</span><br><span class="line">    <span class="keyword">const</span> scalarField&amp; y = turbulence.<span class="literal">y</span>()[patchI];</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">scalar</span> Cmu25 = pow025(Cmu_);</span><br><span class="line">    <span class="keyword">const</span> tmp&lt;volScalarField&gt; tk = turbulence.k();</span><br><span class="line">    <span class="keyword">const</span> volScalarField&amp; k = tk();</span><br><span class="line">    <span class="keyword">const</span> tmp&lt;volScalarField&gt; tnu = turbulence.nu();</span><br><span class="line">    <span class="keyword">const</span> scalarField&amp; nuw = tnu().boundaryField()[patchI];</span><br><span class="line">    <span class="keyword">const</span> tmp&lt;volScalarField&gt; tnut = turbulence.nut();</span><br><span class="line">    <span class="keyword">const</span> volScalarField&amp; nut = tnut();</span><br><span class="line">    <span class="keyword">const</span> scalarField&amp; nutw = nut.boundaryField()[patchI];</span><br><span class="line">    <span class="keyword">const</span> fvPatchVectorField&amp; Uw = turbulence.<span class="keyword">U</span>().boundaryField()[patchI];</span><br><span class="line">    <span class="keyword">const</span> scalarField magGradUw(mag(Uw.snGrad()));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Set omega and G</span></span><br><span class="line">    forAll(nutw, faceI)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">label</span> cellI = patch.faceCells()[faceI];</span><br><span class="line">        <span class="keyword">scalar</span> w = cornerWeights[faceI];</span><br><span class="line">        <span class="keyword">scalar</span> omegaVis = 6.0*nuw[faceI]/(beta1_*sqr(y[faceI]));</span><br><span class="line">        <span class="keyword">scalar</span> omegaLog = <span class="literal">sqrt</span>(k[cellI])/(Cmu25*kappa_*y[faceI]);</span><br><span class="line">        omega[cellI] += w*<span class="literal">sqrt</span>(sqr(omegaVis) + sqr(omegaLog));</span><br><span class="line">        <span class="keyword">G</span>[cellI] +=</span><br><span class="line">            <span class="literal">w</span></span><br><span class="line"><span class="comment">           *(nutw[faceI] + nuw[faceI])</span></span><br><span class="line"><span class="comment">           *magGradUw[faceI]</span></span><br><span class="line"><span class="comment">           *Cmu25*sqrt(k[cellI])</span></span><br><span class="line">           /(kappa_*y[faceI]);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这里， <code>omegaVis</code> 和 <code>omegaLog</code> 分别指的是在假定第一层网格位于粘性底层和对数层时得到的 <code>omega</code> 的解析解<br>$$<br>\omega_{Vis} = \frac{6.0\nu}{\beta_1y^2} \<br>\omega_{Log} = \frac{k_C^{1/2}}{C_\mu^{1/4}\kappa y}<br>$$<br>然后，将 $\omega_{Vis}$ 和 $\omega_{Log}$ 用一个函数混合起来，就得到了<br>$$<br>\omega = \sqrt{\omega_{Vis}^2 + \omega_{Log}^2}<br>$$<br>只是，这里的湍动能生成项，却似乎并没有使用混合的方法，而是用的基于对数律的公式：<br>$$<br>G = \frac{(\nu + \nu_t)\cdot |\frac{U_c-U_w}{d}|\cdot C_\mu^{1/4}k_C^{1/2}}{\kappa y}<br>$$</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://xiaopingqiu.github.io/2016/04/25/wallFunctions3/" data-id="cinet0yjk000754mbdb8q2uck" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/wall-functions/">wall functions</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2016/04/25/wallFunctions4/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          OpenFOAM 中的壁面函数（四）
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2016/04/25/wallFunctions2/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">OpenFOAM 中的壁面函数（二）</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+<section id="comments">
+  <!-- 多说评论框 start -->
+  <div class="ds-thread" data-thread-key="post-wallFunctions3" data-title="OpenFOAM 中的壁面函数（三）" data-url="http://xiaopingqiu.github.io/2016/04/25/wallFunctions3/"></div>
+  <!-- 多说评论框 end -->
+  <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+  <script type="text/javascript">
+  var duoshuoQuery = {short_name:"xiaopingqiu"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+  <!-- 多说公共JS代码 end -->
+</section>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/">OpenFOAM</a><span class="category-list-count">33</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Paraview/">Paraview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/swak4Foam/">swak4Foam</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/test/">test</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/vim/">vim</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Boundary-conditions/">Boundary conditions</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/">C++</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CentOS/">CentOS</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Explained/">Code Explained</a><span class="tag-list-count">23</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a><span class="tag-list-count">19</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Postprocessing/">Postprocessing</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Preprocessing/">Preprocessing</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RTS/">RTS</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TIL/">TIL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/fvOptions/">fvOptions</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/groovyBC/">groovyBC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/paraview/">paraview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/test/">test</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/turbulence-model/">turbulence model</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vim/">vim</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/wall-functions/">wall functions</a><span class="tag-list-count">4</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Boundary-conditions/" style="font-size: 15px;">Boundary conditions</a><a href="/tags/C/" style="font-size: 11.67px;">C++</a><a href="/tags/CentOS/" style="font-size: 10px;">CentOS</a><a href="/tags/Code-Explained/" style="font-size: 20px;">Code Explained</a><a href="/tags/OpenFOAM/" style="font-size: 18.33px;">OpenFOAM</a><a href="/tags/Postprocessing/" style="font-size: 13.33px;">Postprocessing</a><a href="/tags/Preprocessing/" style="font-size: 10px;">Preprocessing</a><a href="/tags/RTS/" style="font-size: 11.67px;">RTS</a><a href="/tags/TIL/" style="font-size: 10px;">TIL</a><a href="/tags/Windows/" style="font-size: 10px;">Windows</a><a href="/tags/fvOptions/" style="font-size: 11.67px;">fvOptions</a><a href="/tags/groovyBC/" style="font-size: 10px;">groovyBC</a><a href="/tags/paraview/" style="font-size: 10px;">paraview</a><a href="/tags/test/" style="font-size: 10px;">test</a><a href="/tags/turbulence-model/" style="font-size: 16.67px;">turbulence model</a><a href="/tags/vim/" style="font-size: 10px;">vim</a><a href="/tags/wall-functions/" style="font-size: 13.33px;">wall functions</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">四月 2016</a><span class="archive-list-count">12</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/12/">十二月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/11/">十一月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/10/">十月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/09/">九月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/08/">八月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">六月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a><span class="archive-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recents</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2016/04/25/wallFunctions4/">OpenFOAM 中的壁面函数（四）</a>
+          </li>
+        
+          <li>
+            <a href="/2016/04/25/wallFunctions3/">OpenFOAM 中的壁面函数（三）</a>
+          </li>
+        
+          <li>
+            <a href="/2016/04/25/wallFunctions2/">OpenFOAM 中的壁面函数（二）</a>
+          </li>
+        
+          <li>
+            <a href="/2016/04/25/wallFunctions1/">OpenFOAM 中的壁面函数（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2016/04/25/TurbulenceModel-30-macro/">OpenFOAM-3.0 的湍流模型（四）</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2016 Giskard Q.<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+<script src="//dn-lbstatics.qbox.me/lbservice/busuanzi/2.0/busuanzi.mini.js"/></script>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/atom.xml" class="mobile-nav-link">Rss</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css" type="text/css">
+  <script src="/fancybox/jquery.fancybox.pack.js" type="text/javascript"></script>
+
+
+<script src="/js/script.js" type="text/javascript"></script>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-62501686-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+  </div>
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+</body>
+</html>
