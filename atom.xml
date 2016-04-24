@@ -75,8 +75,8 @@
     <link href="http://xiaopingqiu.github.io/2016/04/25/wallFunctions3/"/>
     <id>http://xiaopingqiu.github.io/2016/04/25/wallFunctions3/</id>
     <published>2016-04-24T16:43:34.000Z</published>
-    <updated>2016-04-24T18:48:49.442Z</updated>
-    <content type="html"><![CDATA[<p>这篇来看看计算湍动能 $\varepsilon$  和 $\omage$ 的壁面函数。</p>
+    <updated>2016-04-24T18:58:31.796Z</updated>
+    <content type="html"><![CDATA[<p>这篇来看看计算湍动能 $\varepsilon$  和 $\omega$ 的壁面函数。</p>
 <a id="more"></a>
 <h5 id="3-_湍动能耗散_$\varepsilon$_的壁面函数">3. 湍动能耗散 $\varepsilon$ 的壁面函数</h5><p>本篇来看看 OpenFOAM 中的 <code>epsilonWallFunction</code>，共有两个： <code>epsilonWallFunction</code> 和 <code>epsilonLowReWallFunction</code>。</p>
 <ul>
@@ -108,7 +108,7 @@
 <p>这里， <code>omegaVis</code> 和 <code>omegaLog</code> 分别指的是在假定第一层网格位于粘性底层和对数层时得到的 <code>omega</code> 的解析解<br>$$<br>\omega_{Vis} = \frac{6.0\nu}{\beta_1y^2} \<br>\omega_{Log} = \frac{k_C^{1/2}}{C_\mu^{1/4}\kappa y}<br>$$<br>然后，将 $\omega_{Vis}$ 和 $\omega_{Log}$ 用一个函数混合起来，就得到了<br>$$<br>\omega = \sqrt{\omega_{Vis}^2 + \omega_{Log}^2}<br>$$<br>只是，这里的湍动能生成项，却似乎并没有使用混合的方法，而是用的基于对数律的公式：<br>$$<br>G = \frac{(\nu + \nu_t)\cdot |\frac{U_c-U_w}{d}|\cdot C_\mu^{1/4}k_C^{1/2}}{\kappa y}<br>$$</p>
 ]]></content>
     <summary type="html">
-    <![CDATA[<p>这篇来看看计算湍动能 $\varepsilon$  和 $\omage$ 的壁面函数。</p>]]>
+    <![CDATA[<p>这篇来看看计算湍动能 $\varepsilon$  和 $\omega$ 的壁面函数。</p>]]>
     
     </summary>
     
