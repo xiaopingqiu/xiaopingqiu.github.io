@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>OpenFOAM-3.0 的湍流模型（四） | Giskard&#39;s CFD Learning Tricks</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="最后来看一个小问题：OpenFOAM-3.0 中的湍流模型是怎么编译的。在这之前，湍流模型的编译很直观，将需要编译的湍流模型的代码的 .C 文件写到 Make/files 里就好了。可是，在 OpenFOAM-3.0 里，很多湍流模型代码的 .C 文件并没有写到 Make/files 里，而是写在 makeTurbulenceModels.C里，类似12#include &quot;mykEpsilon.H">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenFOAM-3.0 的湍流模型（四）">
+<meta property="og:url" content="http://xiaopingqiu.github.io/2016/04/25/TurbulenceModel-30-macro/index.html">
+<meta property="og:site_name" content="Giskard's CFD Learning Tricks">
+<meta property="og:description" content="最后来看一个小问题：OpenFOAM-3.0 中的湍流模型是怎么编译的。在这之前，湍流模型的编译很直观，将需要编译的湍流模型的代码的 .C 文件写到 Make/files 里就好了。可是，在 OpenFOAM-3.0 里，很多湍流模型代码的 .C 文件并没有写到 Make/files 里，而是写在 makeTurbulenceModels.C里，类似12#include &quot;mykEpsilon.H">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="OpenFOAM-3.0 的湍流模型（四）">
+<meta name="twitter:description" content="最后来看一个小问题：OpenFOAM-3.0 中的湍流模型是怎么编译的。在这之前，湍流模型的编译很直观，将需要编译的湍流模型的代码的 .C 文件写到 Make/files 里就好了。可是，在 OpenFOAM-3.0 里，很多湍流模型代码的 .C 文件并没有写到 Make/files 里，而是写在 makeTurbulenceModels.C里，类似12#include &quot;mykEpsilon.H">
+  
+  
+    <link rel="icon" href="/favicon.png">
+  
+  <link href="//fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="/css/style.css" type="text/css">
+  
+<!-- Google Analytics -->
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+##ga('create', '[object Object]', 'auto');
+ga('create', 'UA-62501686-1', 'auto');
+ga('send', 'pageview');
+
+</script>
+<!-- End Google Analytics -->
+
+
+</head>
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Giskard&#39;s CFD Learning Tricks</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">CFD and Scientific Computing</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+          <a class="main-nav-link" href="/atom.xml">Rss</a>
+        
+          <a class="main-nav-link" href="/about">About</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" results="0" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="q" value="site:http://xiaopingqiu.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-TurbulenceModel-30-macro" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2016/04/25/TurbulenceModel-30-macro/" class="article-date">
+  <time datetime="2016-04-24T16:11:08.000Z" itemprop="datePublished">2016-04-25</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      OpenFOAM-3.0 的湍流模型（四）
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>最后来看一个小问题：OpenFOAM-3.0 中的湍流模型是怎么编译的。在这之前，湍流模型的编译很直观，将需要编译的湍流模型的代码的 <code>.C</code> 文件写到 <code>Make/files</code> 里就好了。可是，在 OpenFOAM-3.0 里，很多湍流模型代码的 <code>.C</code> 文件并没有写到 <code>Make/files</code> 里，而是写在 <code>makeTurbulenceModels.C</code>里，类似<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="preprocessor">#<span class="keyword">include</span> "mykEpsilon.H"</span></span><br><span class="line">makeRASModel(mykEpsilon);</span><br></pre></td></tr></table></figure></p>
+<p>然后在 <code>Make/files</code> 里写的是这个 <code>makeTurbulenceModels.C</code> 文件。为什么呢？</p>
+<p>这里来分析一下这个问题。</p>
+<a id="more"></a>
+<p>这个问题，说起来也简单，不过我经过很多摸索从想明白。其实，这个问题用一个概念就可以解释清楚：条件编译。</p>
+<p>条件编译常用于头文件，格式如下<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//filename: kEpsilon.H</span></span><br><span class="line"><span class="preprocessor">#ifndef  kEpsilon_H</span></span><br><span class="line"><span class="preprocessor">#<span class="keyword">define</span>  kEpsilon_H</span></span><br><span class="line">......</span><br><span class="line">......</span><br><span class="line">......</span><br><span class="line"><span class="preprocessor">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure></p>
+<p>这样能避免头文件重复引用的导致变量或者类重复定义的问题，原因在于，第一次 <code>#include &quot;kEpsilon.H&quot;</code> 时，会触发 <code>#define  kEpsilon_H</code> 的操作，之后如果代码中再出现 <code>#include &quot;kEpsilon.H&quot;</code> 则  <code>#ifndef  kEpsilon_H</code> 将不再成立，所以， <code>#ifndef ... #endif</code> 之间的内容将不会再度被引入。</p>
+<p>OpenFOAM 的模板类中，还常见的一种用法是<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="preprocessor">#ifdef NoRepository</span></span><br><span class="line"><span class="preprocessor">#   <span class="keyword">include</span> "kEpsilon.C"</span></span><br><span class="line"><span class="preprocessor">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure></p>
+<p>这个怎么理解呢？ 本来也不难理解，无非就是如果定义了宏 <code>NoRepository</code> 则在头文件里将类的具体定义部分也引入到头文件里。问题是，翻遍 OpenFOAM 的 <code>src</code> 目录下的源码，也找不到 <code>NoRepository</code> 的定义。经过搜索，原来这个 <code>NoRepository</code> 是通过 g++ 的 <code>-D</code> 选项来定义的！在编译过程中，使用<br><figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ -c -DNoRepository ...</span><br></pre></td></tr></table></figure></p>
+<p>相当于进行了 <code>#define NoRepository 1</code> 的操作，所以， <code>#ifdef NoRepository</code> 这个条件是满足的。<br>OpenFOAM 中，编译选项的定义在 <code>wmake/rules</code> 下，具体的定义取决于你用的编译器，以 <code>linux64Gcc/c++</code> 为例<br><figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">c++WARN     = -Wall -Wextra -Wno-unused-parameter -Wold-style-cast -Wnon-virtual-dtor</span><br><span class="line"></span><br><span class="line"><span class="constant">CC</span>          = g++ -m64</span><br><span class="line"></span><br><span class="line">include $(RULES)/c++$(WM_COMPILE_OPTION)</span><br><span class="line"></span><br><span class="line"><span class="constant">ptFLAGS</span>     = -DNoRepository -ftemplate-depth-100</span><br><span class="line"></span><br><span class="line">c++FLAGS    = $(GFLAGS) $(c++WARN) $(c++OPT) $(c++DBUG) $(ptFLAGS) $(LIB_HEADER_DIRS) -fPIC</span><br><span class="line"></span><br><span class="line"><span class="constant">Ctoo</span>        = <span class="variable">$(WM_SCHEDULER)</span> <span class="variable">$(CC)</span> <span class="variable">$(c++FLAGS)</span> -c $$SOURCE -o $@</span><br><span class="line"><span class="constant">cxxtoo</span>      = <span class="variable">$(Ctoo)</span></span><br><span class="line"><span class="constant">cctoo</span>       = <span class="variable">$(Ctoo)</span></span><br><span class="line"><span class="constant">cpptoo</span>      = <span class="variable">$(Ctoo)</span></span><br><span class="line"></span><br><span class="line"><span class="constant">LINK_LIBS</span>   = <span class="variable">$(c++DBUG)</span></span><br><span class="line"></span><br><span class="line"><span class="constant">LINKLIBSO</span>   = <span class="variable">$(CC)</span> <span class="variable">$(c++FLAGS)</span> -shared -Xlinker --add-needed -Xlinker --no-as-needed</span><br><span class="line"><span class="constant">LINKEXE</span>     = <span class="variable">$(CC)</span> <span class="variable">$(c++FLAGS)</span> -Xlinker --add-needed -Xlinker --no-as-needed</span><br></pre></td></tr></table></figure></p>
+<p>可见这里的确是使用了 <code>-DNoRepository</code> 选项。</p>
+<p>为什么要在头文件里 <code>#include &quot;kEpsilon.C&quot;</code> 呢？这就涉及到模板类的实例化的问题。<a href="http://www.codeproject.com/Articles/3515/How-To-Organize-Template-Source-Code" target="_blank" rel="external">这篇文章</a>详细地探讨了模板类实例化过程中会遇到的问题，以及解决的办法。简单地说，<strong>模板类不是一种类型，而是一种模板</strong>，模板类通过代入模板参数来实例化，以得到具体的类（这个具体的类就可以看作是一种“数据类型”了）。在示例化过程中，编译器不光需要模板类的声明部分，还需要知道模板类的成员函数的具体定义部分，所以，如果在进行模板类声明的地方只包含了模板类的声明部分（一般是头文件），那实例化就会失败，编译器会报类似“undefined reference to …” 的错误。<br><a href="http://www.cfd-online.com/Forums/openfoam-programming-development/90676-norepository.html" target="_blank" rel="external">cfd-online 上的这个帖子</a>也探讨了关于 <code>NoRepository</code> 的问题。</p>
+<p>最后，<code>makeTurbulenceModels.C</code> 里的 <code>#include  &quot;kEpsilon.H&quot;</code>，其实相当于也 <code>#include &quot;kEpsilon.C&quot;</code>，而且，要注意<strong>这里 include 进来的是一个模板类，是用来建立实例化的模型的</strong>！实例化的过程，在 <code>makeRASModel(kEpsilon)</code> 里，详细的参考前一篇，看看这个宏函数的展开，就知道模型参数是怎么代入进去来得到实例化的湍流模型类的。 </p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://xiaopingqiu.github.io/2016/04/25/TurbulenceModel-30-macro/" data-id="cinerv5a3002rnkmbngizg91l" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/turbulence-model/">turbulence model</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2016/04/24/TurbulenceModel-30-NewModels/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">OpenFOAM-3.0 的湍流模型（三）</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+<section id="comments">
+  <!-- 多说评论框 start -->
+  <div class="ds-thread" data-thread-key="post-TurbulenceModel-30-macro" data-title="OpenFOAM-3.0 的湍流模型（四）" data-url="http://xiaopingqiu.github.io/2016/04/25/TurbulenceModel-30-macro/"></div>
+  <!-- 多说评论框 end -->
+  <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+  <script type="text/javascript">
+  var duoshuoQuery = {short_name:"xiaopingqiu"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+  <!-- 多说公共JS代码 end -->
+</section>
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/">OpenFOAM</a><span class="category-list-count">29</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Paraview/">Paraview</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/swak4Foam/">swak4Foam</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/test/">test</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/vim/">vim</a><span class="category-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tags</h3>
+    <div class="widget">
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Boundary-conditions/">Boundary conditions</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/">C++</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CentOS/">CentOS</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Explained/">Code Explained</a><span class="tag-list-count">19</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a><span class="tag-list-count">19</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Postprocessing/">Postprocessing</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Preprocessing/">Preprocessing</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RTS/">RTS</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TIL/">TIL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/fvOptions/">fvOptions</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/groovyBC/">groovyBC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/paraview/">paraview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/test/">test</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/turbulence-model/">turbulence model</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vim/">vim</a><span class="tag-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Tag Cloud</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Boundary-conditions/" style="font-size: 16px;">Boundary conditions</a><a href="/tags/C/" style="font-size: 12px;">C++</a><a href="/tags/CentOS/" style="font-size: 10px;">CentOS</a><a href="/tags/Code-Explained/" style="font-size: 20px;">Code Explained</a><a href="/tags/OpenFOAM/" style="font-size: 20px;">OpenFOAM</a><a href="/tags/Postprocessing/" style="font-size: 14px;">Postprocessing</a><a href="/tags/Preprocessing/" style="font-size: 10px;">Preprocessing</a><a href="/tags/RTS/" style="font-size: 12px;">RTS</a><a href="/tags/TIL/" style="font-size: 10px;">TIL</a><a href="/tags/Windows/" style="font-size: 10px;">Windows</a><a href="/tags/fvOptions/" style="font-size: 12px;">fvOptions</a><a href="/tags/groovyBC/" style="font-size: 10px;">groovyBC</a><a href="/tags/paraview/" style="font-size: 10px;">paraview</a><a href="/tags/test/" style="font-size: 10px;">test</a><a href="/tags/turbulence-model/" style="font-size: 18px;">turbulence model</a><a href="/tags/vim/" style="font-size: 10px;">vim</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">四月 2016</a><span class="archive-list-count">8</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/12/">十二月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/11/">十一月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/10/">十月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/09/">九月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/08/">八月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">六月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a><span class="archive-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recents</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2016/04/25/TurbulenceModel-30-macro/">OpenFOAM-3.0 的湍流模型（四）</a>
+          </li>
+        
+          <li>
+            <a href="/2016/04/24/TurbulenceModel-30-NewModels/">OpenFOAM-3.0 的湍流模型（三）</a>
+          </li>
+        
+          <li>
+            <a href="/2016/04/24/TurbulenceModel-30-RTS/">OpenFOAM-3.0 的湍流模型（二）</a>
+          </li>
+        
+          <li>
+            <a href="/2016/04/24/TurbulenceModel-30-structure/">OpenFOAM-3.0 的湍流模型（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2016/04/02/Boundary-conditions-in-OpenFOAM4/">OpenFOAM 中的边界条件（四）</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      &copy; 2016 Giskard Q.<br>
+      Powered by <a href="http://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+<script src="//dn-lbstatics.qbox.me/lbservice/busuanzi/2.0/busuanzi.mini.js"/></script>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+    <a href="/atom.xml" class="mobile-nav-link">Rss</a>
+  
+    <a href="/about" class="mobile-nav-link">About</a>
+  
+</nav>
+    
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+
+
+  <link rel="stylesheet" href="/fancybox/jquery.fancybox.css" type="text/css">
+  <script src="/fancybox/jquery.fancybox.pack.js" type="text/javascript"></script>
+
+
+<script src="/js/script.js" type="text/javascript"></script>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-62501686-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+  </div>
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+</body>
+</html>
