@@ -171,7 +171,7 @@
     <link href="http://xiaopingqiu.github.io/2016/04/25/wallFunctions1/"/>
     <id>http://xiaopingqiu.github.io/2016/04/25/wallFunctions1/</id>
     <published>2016-04-24T16:36:27.000Z</published>
-    <updated>2016-04-24T18:19:36.318Z</updated>
+    <updated>2016-04-25T02:46:49.734Z</updated>
     <content type="html"><![CDATA[<p>本系列来看看 OpenFOAM 中的壁面函数。壁面函数的本质，是边界条件。这里主要来看看壁面函数的基本原理，OpenFOAM 中实现了的壁面函数，以及选择壁面函数的一些参考依据。</p>
 <a id="more"></a>
 <h5 id="1-_壁面函数的基本原理">1. 壁面函数的基本原理</h5><p>湍流模拟中，需要对近壁区域进行处理。一般来讲，壁面处理方法包含两类，一类是使用很细的网格，使靠近壁面的第一层网格在粘性层内（$y^+ <1$），然后里可以直接解析到粘性层的低雷诺湍流模型；另一类，不直接解析粘性层，而是将第一层网格设置在对数区（$y^+> 30$），然后用经验公式来将粘性层和对数区关联起来。下图是一个典型的壁面附近的 $U^+ \text{-} y^+$ 关系图。<br><img src="/image/wallFunctions/Law_of_the_wall.png" alt="壁面律"><br>图片来自 <a href="https://en.wikipedia.org/wiki/Law_of_the_wall" target="_blank" rel="external">Wikipedia:Law of the wall </a>。<br>在粘性层，满足如下关系<br>$$<br>u^+ = y^+<br>$$<br>而在对数区，则满足<br>$$<br>U^+ = \frac{1}{\kappa}\ln(Ey^+)<br>$$<br>其中 $U^+ = U/u_\tau$， $y^+ = yu_\tau/\nu$， $u_\tau = \sqrt{\tau_w/\rho}$，$\kappa\approx 0.41$，$E \approx 9.8$，$y$ 表示与壁面的距离。</1$），然后里可以直接解析到粘性层的低雷诺湍流模型；另一类，不直接解析粘性层，而是将第一层网格设置在对数区（$y^+></p>
@@ -191,6 +191,11 @@
 <li>计算 $\nu_t$，并更新 $\nu_t$ 在边界上的值（<code>nut_.correctBoundaryConditions()</code>） </li>
 </ol>
 <p>至于具体的 $k$，$\varepsilon$，以及 $\nu_t$ 的边界条件的实现，见后文。 </p>
+<p><strong>参考</strong></p>
+<ol>
+<li>The Finite Volume Method in Computational Fluid Dynamics An Advanced Introduction with OpenFOAM® and Matlab®</li>
+<li><a href="http://www.slideshare.net/fumiyanozaki96/openfoam-36426892" target="_blank" rel="external">http://www.slideshare.net/fumiyanozaki96/openfoam-36426892</a></li>
+</ol>
 ]]></content>
     <summary type="html">
     <![CDATA[<p>本系列来看看 OpenFOAM 中的壁面函数。壁面函数的本质，是边界条件。这里主要来看看壁面函数的基本原理，OpenFOAM 中实现了的壁面函数，以及选择壁面函数的一些参考依据。</p>]]>
