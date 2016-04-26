@@ -141,8 +141,7 @@ ga('send', 'pageview');
 <hr>
 <p>理解了以上这些，就可以进入 <code>option</code> 类了。<br>option 类是所有具体的源项类的基类，这个类里处理了所有源项都需要处理的部分，比如确定起始时间，选择源项作用的区域，这些都是在构造函数里完成的，主要是通过调用 <code>setSelection</code> 和 <code>setCellSet</code> 两个函数。这里需要注意的是数据成员 <code>cells_</code>， <code>V_</code>  以及 <code>fieldNames_</code>，分别定义源项作用区域的网格id （这里源项的作用区域是以 cell 为基础来指定的，即便是 points 模式，实际上源项作用的区域仍然是 points 所在的 cell。）， 选定区域的体积以及需要开启源项作用的场名（有时候，求解器的多个 Eqn 里有fvOptions，但是实际算例中只想针对特定的场开启源项，这可以通过指定 fieldNames_ 来实现）。</p>
 <p>注意 fieldNames 在 <code>option</code> 类中并没有初始化，需要在具体的源项类中指定。此外，<code>makeRelative</code> 等在求解器中实际调用的函数，在 <code>option</code> 类中也并没有进行具体的实现（但不是声明为纯虚函数，仅仅是函数体为空的而已，这里的结果不适合用纯虚函数）</p>
-<p>以 <code>SemiImplicitSource</code> 为例，主要去看 <code>addSup</code> 函数，这个函数，关键的一个参数是<code>fieldI</code>，这个参数，指的是fieldName<em>这个List的 <code>applyToField</code> 函数的返回值，用来判断一个field是否要启用源项。`fieldName</em><code>这个List，是在</code>SemiImplicitSource<code>类的</code>setFieldData<code>函数中赋值的，通过读取</code>SemiImplicitSourceCoeffs<code>中的参数来决定。但是这个</code>fieldName_<code>的确定方法根据不同的类有不同的做法，要具体分析。
-到此，</code>fvOpptions` 源项的调用途径就打通了，接下来可以继续具体分析特定的源项了。</p>
+<p>以 <code>SemiImplicitSource</code> 为例，主要去看 <code>addSup</code> 函数，这个函数，关键的一个参数是<code>fieldI</code>，这个参数，指的是 <code>fieldName_</code> 这个List的 <code>applyToField</code> 函数的返回值，用来判断一个 field 是否要启用源项。<code>fieldName_</code> 这个List，是在  <code>SemiImplicitSource</code> 类的 <code>setFieldData</code> 函数中赋值的，通过读取 <code>SemiImplicitSourceCoeffs</code> 中的参数来决定。但是这个 <code>fieldName_</code> 的确定方法根据不同的类有不同的做法，要具体分析。<br>到此，<code>fvOpptions</code> 源项的调用途径就打通了，接下来可以继续具体分析特定的源项了。</p>
 
       
     </div>
