@@ -176,7 +176,7 @@
     <link href="http://xiaopingqiu.github.io/2016/04/25/wallFunctions1/"/>
     <id>http://xiaopingqiu.github.io/2016/04/25/wallFunctions1/</id>
     <published>2016-04-24T16:36:27.000Z</published>
-    <updated>2016-04-26T13:42:57.672Z</updated>
+    <updated>2016-04-26T15:06:03.045Z</updated>
     <content type="html"><![CDATA[<p>本系列来看看 OpenFOAM 中的壁面函数。壁面函数的本质，是边界条件。这里主要来看看壁面函数的基本原理，OpenFOAM 中实现了的壁面函数，以及选择壁面函数的一些参考依据。</p>
 <a id="more"></a>
 <h5 id="1-_壁面函数的基本原理">1. 壁面函数的基本原理</h5><p>湍流模拟中，需要对近壁区域进行处理。一般来讲，壁面处理方法包含两类，一类是使用很细的网格，使靠近壁面的第一层网格在粘性层内（$y^+ <1$），然后里可以直接解析到粘性层的低雷诺湍流模型；另一类，不直接解析粘性层，而是将第一层网格设置在对数区（$y^+> 30$），然后用经验公式来将粘性层和对数区关联起来。下图是一个典型的壁面附近的 $U^+ \text{-} y^+$ 关系图。<br><img src="/image/wallFunctions/Law_of_the_wall.png" alt="壁面律"><br>图片来自 <a href="https://en.wikipedia.org/wiki/Law_of_the_wall" target="_blank" rel="external">Wikipedia:Law of the wall </a>。<br>在粘性层，满足如下关系<br>$$<br>u^+ = y^+<br>$$<br>而在对数区，则满足<br>$$<br>U^+ = \frac{1}{\kappa}\ln(Ey^+)<br>$$<br>其中 $U^+ = U/u_\tau$， $y^+ = yu_\tau/\nu$， $u_\tau = \sqrt{\tau_w/\rho}$，$\kappa\approx 0.41$，$E \approx 9.8$，$y$ 表示与壁面的距离。</1$），然后里可以直接解析到粘性层的低雷诺湍流模型；另一类，不直接解析粘性层，而是将第一层网格设置在对数区（$y^+></p>
@@ -192,7 +192,7 @@
 <p>从上述代码，可以将湍流模型的具体计算过程归纳如下：</p>
 <ol>
 <li>计算湍动能生成项 $G$，并修正 $G$ 在第一层网格的值。修正是通过 <code>epsilon_.boundaryField().updateCoeffs();</code> 来实现的，这里调用 <code>epsilon</code> 的边界条件的 <code>updateCoeffs</code> 函数，实现的操作是修正 $G$ 和 $\varepsilon$ 在第一层网格的值。</li>
-<li>利用更新的 $G$ 构建 <code>epsEqn</code>，然后修改 <code>epsEqn</code> 这个 <code>fvmatrix</code> （ <code>epsEqn().boundaryManipulate(epsilon_.boundaryField());</code> ），将 <code>epsilonWallFunction</code> 类型的边界对应的网格的值设置为边界上的值（参考 <a href="http://www.cfd-online.com/Forums/openfoam-solving/132703-boundarymanipulate.html" target="_blank" rel="external">cfd-online 的这个帖子</a>）。</li>
+<li>利用更新的 $G$ 构建 <code>epsEqn</code>，然后修改 <code>epsEqn</code> 这个 <code>fvmatrix</code> （ <code>epsEqn().boundaryManipulate(epsilon_.boundaryField());</code> ），这样做的目的是保证在下一步 <code>solve(epsEqn)</code>的时候，<code>epsilonWallFunction</code> 类型的边界所属的网格的值不会变化，而是保持在 <code>epsilon_.boundaryField().updateCoeffs();</code> 这一步里设置的值（参考 <a href="http://www.cfd-online.com/Forums/openfoam-solving/132703-boundarymanipulate.html" target="_blank" rel="external">cfd-online 的这个帖子</a>）。</li>
 <li>求解 <code>epsEqn</code>，得到更新的 $\varepsilon$ 场。</li>
 <li>利用更新的 $\varepsilon$ 场构建并求解 <code>kEqn</code>，得到更新的 $k$ 场。</li>
 <li>计算 $\nu_t$，并更新 $\nu_t$ 在边界上的值（<code>nut_.correctBoundaryConditions()</code>） </li>
