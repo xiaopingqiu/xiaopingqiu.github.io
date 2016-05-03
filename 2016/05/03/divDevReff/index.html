@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8">
   
-  <title>Tag: LIGGGHTS | Giskard&#39;s CFD Learning Tricks</title>
+  <title>OpenFOAM 单相不可压缩湍流模型的 divDevReff 函数的几个小问题 | Giskard&#39;s CFD Learning Tricks</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Giskard's CFD Learning Tricks">
-<meta property="og:url" content="http://xiaopingqiu.github.io/tags/LIGGGHTS/index.html">
+  <meta name="description" content="3.0 版本之前，OpenFOAM 的单相流求解器如 pisoFoam 的动量方程中调用的是湍流模型的 divDevReff 函数来考虑雷诺应力项的作用。只是，细究起来，这个函数似乎有点小问题，本篇来探讨一下这些小问题。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenFOAM 单相不可压缩湍流模型的 divDevReff 函数的几个小问题">
+<meta property="og:url" content="http://xiaopingqiu.github.io/2016/05/03/divDevReff/index.html">
 <meta property="og:site_name" content="Giskard's CFD Learning Tricks">
-<meta property="og:description">
+<meta property="og:description" content="3.0 版本之前，OpenFOAM 的单相流求解器如 pisoFoam 的动量方程中调用的是湍流模型的 divDevReff 函数来考虑雷诺应力项的作用。只是，细究起来，这个函数似乎有点小问题，本篇来探讨一下这些小问题。">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Giskard's CFD Learning Tricks">
-<meta name="twitter:description">
+<meta name="twitter:title" content="OpenFOAM 单相不可压缩湍流模型的 divDevReff 函数的几个小问题">
+<meta name="twitter:description" content="3.0 版本之前，OpenFOAM 的单相流求解器如 pisoFoam 的动量方程中调用的是湍流模型的 divDevReff 函数来考虑雷诺应力项的作用。只是，细究起来，这个函数似乎有点小问题，本篇来探讨一下这些小问题。">
   
   
     <link rel="icon" href="/favicon.png">
@@ -78,39 +78,87 @@ ga('send', 'pageview');
 </header>
 
       <div class="outer">
-        <section id="main">
-  
-  
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2016" class="archive-year">2016</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2016/05/03/liggghts-howto/" class="archive-article-date">
-  <time datetime="2016-05-03T04:38:31.000Z" itemprop="datePublished">5月 3</time>
+        <section id="main"><article id="post-divDevReff" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2016/05/03/divDevReff/" class="article-date">
+  <time datetime="2016-05-03T05:39:44.000Z" itemprop="datePublished">2016-05-03</time>
 </a>
-      
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2016/05/03/liggghts-howto/">LIGGGHTS tips</a>
+    <h1 class="article-title" itemprop="name">
+      OpenFOAM 单相不可压缩湍流模型的 divDevReff 函数的几个小问题
     </h1>
   
 
-    </header>
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>3.0 版本之前，OpenFOAM 的单相流求解器如 pisoFoam 的动量方程中调用的是湍流模型的 <code>divDevReff</code> 函数来考虑雷诺应力项的作用。只是，细究起来，这个函数似乎有点小问题，本篇来探讨一下这些小问题。</p>
+<a id="more"></a>
+<p>OpenFOAM 中单相不可压缩求解器中，雷诺应力项调用的是湍流模型中的 <code>divDevReff</code> 函数。这个函数的返回值为<br>$$<br>\nabla \cdot(\nu_{eff}\nabla U)+\nabla \cdot\left [\nu_{eff}\nabla U^\mathrm{T}-\frac{1}{3} \nu_{eff} (\nabla \cdot U) \mathbf{I} \right ]<br>$$<br>这里有两个疑问，第一是为什么是 $\frac{1}{3}$ 而不是 $\frac{2}{3}$，对应到代码，即为什么用 <code>dev</code> 函数而不是 <code>dev2</code> 函数？第二个问题，根据涡粘度的 Boussinesq approximation，雷诺应力项<br>$$<br>\overline{u’_iu’_j}= -\nu_t \left( \frac{\partial \bar{u}_i}{\partial x_j} + \frac{\partial \bar{u}_j}{\partial x_i} \right) + \frac{2}{3}k \delta_{ij}<br>$$<br>中应该还包含湍动能 $k$，而 OpenFOAM 中的 <code>divDefReff</code> 函数是没有 $k$ 这一项的。<br>这个话题，在 cfd-online 上的<a href="http://www.cfd-online.com/Forums/openfoam-solving/58214-calculating-divdevreff-2.html" target="_blank" rel="external">一篇帖子</a>里有深入的讨论。</p>
+<p>对于第一个问题，我跟<a href="http://www.holzmann-cfd.de/index.php/en/tutorials-en" target="_blank" rel="external">Holtzmann CFD</a> 博客的博主 Tobias Holzmann 持同样观点，即$\frac{1}{3}$ 或 $\frac{2}{3}$ 不重要，因为对于不可压缩流动，连续方程为<br>$$<br>\nabla \cdot U = 0<br>$$<br>所以，收敛以后，$\frac{1}{3} \nu_{eff} (\nabla \cdot U)$ 这一项等于0. 但是在开始阶段，或者说还没有达到满足连续性的流场之前，这一项不为零。这里加上这一项是出于数值稳定性以及收敛速度的考虑，这一项不对收敛后的结果几乎没有影响。所以，$\frac{1}{3}$ 或 $\frac{2}{3}$ 不是很重要。<br>但是，可压缩湍流模型里必须是 $\frac{2}{3}$ ，因为这个 $\frac{2}{3}$ 是从 N-S 方程中严格推导而来的，而且，在可压缩的情形下，即使收敛以后，也有 $\nabla \cdot U \neq 0$ 。在 OpenFOAM=3.0 以后的版本里，不可压和可压缩湍流模型纳入到一个框架下了，两种情形下，都是用的 $\frac{2}{3}$ 这个系数。</p>
+<p>对于第二个问题，有两种观点，一种认为 $k$ 的值相对很小，可以直接忽略不计。另一种观点认为，$k$ 被放到了压力项里，即，动量方程中的压力是雷诺时均压力与雷诺应力的各向同性分量（即 $\frac{2}{3}k$）之和：<br>$$<br>\bar{u}_j\frac{\partial\bar{u}_i}{\partial\bar{u}_j} =<br>-\frac{1}{\rho}\frac{\partial}{\partial x_i} \underbrace{\left[p + \frac{2}{3}k \right]}_{p^\prime}</p>
+<ul>
+<li>\frac{\partial}{\partial x_j} \left[(\nu+\nu_{t}) \left( \frac{\partial \bar{u}_i}{\partial x_j} + \frac{\partial \bar{u}_j}{\partial x_i}\right) \right]<br>$$<br>这种观点可以在 Pope 2000 书第 88 页找到依据。在 “ The Finite Volume Method in Computational Fluid Dynamics: An Advanced Introduction with OpenFOAM® and Matlab®” 这本书的第 699 页，也提到 $k$ 是被放到压力项里去了，目的在于使动量方程中只含有 $\nu_t$ 这一个跟湍流有关的未知量。</li>
+</ul>
+<p>不过，Tobias Holzmann 最后仍持前一种观点，即 $k$ 项被忽略了。理由是 OpenFOAM 中似乎找不到关于修改的压力场的代码，而且 OpenFOAM 那边也没见有人讨论说 OpenFOAM 中使用的是修改的压力场。<br>第二个问题目前还没有确切的结论，也尚不清楚这样处理对结果有多大影响。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://xiaopingqiu.github.io/2016/05/03/divDevReff/" data-id="cinr0qo2u0033v4mb1263e8vr" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/turbulence-model/">turbulence model</a></li></ul>
+
+    </footer>
   </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2016/05/03/liggghts-howto/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">LIGGGHTS tips</div>
+    </a>
+  
+</nav>
+
+  
 </article>
-  
-  
-    </div></section>
-  
+
+
+<section id="comments">
+  <!-- 多说评论框 start -->
+  <div class="ds-thread" data-thread-key="post-divDevReff" data-title="OpenFOAM 单相不可压缩湍流模型的 divDevReff 函数的几个小问题" data-url="http://xiaopingqiu.github.io/2016/05/03/divDevReff/"></div>
+  <!-- 多说评论框 end -->
+  <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+  <script type="text/javascript">
+  var duoshuoQuery = {short_name:"xiaopingqiu"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+  <!-- 多说公共JS代码 end -->
+</section>
+
 </section>
         
           <aside id="sidebar">
