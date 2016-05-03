@@ -4,7 +4,7 @@
   <subtitle><![CDATA[CFD and Scientific Computing]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://xiaopingqiu.github.io/"/>
-  <updated>2016-05-03T05:55:49.539Z</updated>
+  <updated>2016-05-03T05:58:35.645Z</updated>
   <id>http://xiaopingqiu.github.io/</id>
   
   <author>
@@ -15,11 +15,11 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
-    <title><![CDATA[OpenFOAM 单相不可压缩湍流模型的 divDevReff 函数的几个小问题]]></title>
+    <title><![CDATA[OpenFOAM 不可压缩湍流模型的 divDevReff 函数]]></title>
     <link href="http://xiaopingqiu.github.io/2016/05/03/divDevReff/"/>
     <id>http://xiaopingqiu.github.io/2016/05/03/divDevReff/</id>
     <published>2016-05-03T05:39:44.000Z</published>
-    <updated>2016-05-03T05:55:49.539Z</updated>
+    <updated>2016-05-03T05:58:35.645Z</updated>
     <content type="html"><![CDATA[<p>3.0 版本之前，OpenFOAM 的单相流求解器如 pisoFoam 的动量方程中调用的是湍流模型的 <code>divDevReff</code> 函数来考虑雷诺应力项的作用。只是，细究起来，这个函数似乎有点小问题，本篇来探讨一下这些小问题。</p>
 <a id="more"></a>
 <p>OpenFOAM 中单相不可压缩求解器中，雷诺应力项调用的是湍流模型中的 <code>divDevReff</code> 函数。这个函数的返回值为<br>$$<br>\nabla \cdot(\nu_{eff}\nabla U)+\nabla \cdot\left [\nu_{eff}\nabla U^\mathrm{T}-\frac{1}{3} \nu_{eff} (\nabla \cdot U) \mathbf{I} \right ]<br>$$<br>这里有两个疑问，第一是为什么是 $\frac{1}{3}$ 而不是 $\frac{2}{3}$，对应到代码，即为什么用 <code>dev</code> 函数而不是 <code>dev2</code> 函数？第二个问题，根据涡粘度的 Boussinesq approximation，雷诺应力项<br>$$<br>\overline{u’_iu’_j}= -\nu_t \left( \frac{\partial \bar{u}_i}{\partial x_j} + \frac{\partial \bar{u}_j}{\partial x_i} \right) + \frac{2}{3}k \delta_{ij}<br>$$<br>中应该还包含湍动能 $k$，而 OpenFOAM 中的 <code>divDefReff</code> 函数是没有 $k$ 这一项的。<br>这个话题，在 cfd-online 上的<a href="http://www.cfd-online.com/Forums/openfoam-solving/58214-calculating-divdevreff-2.html" target="_blank" rel="external">一篇帖子</a>里有深入的讨论。</p>
