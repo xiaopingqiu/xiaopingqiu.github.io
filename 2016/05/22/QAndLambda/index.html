@@ -3,17 +3,24 @@
 <head>
   <meta charset="utf-8">
   
-  <title>Archives: 2015 | Giskard&#39;s CFD Learning Tricks</title>
+  <title>涡结构提取 | Giskard&#39;s CFD Learning Tricks</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Giskard's CFD Learning Tricks">
-<meta property="og:url" content="http://xiaopingqiu.github.io/archives/2015/index.html">
+  <meta name="description" content="为了研究湍流的涡结构，需要有一些方法来将涡结构提取出来，比图在文章中常见类似这种图：
+本篇介绍怎么在 OpenFOAM 中提取涡结构。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="涡结构提取">
+<meta property="og:url" content="http://xiaopingqiu.github.io/2016/05/22/QAndLambda/index.html">
 <meta property="og:site_name" content="Giskard's CFD Learning Tricks">
-<meta property="og:description">
+<meta property="og:description" content="为了研究湍流的涡结构，需要有一些方法来将涡结构提取出来，比图在文章中常见类似这种图：
+本篇介绍怎么在 OpenFOAM 中提取涡结构。">
+<meta property="og:image" content="/image/vortex/Lambda2.png">
+<meta property="og:image" content="/image/vortex/p.png">
+<meta property="og:image" content="/image/vortex/s.png">
+<meta property="og:image" content="/image/vortex/magVor.png">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Giskard's CFD Learning Tricks">
-<meta name="twitter:description">
+<meta name="twitter:title" content="涡结构提取">
+<meta name="twitter:description" content="为了研究湍流的涡结构，需要有一些方法来将涡结构提取出来，比图在文章中常见类似这种图：
+本篇介绍怎么在 OpenFOAM 中提取涡结构。">
   
   
     <link rel="icon" href="/favicon.png">
@@ -78,210 +85,103 @@ ga('send', 'pageview');
 </header>
 
       <div class="outer">
-        <section id="main">
-  
-  
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2015" class="archive-year">2015</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2015/12/12/timeVaryingBC1/" class="archive-article-date">
-  <time datetime="2015-12-12T06:38:50.000Z" itemprop="datePublished">12月 12</time>
+        <section id="main"><article id="post-QAndLambda" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2016/05/22/QAndLambda/" class="article-date">
+  <time datetime="2016-05-22T11:35:16.000Z" itemprop="datePublished">2016-05-22</time>
 </a>
-      
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2015/12/12/timeVaryingBC1/">两个简单的随时间变化的边界条件</a>
+    <h1 class="article-title" itemprop="name">
+      涡结构提取
     </h1>
   
 
-    </header>
-  </div>
-</article>
-  
+      </header>
     
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2015/11/25/swak4Foam-alpha-water/" class="archive-article-date">
-  <time datetime="2015-11-25T12:33:10.000Z" itemprop="datePublished">11月 25</time>
-</a>
+    <div class="article-entry" itemprop="articleBody">
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2015/11/25/swak4Foam-alpha-water/">swak4Foam 如何用于名字形如 alpha.water 的场？</a>
-    </h1>
-  
+        <p>为了研究湍流的涡结构，需要有一些方法来将涡结构提取出来，比图在文章中常见类似这种图：<br><img src="/image/vortex/Lambda2.png" alt="涡结构"></p>
+<p>本篇介绍怎么在 OpenFOAM 中提取涡结构。</p>
+<a id="more"></a>
+<p>历史上曾用过的涡结构提取有以下几种：</p>
+<ol>
+<li><p>压强的局部极小值<br>在形成涡的地方，通常伴随着压强的极小值。比如:<br><img src="/image/vortex/p.png" alt=""><br>这种方法的缺点在于，缺乏客观的压力阈值来捕捉所有的涡结构，而且，压力出现极值的地方不见得就真的有涡。</p>
+</li>
+<li><p>流线<br>通过流线的封闭来显示涡的结构也是一种常见方法，比如<br><img src="/image/vortex/s.png" alt=""><br>这种方法有一个最明显的缺点是，流线不满足伽利略不变性，即，如果换一个参考系，则可能显示出来的“涡结构”就完全不一样了。另外，这种方法也难以分辨两个很靠近的涡。</p>
+</li>
+<li><p>涡量的模<br>用涡量的模来显示涡结构是一种很常用的方法，类似这样<br><img src="/image/vortex/magVor.png" alt=""><br>这种方法在自由剪切流中很有效，不过，对于壁面束缚流动则不太适用，原因是背景流动的剪切性导致的涡量模可以达到跟涡结构处的涡量的模差不多大小，这就使得涡结构难以从背景流动中分离出来了。并且，涡量的模的最大值通常发生在壁面上，而涡的核心显然不可能出现在壁面上。所以这种方法不适合用于提取边界层附近的涡结构。</p>
+<p>OpenFOAM 中提供了两种方法来提取涡结构：Q 和 Lambda2。</p>
+</li>
+</ol>
+<ul>
+<li>速度梯度张量的二阶不变量<br>速度梯度 $\nabla \mathbf{U}$ 的二阶不变量 $Q$ 的定义为<br>$$<br>Q = \frac{1}{2}\Big ( ||\mathbf{W}||^2 - ||\mathbf{S}||^2 \Big )<br>$$<br>其中<br>$$<br>\mathbf{W} = \frac{1}{2} \Big ( \nabla \mathbf{U} - (\nabla \mathbf{U}) ^{\mathrm{T}} \Big ) \\<br>||\mathbf{W}|| = (\mathbf{W}:\mathbf{W})^{1/2} \\<br>\mathbf{S} = \frac{1}{2} \Big ( \nabla \mathbf{U} + (\nabla \mathbf{U}) ^{\mathrm{T}} \Big ) \\<br>||\mathbf{S}|| = (\mathbf{S}:\mathbf{S})^{1/2}<br>$$</li>
+</ul>
+<p>可以用 $Q &gt; 0$ 来作为涡结构存在的盘踞。<br>在 OpenFOAM 中，有一个程序用来计算 $Q$，名字就叫 <code>Q</code>。在流场计算完毕以后，可以运行 <code>Q</code>，然后在 paraview 中显示 <code>Q</code> 值大于 0 的等值面来显示涡的结构。只是，OpenFOAM 中 $Q$ 的计算用的是另一种方法：</p>
+<figure class="highlight scss"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//Q.C </span></span><br><span class="line">volTensorField <span class="function">gradU</span>(fvc<span class="value">::<span class="function">grad</span>(U));</span></span><br><span class="line"></span><br><span class="line">volScalarField <span class="tag">Q</span></span><br><span class="line">(</span><br><span class="line">    IOobject</span><br><span class="line">    (</span><br><span class="line">        "<span class="tag">Q</span>",</span><br><span class="line">        runTime<span class="class">.timeName</span>(),</span><br><span class="line">        mesh,</span><br><span class="line">        IOobject<span class="value">::NO_READ,</span><br><span class="line">        IOobject::NO_WRITE</span><br><span class="line">    ),</span><br><span class="line">    <span class="number">0.5</span>*(<span class="function">sqr</span>(<span class="function">tr</span>(gradU)) - <span class="function">tr</span>(((gradU)&amp;(gradU))))</span><br><span class="line">);</span></span><br></pre></td></tr></table></figure>
+<p>代码里注释说这是另一种计算 $Q$ 的方法，与上面公式的计算方法差别很小。</p>
+<ul>
+<li>张量 $\mathbf{W} \cdot \mathbf{W} + \mathbf{S} \cdot \mathbf{S}$ 的第二大特征值</li>
+</ul>
+<p>另一种判据是 $\mathbf{W} \cdot \mathbf{W} + \mathbf{S} \cdot \mathbf{S}$ 的第二大特征值 $\lambda _ 2 &lt; 0$。<br>在 OpenFOAM 中有一个程序用来计算 $\lambda _ 2$ ：<code>Lambda2</code>。<br><figure class="highlight scss"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//Lambda2.C</span></span><br><span class="line"> const volTensorField <span class="function">gradU</span>(fvc<span class="value">::<span class="function">grad</span>(U));</span></span><br><span class="line"></span><br><span class="line">        volTensorField SSplusWW</span><br><span class="line">        (</span><br><span class="line">            (<span class="function">symm</span>(gradU) &amp; <span class="function">symm</span>(gradU)) + (<span class="function">skew</span>(gradU) &amp; <span class="function">skew</span>(gradU))</span><br><span class="line">        );</span><br><span class="line"></span><br><span class="line">        volScalarField Lambda2</span><br><span class="line">        (</span><br><span class="line">            IOobject</span><br><span class="line">            (</span><br><span class="line">                "Lambda2",</span><br><span class="line">                runTime<span class="class">.timeName</span>(),</span><br><span class="line">                mesh,</span><br><span class="line">                IOobject<span class="value">::NO_READ,</span><br><span class="line">                IOobject::NO_WRITE</span><br><span class="line">            ),</span><br><span class="line">            <span class="function">-eigenValues</span>(SSplusWW)().<span class="function">component</span>(vector::Y)</span><br><span class="line">        );</span></span><br><span class="line"></span><br><span class="line">        Info&lt;&lt; "    Writing -Lambda2" &lt;&lt; endl;</span><br><span class="line">        Lambda2<span class="class">.write</span>();</span><br></pre></td></tr></table></figure></p>
+<p>注意，OpenFOAM 返回的是 $- \lambda _ 2$，所以，在计算了 <code>Lambda2</code> 后，需要通过 <code>Lambda2</code> 大于 0 的等值面来显示涡结构。本篇开头第一张图片，显示的是圆柱绕流的 <code>Lambda2 = 500</code> 等值面。</p>
+<p><strong>参考</strong><br>Eugene de Villiers, The Potential of Large Eddy Simulation for the Modeling of Wall Bounded Flows, Ph.D Thesis, Imperial College of Science, 2005.</p>
 
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2015/11/25/OpenFOAM-singlePhase-turbulenceModel/" class="archive-article-date">
-  <time datetime="2015-11-25T11:13:58.000Z" itemprop="datePublished">11月 25</time>
-</a>
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2015/11/25/OpenFOAM-singlePhase-turbulenceModel/">OpenFOAM 中的单相流湍流模型之一</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2015/10/06/blockMesh-multi-sectional-grading/" class="archive-article-date">
-  <time datetime="2015-10-06T12:24:52.000Z" itemprop="datePublished">10月 6</time>
-</a>
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://xiaopingqiu.github.io/2016/05/22/QAndLambda/" data-id="cioiqegf60047z8mbwxcpxfzu" class="article-share-link">Share</a>
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2015/10/06/blockMesh-multi-sectional-grading/">blockMesh 的新功能：multi/sectional grading in a block</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2015/09/19/TFM-TurbulenceModel/" class="archive-article-date">
-  <time datetime="2015-09-19T04:38:20.000Z" itemprop="datePublished">9月 19</time>
-</a>
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2015/09/19/TFM-TurbulenceModel/">OpenFOAM-2.3.x 中的 twoPhaseEulerFoam 解析之 TurbulenceModel</a>
-    </h1>
-  
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Postprocessing/">Postprocessing</a></li></ul>
 
-    </header>
+    </footer>
   </div>
-</article>
   
     
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2015/09/19/kineticTheoryModelSubModels/" class="archive-article-date">
-  <time datetime="2015-09-19T03:45:35.000Z" itemprop="datePublished">9月 19</time>
-</a>
-      
+<nav id="article-nav">
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2015/09/19/kineticTheoryModelSubModels/">OpenFOAM-2.3.x 中的 twoPhaseEulerFoam 解析之 kineticTheoryModel 的子模型</a>
-    </h1>
   
+    <a href="/2016/05/03/divDevReff/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">OpenFOAM 不可压缩湍流模型的 divDevReff 函数</div>
+    </a>
+  
+</nav>
 
-    </header>
-  </div>
+  
 </article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2015/09/19/kineticTheoryModel/" class="archive-article-date">
-  <time datetime="2015-09-19T02:26:09.000Z" itemprop="datePublished">9月 19</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2015/09/19/kineticTheoryModel/">OpenFOAM-2.3.x 中的 twoPhaseEulerFoam 解析之 kineticTheoryModel</a>
-    </h1>
-  
 
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2015/09/13/CPP-conversion-Of-derived-class-reference-to-base-class-type/" class="archive-article-date">
-  <time datetime="2015-09-13T09:03:35.000Z" itemprop="datePublished">9月 13</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2015/09/13/CPP-conversion-Of-derived-class-reference-to-base-class-type/">C++ 中派生类引用与基类引用的隐式转换</a>
-    </h1>
-  
 
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2015/09/13/OpenFOAM-install-centOS/" class="archive-article-date">
-  <time datetime="2015-09-13T05:23:06.000Z" itemprop="datePublished">9月 13</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2015/09/13/OpenFOAM-install-centOS/">在 CentOS 上安装 OpenFOAM </a>
-    </h1>
-  
+<section id="comments">
+  <!-- 多说评论框 start -->
+  <div class="ds-thread" data-thread-key="post-QAndLambda" data-title="涡结构提取" data-url="http://xiaopingqiu.github.io/2016/05/22/QAndLambda/"></div>
+  <!-- 多说评论框 end -->
+  <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+  <script type="text/javascript">
+  var duoshuoQuery = {short_name:"xiaopingqiu"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+  <!-- 多说公共JS代码 end -->
+</section>
 
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2015/09/07/twoPhaseEulerFoam23x-twoPhaseSystem/" class="archive-article-date">
-  <time datetime="2015-09-07T14:27:47.000Z" itemprop="datePublished">9月 7</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2015/09/07/twoPhaseEulerFoam23x-twoPhaseSystem/">OpenFOAM-2.3.x 中的 twoPhaseEulerFoam 解析之曳力模型的调用过程</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
 </section>
         
           <aside id="sidebar">
