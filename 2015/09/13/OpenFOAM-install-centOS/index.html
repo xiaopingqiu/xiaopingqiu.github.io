@@ -145,7 +145,7 @@ ga('send', 'pageview');
 <p>导致 openmpi 无法编译。<br>但是，将OpenFOAM拷贝到另一个目录（不再是 <code>$HOME/OpenFOAM</code> ），再重新尝试，却成功了。</p>
 <p>另一次，是在 Scientific Linux 上，也是重新编译 openmpi 的时候遇到了一样的报错，后来解决的办法是，弃用ThirdParty下的 openmpi，改启用系统的openmpi（虽然版本老一点），具体设置是将” export WM_MPLIB=OPENMPI” 改为 “ export WM_MPLIB=SYSTEMOPENMPI”，改完以后也能成功并行运行。</p>
 <p>本篇博文，由于是写在我编译 OpenFOAM 好几个月之后，当时也没有详细记录编译过程，所以肯定有细节遗漏或者错误的地方。而且，在不同的系统上，也可能遇到我这里没有提到的问题，本篇博文仅仅是给有需要的人做一个参考。要是你编译过程中遇到某个问题在看了本文后得到了解决，那我的目的就达到了。有问题 ，欢迎来OpenFOAM开源计算千人群讨论交流。</p>
-<p>** 2016.05.22 补充：<br>最近编译了 OpenFOAM-v3.0+，使用 gcc-4.9.3 和 openMPI-1.10.0，在编译过程中，流程跟上面是一样的，但是有些额外的步骤。</p>
+<p><strong> 2016.05.22 补充 </strong>：<br>最近编译了 OpenFOAM-v3.0+，使用 gcc-4.9.3 和 openMPI-1.10.0，在编译过程中，流程跟上面是一样的，但是有些额外的步骤。</p>
 <ol>
 <li>编译 gcc 的时候，报错说找不到 lgcc_s，提示可能是缺少32位的库，经过 “ yum install libgcc “ 和 “ yum install libgcc.i686 “ 后，问题解决。</li>
 <li>编译 openmpi-1.10.0 时，遇到提示 autoconf 和 aclocal 版本不对，经过源码编译安装 autoconf-2.69 和 automake-1.12 后，问题解决。</li>
