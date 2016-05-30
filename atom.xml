@@ -610,10 +610,10 @@
     <link href="http://xiaopingqiu.github.io/2016/04/02/Boundary-conditions-in-OpenFOAM2/"/>
     <id>http://xiaopingqiu.github.io/2016/04/02/Boundary-conditions-in-OpenFOAM2/</id>
     <published>2016-04-02T08:40:43.000Z</published>
-    <updated>2016-04-02T09:27:58.296Z</updated>
+    <updated>2016-05-30T16:01:39.866Z</updated>
     <content type="html"><![CDATA[<p>本篇在上一篇的基础上来解读 OpenFOAM 中的基础边界条件。基础边界条件一般包括三类，一是Dirichlet 边界，二是 Neumann 边界，三是混合 Dirichlet 和 Neumann 的边界。</p>
 <a id="more"></a>
-<h5 id="1-_fixedalue">1. fixedalue</h5><p>这个是 OpenFOAM 中的 Dirichlet 边界条件。</p>
+<h5 id="1-_fixedValue">1. fixedValue</h5><p>这个是 OpenFOAM 中的 Dirichlet 边界条件。</p>
 <ul>
 <li>构造函数<figure class="highlight nimrod"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;class <span class="type">Type</span>&gt;</span><br><span class="line">fixedValueFvPatchField&lt;<span class="type">Type</span>&gt;::fixedValueFvPatchField</span><br><span class="line">(</span><br><span class="line">    <span class="keyword">const</span> fvPatch&amp; p,</span><br><span class="line">    <span class="keyword">const</span> <span class="type">DimensionedField</span>&lt;<span class="type">Type</span>, volMesh&gt;&amp; iF,</span><br><span class="line">    <span class="keyword">const</span> dictionary&amp; dict</span><br><span class="line">)</span><br><span class="line">:</span><br><span class="line">    fvPatchField&lt;<span class="type">Type</span>&gt;(p, iF, dict, <span class="literal">true</span>)</span><br><span class="line">&#123;&#125;</span><br></pre></td></tr></table></figure>
 </li>
