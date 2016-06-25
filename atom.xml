@@ -4,7 +4,7 @@
   <subtitle><![CDATA[CFD and Scientific Computing]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://xiaopingqiu.github.io/"/>
-  <updated>2016-06-25T07:08:24.948Z</updated>
+  <updated>2016-06-25T07:13:34.679Z</updated>
   <id>http://xiaopingqiu.github.io/</id>
   
   <author>
@@ -15,11 +15,11 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
-    <title><![CDATA[OpenFOAM 中的热物理类之]]></title>
+    <title><![CDATA[OpenFOAM 中的热物理类之 hashTable 的创建]]></title>
     <link href="http://xiaopingqiu.github.io/2016/06/25/thermophysics2/"/>
     <id>http://xiaopingqiu.github.io/2016/06/25/thermophysics2/</id>
     <published>2016-06-25T06:46:48.000Z</published>
-    <updated>2016-06-25T07:08:24.948Z</updated>
+    <updated>2016-06-25T07:13:34.679Z</updated>
     <content type="html"><![CDATA[<p>这一篇来看一下热物理类是如何编译并创建储存了可选模型的 hashTable 的。</p>
 <a id="more"></a>
 <p>根据以前的经验，编译和构建 hashTable 肯定是跟这个源文件有关：<code>src/thermophysicalModels/basic/rhoThermo/rhoThermos</code>。<br>这个文件里，全部都是在调用宏函数。而且，从宏函数的参数来看，似乎就是个排列组合的游戏，把所有可用的组合都写了一遍。<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">makeThermo</span><br><span class="line">(</span><br><span class="line">    rhoThermo,</span><br><span class="line">    heRhoThermo,</span><br><span class="line">    pureMixture,</span><br><span class="line">    constTransport,</span><br><span class="line">    sensibleEnthalpy,</span><br><span class="line">    hConstThermo,</span><br><span class="line">    perfectGas,</span><br><span class="line">    specie</span><br><span class="line">);</span><br><span class="line">......</span><br></pre></td></tr></table></figure></p>
