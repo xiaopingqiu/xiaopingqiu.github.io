@@ -4,7 +4,7 @@
   <subtitle><![CDATA[CFD and Scientific Computing]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://xiaopingqiu.github.io/"/>
-  <updated>2016-06-25T13:30:51.827Z</updated>
+  <updated>2016-08-21T06:27:37.355Z</updated>
   <id>http://xiaopingqiu.github.io/</id>
   
   <author>
@@ -13,6 +13,46 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title><![CDATA[LES 中的 commutation error]]></title>
+    <link href="http://xiaopingqiu.github.io/2016/08/21/commutationError/"/>
+    <id>http://xiaopingqiu.github.io/2016/08/21/commutationError/</id>
+    <published>2016-08-21T03:27:48.000Z</published>
+    <updated>2016-08-21T06:27:37.355Z</updated>
+    <content type="html"><![CDATA[<p>大涡模拟不仅对网格的解析度有要求，而且对网格质量也有更高的要求。本文介绍一种由网格带来的误差，commutation error，并简单分析其对结果的影响。</p>
+<a id="more"></a>
+<p>在 LES 模拟的程序中，常用的一种过滤方法是隐式过滤，即，用当地网格的尺度作为该处的过滤尺度。这种方法在各种类型的网格上实现起来都相对简单。只是，稍微复杂一点的几何构体，生成的网格的尺度总是不可能一样，这也就意味着过滤尺度是变化的。如果相邻网格的尺度变化很大，这也将引起相邻网格的过滤尺度相差很大，这时就会带来严重的 commutation error。</p>
+<p>Commutation error 产生的根本原因是，当相邻网格过滤尺度不一样时，，$\overline{\tfrac{\partial \phi}{\partial x}} \neq \tfrac{\partial \overline{\phi}}{\partial x}$。下面举一个例子来说明：<br>假设有一个场量，解析值为<br>$$<br>\phi = 1-x^2<br>$$<br>其导数为<br>$$<br>\frac{\partial \phi}{\partial x} = -2x<br>$$<br>在一个如下图的网格中来进行过滤</p>
+<p><img src="/image/LES/filterGrid.png" alt=""></p>
+<p>第一次，我们对点 $P$ 和 $N_1$ 处进行过滤，过滤直径都是 $\Delta_1 = 1$，使用 top hat 过滤函数，即</p>
+<p>$$<br>G(x,\Delta)=<br>\begin{cases}<br>\frac{1}{\Delta} &amp; if(|x’\le\frac{\Delta}{2}|) \\<br>0 &amp; otherwise<br>\end{cases}<br>$$</p>
+<p>则<br>$$<br>\overline{\phi}_P = \oint G(x,x\prime;\Delta)\,f(x\prime) dx\prime = \int _{-\infty} ^{-1} 0\cdot \phi(x\prime) dx\prime + \int_{-1}^{0} \frac{1}{\Delta_1} \cdot \phi(x\prime)dx\prime + \int _{0} ^{\infty} 0\cdot \phi(x\prime) dx\prime = \frac{2}{3}<br>$$<br>类似地，<br>$$<br>\overline{\phi}_{N_1} = \int_0^1 \frac{1}{\Delta_1} \cdot \phi(x\prime) dx\prime = \frac{2}{3}<br>$$</p>
+<p>另一方面，对梯度使用过滤，得<br>$$<br>\Bigg(\overline{\frac{\partial \phi}{\partial x}} \Bigg)_0= \int_{-0.5}^{0.5} \frac{1}{\Delta_1}\cdot(-2x)dx = 0<br>$$<br>而<br>$$<br>\frac{\partial \overline{\phi}}{\partial x} = \frac{\overline{\phi}_{N1}-\overline{\phi}_P}{x_{N1}-x_{P}} = 0<br>$$</p>
+<p>这说明，当相邻网格的过滤尺度一致时，commutation error 为零。但是，当过滤尺度不一致时，考虑右边的网格中心为 $N_2$ 的情形，此时<br>$$<br>\overline{\phi}_{N2} = \int_{0}^{0.5} \frac{1}{\Delta_2} \cdot \phi dx = \frac{11}{12}<br>$$</p>
+<p>$$<br>\frac{\partial \overline{\phi}}{\partial x} = \frac{\overline{\phi}_{N2}-\overline{\phi}_P}{x_{N2}-x_{P}} = \frac{1}{6} \neq  0<br>$$<br>这时就产生了 commutation error。</p>
+<p>所以，网格尺度不均匀现象严重的区域就会出现显著的 commutation error。边界层是容易出现网格尺度不一致的区域，在壁面上，严格来说，过滤尺度必须是零，否则将破坏无滑移条件。这种情况还可以通过 DES 这样的方法来处理。但是，核心区也可能出现相邻网格不一致的情形。局部网格加密是一种实用的节省计算量的方法，这种方法只需要在重要区域进行加密，不必全局加密。但是局部加密就导致了相邻网格尺度不一致，由此就带来了显著的 commutation error。所以，使用局部加密时，要注意<strong>不要让相邻两种等级的网格的边界落在重要区域</strong>。</p>
+<p>局部加密效应可以从下图看出</p>
+<p><img src="/image/LES/localRefinement.png" alt=""></p>
+<p>当从细网格向粗网格过渡时，会出现亚格子粘度的突降；当从粗网格过渡到细网格时，亚格子粘度会突然上升。有一种办法是对过滤尺度进行光滑处理：</p>
+<p>$$<br>\Delta P=max(\Delta P, \Delta N/C_{\Delta s})<br>$$</p>
+<p><img src="/image/LES/smoothedDelta.png" alt=""></p>
+<p>$C_{\Delta s}$ 的取值约为 1.5。</p>
+<p>用这种方法可让局部加密带来的问题得到部分缓解。亚格子粘度在粗细网格交接附近的过渡也更光滑。</p>
+<p><img src="/image/LES/smoothedViscosity.png" alt=""></p>
+<p>误差总是无可避免的，降低误差的技术也有很多。从“计算性价比”（即为了得到一定准确度的结果所耗费的计算量） 的角度看，没有哪个结果就一定是严格地错误或者正确，只是“计算性价比”不同。有时候为了降低计算量，在一些区域即便产生了严重的误差，也是可以接受的。关键是要对误差差生的原因有清楚的认识，尽量不要让很大的误差出现在重要的区域。</p>
+<p>本篇的图，文，公式，完全取材整理自 Eugene de Villiers 的博士论文 “The Potential of Large Eddy Simulation for the Modeling of Wall Bounded Flows”，特此声明。</p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<p>大涡模拟不仅对网格的解析度有要求，而且对网格质量也有更高的要求。本文介绍一种由网格带来的误差，commutation error，并简单分析其对结果的影响。</p>]]>
+    
+    </summary>
+    
+      <category term="LES" scheme="http://xiaopingqiu.github.io/tags/LES/"/>
+    
+      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/categories/OpenFOAM/"/>
+    
+  </entry>
   
   <entry>
     <title><![CDATA[OpenFOAM 中的热物理类之添加新模型]]></title>
@@ -927,47 +967,6 @@
 ]]></content>
     <summary type="html">
     <![CDATA[<p>本篇在上一篇的基础上来解读 OpenFOAM 中的基础边界条件。基础边界条件一般包括三类，一是Dirichlet 边界，二是 Neumann 边界，三是混合 Dirichlet 和 Neumann 的边界。</p>]]>
-    
-    </summary>
-    
-      <category term="Boundary conditions" scheme="http://xiaopingqiu.github.io/tags/Boundary-conditions/"/>
-    
-      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/categories/OpenFOAM/"/>
-    
-  </entry>
-  
-  <entry>
-    <title><![CDATA[OpenFOAM 中的边界条件（一）]]></title>
-    <link href="http://xiaopingqiu.github.io/2016/04/02/Boundary-conditions-in-OpenFOAM1/"/>
-    <id>http://xiaopingqiu.github.io/2016/04/02/Boundary-conditions-in-OpenFOAM1/</id>
-    <published>2016-04-02T07:29:24.000Z</published>
-    <updated>2016-04-03T07:27:24.175Z</updated>
-    <content type="html"><![CDATA[<p>本系列解读 OpenFOAM 中边界条件的实现。主要关心一些几个问题：</p>
-<ol>
-<li>OpenFOAM 中边界条件是怎样与有限体积离散部分交互的？</li>
-<li>怎么从代码看懂一个边界条件具体是怎么计算边界上的值的？</li>
-<li>怎么定制一个边界条件？</li>
-</ol>
-<p>本篇先阐述第一个问题。</p>
-<a id="more"></a>
-<p>从有限体积离散的角度来看，离散过程中，可能要用到的边界信息包括两类：一是某个场在边界上的值，另一是某个场在边界上的梯度。前者在对流项的离散中需要用到，举例说<br>$$<br>\int_v \nabla \cdot (\rho \mathbf{U} \phi) dV = \sum_f m_f \phi_f<br>$$<br>当组成体积元的面中有边界面时，需要用到这些边界面上的值 $\phi_f$。<br>而在扩散项的离散过程中<br>$$<br>\int_v \nabla \cdot (\Gamma \nabla \phi) dV = \sum_f (\Gamma \nabla \phi)_f \cdot \mathbf{S}_f<br>$$<br>这时，如果组成体积元的某个面是边界面，就需要该边界面上 $\phi$ 的梯度值 $\nabla \phi_f$ 了。</p>
-<p>边界上的某个场值，或者梯度值，其计算方法可以用如下通式表示<br>$$<br>\begin{align}<br>\phi_f &amp; = A_1 \phi_C + B_1 \\<br>\nabla \phi_f &amp; = A_2 \phi_C + B_2<br>\end{align}<br>$$<br>这里，$ \phi_C$ 表示 $\phi$ 在邻近边界的网格中心的值，$A_1$ ，$B_1$，$A_2$，$B_2$ 是系数。</p>
-<p>OpenFOAM 中的边界条件类中，有四个函数分别对应上面四个系数：<code>valueInternalCoeffs</code> 对应 $A_1$，<code>valueBoundaryCoeffs</code> 对应 $B_1$，<code>gradientInternalCoeffs</code> 对应 $A_2$，<code>gradientBoundaryCoeffs</code> 对应 $B_2$。<br>所以，看懂 OpenFOAM 中的边界条件，很关键的一步就是看懂这四个函数的定义。</p>
-<p>此外，还有一个函数，<code>updateCoeffs</code>， 也很重要。这个函数负责对边界条件进行显式地更新。浏览一下 OpenFOAM 边界条件的代码，会发现很多边界条件都是在 <code>updateCoeffs</code> 这个函数中进行边界值的计算的。</p>
-<p>另外，还有些边界条件，似乎是在 <code>evaluate</code> 函数中进行边界值的指定的。</p>
-<p>至于边界条件是在什么地方调用的，cfd-online 上有<a href="http://www.cfd-online.com/Forums/openfoam-programming-development/129271-how-boundary-conditions-called-openfoam-solvers.html" target="_blank" rel="external">一个帖子</a>，Hrvoje Jasak 对这个问题的回答是：<br>“<br>Easy:<br>- on correctBoundaryConditions() for a field<br>- on updateCoeffs() at matrix creation<br>correctBoundaryConditions is also called after the linear solver call automatically.<br>”<br>其他网友还提供了一些有价值的信息，比如，在 <code>correctBoundaryConditions</code> 函数中，<br><figure class="highlight nimrod"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;class <span class="type">Type</span>, <span class="keyword">template</span>&lt;class&gt; class <span class="type">PatchField</span>, class <span class="type">GeoMesh</span>&gt;</span><br><span class="line"><span class="type">void</span> <span class="type">Foam</span>::<span class="type">GeometricField</span>&lt;<span class="type">Type</span>, <span class="type">PatchField</span>, <span class="type">GeoMesh</span>&gt;::</span><br><span class="line">correctBoundaryConditions()</span><br><span class="line">&#123;</span><br><span class="line">    this-&gt;setUpToDate();</span><br><span class="line">    storeOldTimes();</span><br><span class="line">    boundaryField_.evaluate();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>调用了 <code>evaluate</code> 函数。<br>为什么有些边界条件用 <code>updateCoeffs()</code>，而有些则用 <code>evaluate()</code> 呢？目前的理解是这样的： <code>updateCoeffs()</code> 主要用来显式地计算并更新变量在边界上的值，当边界上的值是通过某个依赖于外部参数的公式来计算，并且值会随着迭代的进行而不断改变时，则需要用 <code>updateCoeffs()</code>。有些边界条件，比如最基本的 <code>zeroGradient()</code>，不需要外部的参数，只需要每一次将临近网格的值赋给边界就可以了，这时就可以用 <code>evaluate()</code>。</p>
-<p>关于边界条件调用的具体过程，需要在看了 <code>fvMatrix</code> 类以后才能更深入地理解，博主目前只能给出一个粗浅的理解。</p>
-<p><strong>参考资料</strong>：<br>The Finite Volume Method in Computational Fluid Dynamics: An Advanced Introduction with OpenFOAM® and Matlab®</p>
-]]></content>
-    <summary type="html">
-    <![CDATA[<p>本系列解读 OpenFOAM 中边界条件的实现。主要关心一些几个问题：</p>
-<ol>
-<li>OpenFOAM 中边界条件是怎样与有限体积离散部分交互的？</li>
-<li>怎么从代码看懂一个边界条件具体是怎么计算边界上的值的？</li>
-<li>怎么定制一个边界条件？</li>
-</ol>
-<p>本篇先阐述第一个问题。</p>]]>
     
     </summary>
     
