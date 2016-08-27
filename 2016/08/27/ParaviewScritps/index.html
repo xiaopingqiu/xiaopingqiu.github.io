@@ -155,8 +155,10 @@ ga('send', 'pageview');
 <figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> key <span class="keyword">in</span> <span class="function"><span class="title">GetSources</span><span class="params">()</span></span>.<span class="function"><span class="title">keys</span><span class="params">()</span></span>:</span><br><span class="line">     s = <span class="function"><span class="title">GetSources</span><span class="params">()</span></span>[key]</span><br><span class="line">     <span class="function"><span class="title">Delete</span><span class="params">(s)</span></span></span><br><span class="line">     <span class="tag">del</span> s</span><br></pre></td></tr></table></figure>
 </li>
 <li><p>Paraview 的 python shell（Tools-&gt;Python Shell），可以当作是一个 pvpython 的 IDE，里面可以方便地进行命令补全，并且每条语句的效果可以即时地显示在 Paraview 中，调试脚本的时候非常有用。</p>
+<p>最后说明一下，上述脚本只适用于 Paraview-4.1，在 Paraview-5.0 以后，接口的名字有所变化，这里给出一个<a href="https://github.com/xiaopingqiu/ParaviewScripts" target="_blank" rel="external">链接</a>，感兴趣的读者可以在链接中找到本文中介绍的脚本以及另一个适用于 Paraview-5.0 的脚本。</p>
 </li>
 </ol>
+<p>参考：</p>
 
       
     </div>
