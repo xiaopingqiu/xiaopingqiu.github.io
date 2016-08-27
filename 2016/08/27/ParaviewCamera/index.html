@@ -3,17 +3,22 @@
 <head>
   <meta charset="utf-8">
   
-  <title>Archives: 2016/4 | Giskard&#39;s CFD Learning Tricks</title>
+  <title>Paraview 中有关 Camera 的操作两例 | Giskard&#39;s CFD Learning Tricks</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Giskard's CFD Learning Tricks">
-<meta property="og:url" content="http://xiaopingqiu.github.io/archives/2016/04/index.html">
+  <meta name="description" content="这篇介绍 Paraview 中有关 Camera 的两个操作：Link Camera 和 利用 Camera 来制作旋转动画。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Paraview 中有关 Camera 的操作两例">
+<meta property="og:url" content="http://xiaopingqiu.github.io/2016/08/27/ParaviewCamera/index.html">
 <meta property="og:site_name" content="Giskard's CFD Learning Tricks">
-<meta property="og:description">
+<meta property="og:description" content="这篇介绍 Paraview 中有关 Camera 的两个操作：Link Camera 和 利用 Camera 来制作旋转动画。">
+<meta property="og:image" content="/image/Paraview/beforeLink.png">
+<meta property="og:image" content="/image/Paraview/Link1.png">
+<meta property="og:image" content="/image/Paraview/Link2.png">
+<meta property="og:image" content="/image/Paraview/Link5.png">
+<meta property="og:image" content="/image/Paraview/Link6.gif">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Giskard's CFD Learning Tricks">
-<meta name="twitter:description">
+<meta name="twitter:title" content="Paraview 中有关 Camera 的操作两例">
+<meta name="twitter:description" content="这篇介绍 Paraview 中有关 Camera 的两个操作：Link Camera 和 利用 Camera 来制作旋转动画。">
   
   
     <link rel="icon" href="/favicon.png">
@@ -78,210 +83,96 @@ ga('send', 'pageview');
 </header>
 
       <div class="outer">
-        <section id="main">
-  
-  
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2016" class="archive-year">2016</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2016/04/25/wallFunctions4/" class="archive-article-date">
-  <time datetime="2016-04-24T16:43:40.000Z" itemprop="datePublished">4月 25</time>
+        <section id="main"><article id="post-ParaviewCamera" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2016/08/27/ParaviewCamera/" class="article-date">
+  <time datetime="2016-08-27T08:28:40.000Z" itemprop="datePublished">2016-08-27</time>
 </a>
-      
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/Paraview/">Paraview</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2016/04/25/wallFunctions4/">OpenFOAM 中的壁面函数（四）</a>
+    <h1 class="article-title" itemprop="name">
+      Paraview 中有关 Camera 的操作两例
     </h1>
   
 
-    </header>
-  </div>
-</article>
-  
+      </header>
     
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2016/04/25/wallFunctions3/" class="archive-article-date">
-  <time datetime="2016-04-24T16:43:34.000Z" itemprop="datePublished">4月 25</time>
-</a>
+    <div class="article-entry" itemprop="articleBody">
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2016/04/25/wallFunctions3/">OpenFOAM 中的壁面函数（三）</a>
-    </h1>
-  
+        <p>这篇介绍 Paraview 中有关 Camera 的两个操作：Link Camera 和 利用 Camera 来制作旋转动画。</p>
+<a id="more"></a>
+<h5 id="1-_Link_Camera">1. Link Camera</h5><p>这个功能作用是将两个窗口（views）链接起来，这样，当一个窗口的视角变动的时候，另一个也相应跟着变化。比如，建立 Link 之前，这两个视窗是独立转动的，</p>
+<p><img src="/image/Paraview/beforeLink.png" alt=""></p>
+<p>有时候，为了比较，希望两个视窗是同步转动的，这时只要建立一个 link 就可以了，在左边视窗右键点击空白处，选择 Link Camera，给这个Link 取个名字，然后左键点一下右边的视窗，就完成了链接</p>
+<p><img src="/image/Paraview/Link1.png" alt=""></p>
+<p>链接之后，二者就不再是独立的了。这种链接是双向的，改变其一，另一个也跟着改，而且，允许多个窗口链接在一起，如下图，左一和右上先建立了链接，然后再建立一个左一和右下的链接，这样就把三个都链接在一起了。</p>
+<p><img src="/image/Paraview/Link2.png" alt=""></p>
+<p>新版的（5.0以上）还有一个 Interactive view 的选项，<br><img src="/image/Paraview/Link5.png" alt=""><br>选择这个选项以后，<br><img src="/image/Paraview/Link6.gif" alt=""><br>会在建立链接的那一个视窗中（主动视窗），出现一个小的窗口，这个小窗口会将被链接视窗（被动视窗）的相同位置的显示结果叠加到主动视窗中。</p>
 
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2016/04/25/wallFunctions2/" class="archive-article-date">
-  <time datetime="2016-04-24T16:43:29.000Z" itemprop="datePublished">4月 25</time>
-</a>
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2016/04/25/wallFunctions2/">OpenFOAM 中的壁面函数（二）</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2016/04/25/wallFunctions1/" class="archive-article-date">
-  <time datetime="2016-04-24T16:36:27.000Z" itemprop="datePublished">4月 25</time>
-</a>
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://xiaopingqiu.github.io/2016/08/27/ParaviewCamera/" data-id="ciscxzhqs00596gmbiyongb5h" class="article-share-link">Share</a>
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2016/04/25/wallFunctions1/">OpenFOAM 中的壁面函数（一）</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2016/04/25/TurbulenceModel-30-macro/" class="archive-article-date">
-  <time datetime="2016-04-24T16:11:08.000Z" itemprop="datePublished">4月 25</time>
-</a>
       
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2016/04/25/TurbulenceModel-30-macro/">OpenFOAM-3.0 的湍流模型（四）</a>
-    </h1>
-  
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/PostProcessing/">PostProcessing</a></li></ul>
 
-    </header>
+    </footer>
   </div>
-</article>
   
     
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2016/04/24/TurbulenceModel-30-NewModels/" class="archive-article-date">
-  <time datetime="2016-04-24T15:34:01.000Z" itemprop="datePublished">4月 24</time>
-</a>
-      
+<nav id="article-nav">
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2016/04/24/TurbulenceModel-30-NewModels/">OpenFOAM-3.0 的湍流模型（三）</a>
-    </h1>
+    <a href="/2016/08/27/ParaviewScritps/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Newer</strong>
+      <div class="article-nav-title">
+        
+          ParaviewScritps
+        
+      </div>
+    </a>
   
+  
+    <a href="/2016/08/27/ParaviewCustomFilter/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Paraview 中创建 Custom Filter</div>
+    </a>
+  
+</nav>
 
-    </header>
-  </div>
+  
 </article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2016/04/24/TurbulenceModel-30-RTS/" class="archive-article-date">
-  <time datetime="2016-04-24T14:21:52.000Z" itemprop="datePublished">4月 24</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2016/04/24/TurbulenceModel-30-RTS/">OpenFOAM-3.0 的湍流模型（二）</a>
-    </h1>
-  
 
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2016/04/24/TurbulenceModel-30-structure/" class="archive-article-date">
-  <time datetime="2016-04-24T13:35:17.000Z" itemprop="datePublished">4月 24</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2016/04/24/TurbulenceModel-30-structure/">OpenFOAM-3.0 的湍流模型（一）</a>
-    </h1>
-  
 
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2016/04/02/Boundary-conditions-in-OpenFOAM4/" class="archive-article-date">
-  <time datetime="2016-04-02T10:16:39.000Z" itemprop="datePublished">4月 2</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2016/04/02/Boundary-conditions-in-OpenFOAM4/">OpenFOAM 中的边界条件（四）</a>
-    </h1>
-  
+<section id="comments">
+  <!-- 多说评论框 start -->
+  <div class="ds-thread" data-thread-key="post-ParaviewCamera" data-title="Paraview 中有关 Camera 的操作两例" data-url="http://xiaopingqiu.github.io/2016/08/27/ParaviewCamera/"></div>
+  <!-- 多说评论框 end -->
+  <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+  <script type="text/javascript">
+  var duoshuoQuery = {short_name:"xiaopingqiu"};
+	(function() {
+		var ds = document.createElement('script');
+		ds.type = 'text/javascript';ds.async = true;
+		ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+		ds.charset = 'UTF-8';
+		(document.getElementsByTagName('head')[0] 
+		 || document.getElementsByTagName('body')[0]).appendChild(ds);
+	})();
+	</script>
+  <!-- 多说公共JS代码 end -->
+</section>
 
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      <a href="/2016/04/02/Boundary-conditions-in-OpenFOAM3/" class="archive-article-date">
-  <time datetime="2016-04-02T09:29:16.000Z" itemprop="datePublished">4月 2</time>
-</a>
-      
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2016/04/02/Boundary-conditions-in-OpenFOAM3/">OpenFOAM 中的边界条件（三）</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
 </section>
         
           <aside id="sidebar">

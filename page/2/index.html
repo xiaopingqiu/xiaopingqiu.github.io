@@ -80,6 +80,104 @@ ga('send', 'pageview');
       <div class="outer">
         <section id="main">
   
+    <article id="post-thermophysics3" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2016/06/25/thermophysics3/" class="article-date">
+  <time datetime="2016-06-25T07:14:28.000Z" itemprop="datePublished">2016-06-25</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/06/25/thermophysics3/">OpenFOAM 中的热物理类之继承派生关系</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>根据上一篇的介绍，我们已经知道<br><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">thermoType</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="title">type</span>             heRhoThermo;</span><br><span class="line">    <span class="title">mixture</span>          pureMixture;</span><br><span class="line">    <span class="title">transport</span>        const;</span><br><span class="line">    <span class="title">thermo</span>           hConst;</span><br><span class="line">    <span class="title">equationOfState</span>  perfectGas;</span><br><span class="line">    <span class="title">specie</span>           specie;</span><br><span class="line">    <span class="title">energy</span>           sensibleInternalEnergy;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>这个设置对应的是下述类：<br><figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">heRhoThermo                                                                 </span><br><span class="line">&lt;                                                                        </span><br><span class="line">    rhoThermo,                                                          </span><br><span class="line">    pureMixture</span><br><span class="line">    &lt;</span><br><span class="line">        constTransport&lt;<span class="symbol">species:</span><span class="symbol">:thermo&lt;hConstThermo&lt;perfectGas&lt;specie&gt;&gt;</span>,sensibleInternalEnergy<span class="prompt">&gt;&gt;</span><br><span class="line">    </span>&gt;                 </span><br><span class="line">&gt;</span><br></pre></td></tr></table></figure></p>
+<p>接下来就能来看看具体的类的继承派生关系了。</p>
+        
+          <p class="article-more-link">
+            <a href="/2016/06/25/thermophysics3/#more">Read More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://xiaopingqiu.github.io/2016/06/25/thermophysics3/" data-id="ciscxzhl8001l6gmbcdqgnquu" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/thermophysicalModels/">thermophysicalModels</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-thermophysics2" class="article article-type-post" itemscope itemprop="blogPost">
+  <div class="article-meta">
+    <a href="/2016/06/25/thermophysics2/" class="article-date">
+  <time datetime="2016-06-25T06:46:48.000Z" itemprop="datePublished">2016-06-25</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/06/25/thermophysics2/">OpenFOAM 中的热物理类之 hashTable 的创建</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>这一篇来看一下热物理类是如何编译并创建储存了可选模型的 hashTable 的。</p>
+        
+          <p class="article-more-link">
+            <a href="/2016/06/25/thermophysics2/#more">Read More</a>
+          </p>
+        
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://xiaopingqiu.github.io/2016/06/25/thermophysics2/" data-id="ciscxzhlg001p6gmbepezi45u" class="article-share-link">Share</a>
+      
+      
+  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/thermophysicalModels/">thermophysicalModels</a></li></ul>
+
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-thermophysics1" class="article article-type-post" itemscope itemprop="blogPost">
   <div class="article-meta">
     <a href="/2016/06/25/thermophysics1/" class="article-date">
@@ -115,7 +213,7 @@ ga('send', 'pageview');
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2016/06/25/thermophysics1/" data-id="ciscwkqgf001tjcmbh36gu158" class="article-share-link">Share</a>
+      <a data-url="http://xiaopingqiu.github.io/2016/06/25/thermophysics1/" data-id="ciscxzhlt001t6gmbl1re20u6" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/thermophysicalModels/">thermophysicalModels</a></li></ul>
@@ -164,7 +262,7 @@ ga('send', 'pageview');
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2016/05/22/QAndLambda/" data-id="ciscwkqkd004xjcmbvjgbhg8n" class="article-share-link">Share</a>
+      <a data-url="http://xiaopingqiu.github.io/2016/05/22/QAndLambda/" data-id="ciscxzhqb004x6gmb6o7syr9h" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Postprocessing/">Postprocessing</a></li></ul>
@@ -212,7 +310,7 @@ ga('send', 'pageview');
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2016/05/03/divDevReff/" data-id="ciscwkqin003pjcmbio0f89v5" class="article-share-link">Share</a>
+      <a data-url="http://xiaopingqiu.github.io/2016/05/03/divDevReff/" data-id="ciscxzhop003p6gmbupgzl5mq" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/turbulence-model/">turbulence model</a></li></ul>
@@ -260,7 +358,7 @@ ga('send', 'pageview');
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2016/05/03/liggghts-howto/" data-id="ciscwkqh6002ijcmbh4rt2m5s" class="article-share-link">Share</a>
+      <a data-url="http://xiaopingqiu.github.io/2016/05/03/liggghts-howto/" data-id="ciscxzhmn002i6gmbyil42w6v" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/LIGGGHTS/">LIGGGHTS</a></li></ul>
@@ -308,7 +406,7 @@ ga('send', 'pageview');
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2016/04/25/wallFunctions4/" data-id="ciscwkqdr0001jcmbkvhfbu70" class="article-share-link">Share</a>
+      <a data-url="http://xiaopingqiu.github.io/2016/04/25/wallFunctions4/" data-id="ciscxzhi000016gmbos8t0e97" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/wall-functions/">wall functions</a></li></ul>
@@ -356,7 +454,7 @@ ga('send', 'pageview');
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2016/04/25/wallFunctions3/" data-id="ciscwkqe50008jcmbqzsx3812" class="article-share-link">Share</a>
+      <a data-url="http://xiaopingqiu.github.io/2016/04/25/wallFunctions3/" data-id="ciscxzhik00086gmblmubg1e5" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/wall-functions/">wall functions</a></li></ul>
@@ -404,7 +502,7 @@ ga('send', 'pageview');
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2016/04/25/wallFunctions2/" data-id="ciscwkqea000cjcmbtuniwll1" class="article-share-link">Share</a>
+      <a data-url="http://xiaopingqiu.github.io/2016/04/25/wallFunctions2/" data-id="ciscxzhis000c6gmbs4xmurf9" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/wall-functions/">wall functions</a></li></ul>
@@ -452,108 +550,10 @@ ga('send', 'pageview');
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2016/04/25/wallFunctions1/" data-id="ciscwkqei000gjcmbspqbyp3v" class="article-share-link">Share</a>
+      <a data-url="http://xiaopingqiu.github.io/2016/04/25/wallFunctions1/" data-id="ciscxzhjj000g6gmboxvpkoj0" class="article-share-link">Share</a>
       
       
   <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/wall-functions/">wall functions</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-TurbulenceModel-30-macro" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2016/04/25/TurbulenceModel-30-macro/" class="article-date">
-  <time datetime="2016-04-24T16:11:08.000Z" itemprop="datePublished">2016-04-25</time>
-</a>
-    
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
-  </div>
-
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2016/04/25/TurbulenceModel-30-macro/">OpenFOAM-3.0 的湍流模型（四）</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>最后来看一个小问题：OpenFOAM-3.0 中的湍流模型是怎么编译的。在这之前，湍流模型的编译很直观，将需要编译的湍流模型的代码的 <code>.C</code> 文件写到 <code>Make/files</code> 里就好了。可是，在 OpenFOAM-3.0 里，很多湍流模型代码的 <code>.C</code> 文件并没有写到 <code>Make/files</code> 里，而是在 <code>makeTurbulenceModels.C</code>里类似这样写<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="preprocessor">#<span class="keyword">include</span> "mykEpsilon.H"</span></span><br><span class="line">makeRASModel(mykEpsilon);</span><br></pre></td></tr></table></figure></p>
-<p>然后在 <code>Make/files</code> 里写的是这个 <code>makeTurbulenceModels.C</code> 文件。为什么呢？</p>
-<p>这里来分析一下这个问题。</p>
-        
-          <p class="article-more-link">
-            <a href="/2016/04/25/TurbulenceModel-30-macro/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2016/04/25/TurbulenceModel-30-macro/" data-id="ciscwkqje0046jcmb1e7y5j17" class="article-share-link">Share</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/turbulence-model/">turbulence model</a></li></ul>
-
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-TurbulenceModel-30-NewModels" class="article article-type-post" itemscope itemprop="blogPost">
-  <div class="article-meta">
-    <a href="/2016/04/24/TurbulenceModel-30-NewModels/" class="article-date">
-  <time datetime="2016-04-24T15:34:01.000Z" itemprop="datePublished">2016-04-24</time>
-</a>
-    
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/OpenFOAM/">OpenFOAM</a>
-  </div>
-
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2016/04/24/TurbulenceModel-30-NewModels/">OpenFOAM-3.0 的湍流模型（三）</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>有了上一篇的基础，就很容易做到添加新的湍流模型了，这里分别给出对四类湍流模型增加新模型的方法。探索过程不详述了，仅给出结果。</p>
-        
-          <p class="article-more-link">
-            <a href="/2016/04/24/TurbulenceModel-30-NewModels/#more">Read More</a>
-          </p>
-        
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://xiaopingqiu.github.io/2016/04/24/TurbulenceModel-30-NewModels/" data-id="ciscwkqjq004gjcmbdal1vlra" class="article-share-link">Share</a>
-      
-      
-  <ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Code-Explained/">Code Explained</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/turbulence-model/">turbulence model</a></li></ul>
 
     </footer>
   </div>
@@ -576,7 +576,7 @@ ga('send', 'pageview');
   <div class="widget-wrap">
     <h3 class="widget-title">Categories</h3>
     <div class="widget">
-      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/DEM/">DEM</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/">OpenFOAM</a><span class="category-list-count">44</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Paraview/">Paraview</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/swak4Foam/">swak4Foam</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/test/">test</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/vim/">vim</a><span class="category-list-count">1</span></li></ul>
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/C/">C++</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/DEM/">DEM</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/OpenFOAM/">OpenFOAM</a><span class="category-list-count">44</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Paraview/">Paraview</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/swak4Foam/">swak4Foam</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/test/">test</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/vim/">vim</a><span class="category-list-count">1</span></li></ul>
     </div>
   </div>
 
@@ -585,7 +585,7 @@ ga('send', 'pageview');
   <div class="widget-wrap">
     <h3 class="widget-title">Tags</h3>
     <div class="widget">
-      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Boundary-conditions/">Boundary conditions</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/">C++</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CentOS/">CentOS</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Explained/">Code Explained</a><span class="tag-list-count">29</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LES/">LES</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LIGGGHTS/">LIGGGHTS</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ODE/">ODE</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a><span class="tag-list-count">20</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/PostProcessing/">PostProcessing</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Postprocessing/">Postprocessing</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Preprocessing/">Preprocessing</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RTS/">RTS</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TIL/">TIL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/fvOptions/">fvOptions</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/groovyBC/">groovyBC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/paraview/">paraview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/test/">test</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/thermophysicalModels/">thermophysicalModels</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/turbulence-model/">turbulence model</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vim/">vim</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/wall-functions/">wall functions</a><span class="tag-list-count">4</span></li></ul>
+      <ul class="tag-list"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Boundary-conditions/">Boundary conditions</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/C/">C++</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CentOS/">CentOS</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Code-Explained/">Code Explained</a><span class="tag-list-count">29</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LES/">LES</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/LIGGGHTS/">LIGGGHTS</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ODE/">ODE</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/OpenFOAM/">OpenFOAM</a><span class="tag-list-count">20</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/PostProcessing/">PostProcessing</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Postprocessing/">Postprocessing</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Preprocessing/">Preprocessing</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RTS/">RTS</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/TIL/">TIL</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Windows/">Windows</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/fvOptions/">fvOptions</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/groovyBC/">groovyBC</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/paraview/">paraview</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/test/">test</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/thermophysicalModels/">thermophysicalModels</a><span class="tag-list-count">5</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/turbulence-model/">turbulence model</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/vim/">vim</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/wall-functions/">wall functions</a><span class="tag-list-count">4</span></li></ul>
     </div>
   </div>
 
@@ -594,7 +594,7 @@ ga('send', 'pageview');
   <div class="widget-wrap">
     <h3 class="widget-title">Tag Cloud</h3>
     <div class="widget tagcloud">
-      <a href="/tags/Boundary-conditions/" style="font-size: 16.25px;">Boundary conditions</a><a href="/tags/C/" style="font-size: 11.25px;">C++</a><a href="/tags/CentOS/" style="font-size: 10px;">CentOS</a><a href="/tags/Code-Explained/" style="font-size: 20px;">Code Explained</a><a href="/tags/LES/" style="font-size: 10px;">LES</a><a href="/tags/LIGGGHTS/" style="font-size: 10px;">LIGGGHTS</a><a href="/tags/ODE/" style="font-size: 10px;">ODE</a><a href="/tags/OpenFOAM/" style="font-size: 18.75px;">OpenFOAM</a><a href="/tags/PostProcessing/" style="font-size: 10px;">PostProcessing</a><a href="/tags/Postprocessing/" style="font-size: 16.25px;">Postprocessing</a><a href="/tags/Preprocessing/" style="font-size: 11.25px;">Preprocessing</a><a href="/tags/RTS/" style="font-size: 12.5px;">RTS</a><a href="/tags/TIL/" style="font-size: 10px;">TIL</a><a href="/tags/Windows/" style="font-size: 10px;">Windows</a><a href="/tags/fvOptions/" style="font-size: 11.25px;">fvOptions</a><a href="/tags/groovyBC/" style="font-size: 10px;">groovyBC</a><a href="/tags/paraview/" style="font-size: 10px;">paraview</a><a href="/tags/test/" style="font-size: 10px;">test</a><a href="/tags/thermophysicalModels/" style="font-size: 15px;">thermophysicalModels</a><a href="/tags/turbulence-model/" style="font-size: 17.5px;">turbulence model</a><a href="/tags/vim/" style="font-size: 10px;">vim</a><a href="/tags/wall-functions/" style="font-size: 13.75px;">wall functions</a>
+      <a href="/tags/Boundary-conditions/" style="font-size: 16.25px;">Boundary conditions</a><a href="/tags/C/" style="font-size: 11.25px;">C++</a><a href="/tags/CentOS/" style="font-size: 10px;">CentOS</a><a href="/tags/Code-Explained/" style="font-size: 20px;">Code Explained</a><a href="/tags/LES/" style="font-size: 10px;">LES</a><a href="/tags/LIGGGHTS/" style="font-size: 10px;">LIGGGHTS</a><a href="/tags/ODE/" style="font-size: 10px;">ODE</a><a href="/tags/OpenFOAM/" style="font-size: 18.75px;">OpenFOAM</a><a href="/tags/PostProcessing/" style="font-size: 11.25px;">PostProcessing</a><a href="/tags/Postprocessing/" style="font-size: 16.25px;">Postprocessing</a><a href="/tags/Preprocessing/" style="font-size: 11.25px;">Preprocessing</a><a href="/tags/RTS/" style="font-size: 12.5px;">RTS</a><a href="/tags/TIL/" style="font-size: 10px;">TIL</a><a href="/tags/Windows/" style="font-size: 10px;">Windows</a><a href="/tags/fvOptions/" style="font-size: 11.25px;">fvOptions</a><a href="/tags/groovyBC/" style="font-size: 10px;">groovyBC</a><a href="/tags/paraview/" style="font-size: 10px;">paraview</a><a href="/tags/test/" style="font-size: 10px;">test</a><a href="/tags/thermophysicalModels/" style="font-size: 15px;">thermophysicalModels</a><a href="/tags/turbulence-model/" style="font-size: 17.5px;">turbulence model</a><a href="/tags/vim/" style="font-size: 10px;">vim</a><a href="/tags/wall-functions/" style="font-size: 13.75px;">wall functions</a>
     </div>
   </div>
 
@@ -603,7 +603,7 @@ ga('send', 'pageview');
   <div class="widget-wrap">
     <h3 class="widget-title">Archives</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/08/">八月 2016</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/06/">六月 2016</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/05/">五月 2016</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">四月 2016</a><span class="archive-list-count">12</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/12/">十二月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/11/">十一月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/10/">十月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/09/">九月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/08/">八月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">六月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a><span class="archive-list-count">2</span></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/08/">八月 2016</a><span class="archive-list-count">8</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/06/">六月 2016</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/05/">五月 2016</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/04/">四月 2016</a><span class="archive-list-count">12</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2016/03/">三月 2016</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/12/">十二月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/11/">十一月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/10/">十月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/09/">九月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/08/">八月 2015</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/06/">六月 2015</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/05/">五月 2015</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2015/04/">四月 2015</a><span class="archive-list-count">2</span></li></ul>
     </div>
   </div>
 
@@ -615,6 +615,14 @@ ga('send', 'pageview');
       <ul>
         
           <li>
+            <a href="/2016/08/27/ParaviewScritps/">ParaviewScritps</a>
+          </li>
+        
+          <li>
+            <a href="/2016/08/27/ParaviewCamera/">Paraview 中有关 Camera 的操作两例</a>
+          </li>
+        
+          <li>
             <a href="/2016/08/27/ParaviewCustomFilter/">Paraview 中创建 Custom Filter</a>
           </li>
         
@@ -624,14 +632,6 @@ ga('send', 'pageview');
         
           <li>
             <a href="/2016/08/21/ODE/">OpenFOAM 中求解 ODE 一例</a>
-          </li>
-        
-          <li>
-            <a href="/2016/08/21/fixedFluxPressure/">fixedFluxPressure 边界条件</a>
-          </li>
-        
-          <li>
-            <a href="/2016/08/21/ManualDecomposition/">OpenFOAM 中用手动并行分块的方法</a>
           </li>
         
       </ul>
