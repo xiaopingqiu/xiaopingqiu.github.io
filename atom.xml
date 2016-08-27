@@ -4,7 +4,7 @@
   <subtitle><![CDATA[CFD and Scientific Computing]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://xiaopingqiu.github.io/"/>
-  <updated>2016-08-27T08:04:32.298Z</updated>
+  <updated>2016-08-27T08:17:55.318Z</updated>
   <id>http://xiaopingqiu.github.io/</id>
   
   <author>
@@ -19,11 +19,42 @@
     <link href="http://xiaopingqiu.github.io/2016/08/27/ParaviewCustomFilter/"/>
     <id>http://xiaopingqiu.github.io/2016/08/27/ParaviewCustomFilter/</id>
     <published>2016-08-27T08:04:07.000Z</published>
-    <updated>2016-08-27T08:04:32.298Z</updated>
-    <content type="html"></content>
+    <updated>2016-08-27T08:17:55.318Z</updated>
+    <content type="html"><![CDATA[<p>在 <a href="http://xiaopingqiu.github.io/2016/08/27/ParaviewStreamLineOnSlice/" target="_blank" rel="external">上一篇</a>，介绍了如果作截面上的流线，其中涉及到多个 filter 的组合操作。如果每次都要来这么一串操作，挺繁琐的。Paraview 提供的 Custom Filter 的功能，能大大简化这种繁琐的重复操作。Custom Filter，本质上就是将一系列 filter 的组合操作打包成一个新的 filter。下面以作截面流线的操作为例，介绍如何创建一个 Custom Filter。</p>
+<a id="more"></a>
+<p>步骤如下：</p>
+<ol>
+<li>选定下图中所示的三个pipeline，</li>
+</ol>
+<p><img src="/image/Paraview/select1.png" alt=""></p>
+<p>然后点右键选择 Create Custom Filter</p>
+<p><img src="/image/Paraview/CF1.png" alt=""></p>
+<ol>
+<li>Next，进入 Custom Fliter 的配置环节</li>
+</ol>
+<p><img src="/image/Paraview/CFsetting1.png" alt=""></p>
+<p>选择 SurfaceVector1，设置为 Input，并取名为 SurfaceVector，设置好以后，点 “+”添加这个 Input。<br>然后，Next</p>
+<p><img src="/image/Paraview/CFsetting2.png" alt=""></p>
+<p>将 StreamTracerWithCustomSource1 和 MaskPoints1 设置为 output。</p>
+<p>继续 Next，这一步可以指定一些将来可以再调整的参数，如果不设置，那么新建立的 filter 将使用当前的 StreamTracerWithCustomSource1 和 MaskPoints1 使用的参数，不可调整，这样显然会严重限制新 fliter 的实用性，至少，我们应该添加控制 MaskPoint 的点数的参数。添加的方法是，选定左边的 MaskPoints，然后在右边的 Property 下拉菜单中，选择一个参数，比如，Maximum Number of Points，然后点 “+”，将来可能需要重新调整什么参数，就在这一步选上它，</p>
+<p><img src="/image/Paraview/CFsetting3.png" alt=""></p>
+<p>然后，点 Finish，就完成了 Custom Filter 的添加。</p>
+<p>之后，你可以在 Filter 菜单中找到新添加的 SurfaceStreamLines ，将其用在某个 slice 上，就自动生成了这个 slice 的流线。</p>
+<p><img src="/image/Paraview/CFusing1.png" alt=""></p>
+<p>注意 pipe line 这边，能调的参数，正是在建立 Custom filter 的最后一步添加的那四个。</p>
+<p>建立好的 Custom Filter，应该保存下来，用下图中的 export。要不然，下次打开Paraview，自定义的 filter 就没了。</p>
+<p><img src="/image/Paraview/export.png" alt=""></p>
+<p>导出的文件可以共享给其他人。</p>
+<p>如果对建立的 filter 不满意，需要删除重建，可以选择菜单的 Tools-&gt; Manage Custom Filters<br><img src="/image/Paraview/remove.png" alt=""><br>这里会列出所有的 Custom Filters，选择需要删除的，点 Remove 即可。</p>
+]]></content>
     <summary type="html">
+    <![CDATA[<p>在 <a href="http://xiaopingqiu.github.io/2016/08/27/ParaviewStreamLineOnSlice/">上一篇</a>，介绍了如果作截面上的流线，其中涉及到多个 filter 的组合操作。如果每次都要来这么一串操作，挺繁琐的。Paraview 提供的 Custom Filter 的功能，能大大简化这种繁琐的重复操作。Custom Filter，本质上就是将一系列 filter 的组合操作打包成一个新的 filter。下面以作截面流线的操作为例，介绍如何创建一个 Custom Filter。</p>]]>
     
     </summary>
+    
+      <category term="PostProcessing" scheme="http://xiaopingqiu.github.io/tags/PostProcessing/"/>
+    
+      <category term="Paraview" scheme="http://xiaopingqiu.github.io/categories/Paraview/"/>
     
   </entry>
   
