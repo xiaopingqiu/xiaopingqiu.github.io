@@ -4,7 +4,7 @@
   <subtitle><![CDATA[CFD and Scientific Computing]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://xiaopingqiu.github.io/"/>
-  <updated>2016-08-27T09:39:19.363Z</updated>
+  <updated>2016-08-27T09:44:39.728Z</updated>
   <id>http://xiaopingqiu.github.io/</id>
   
   <author>
@@ -19,7 +19,7 @@
     <link href="http://xiaopingqiu.github.io/2016/08/27/ParaviewScritps/"/>
     <id>http://xiaopingqiu.github.io/2016/08/27/ParaviewScritps/</id>
     <published>2016-08-27T08:45:24.000Z</published>
-    <updated>2016-08-27T09:39:19.363Z</updated>
+    <updated>2016-08-27T09:44:39.728Z</updated>
     <content type="html"><![CDATA[<p>Paraview 提供了一个 python 接口，可以用 python 脚本来控制 Paraview，以实现自动化的后处理。使用方法是，先写一个 python 脚本，里面包含调用 Paraview 的各种语句，然后，用 Paraview 的安装目录的 bin 下的 <code>pvpython</code> 来运行这个脚本即可。本篇用一个例子来说明 python 脚本的写法，以及常用 Paraview 操作对应的语句。</p>
 <a id="more"></a>
 <p>这个脚本实现的功能如下：</p>
@@ -75,6 +75,11 @@
 </li>
 </ol>
 <p>参考：</p>
+<ol>
+<li><a href="http://www.paraview.org/Wiki/ParaView/Python_Scripting" target="_blank" rel="external">http://www.paraview.org/Wiki/ParaView/Python_Scripting</a></li>
+<li><a href="http://www.paraview.org/Wiki/Python_recipes" target="_blank" rel="external">http://www.paraview.org/Wiki/Python_recipes</a></li>
+<li><a href="http://www.paraview.org/ParaView/Doc/Nightly/www/py-doc/index.html" target="_blank" rel="external">http://www.paraview.org/ParaView/Doc/Nightly/www/py-doc/index.html</a></li>
+</ol>
 ]]></content>
     <summary type="html">
     <![CDATA[<p>Paraview 提供了一个 python 接口，可以用 python 脚本来控制 Paraview，以实现自动化的后处理。使用方法是，先写一个 python 脚本，里面包含调用 Paraview 的各种语句，然后，用 Paraview 的安装目录的 bin 下的 <code>pvpython</code> 来运行这个脚本即可。本篇用一个例子来说明 python 脚本的写法，以及常用 Paraview 操作对应的语句。</p>]]>
