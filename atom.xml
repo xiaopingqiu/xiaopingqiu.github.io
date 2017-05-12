@@ -4,7 +4,7 @@
   <subtitle><![CDATA[CFD and Scientific Computing]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://xiaopingqiu.github.io/"/>
-  <updated>2016-08-27T13:03:29.108Z</updated>
+  <updated>2017-05-12T03:43:50.118Z</updated>
   <id>http://xiaopingqiu.github.io/</id>
   
   <author>
@@ -13,6 +13,24 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title><![CDATA[多说评论系统将停止提供服务]]></title>
+    <link href="http://xiaopingqiu.github.io/2017/05/12/duoshuoAnnouncement/"/>
+    <id>http://xiaopingqiu.github.io/2017/05/12/duoshuoAnnouncement/</id>
+    <published>2017-05-12T03:36:26.000Z</published>
+    <updated>2017-05-12T03:43:50.118Z</updated>
+    <content type="html"><![CDATA[<h5 id="关于停用“多说评论系统”的通知">关于停用“多说评论系统”的通知</h5><p>各位读者，本博客所依赖的“多说评论系统”将于 2017 年 6 月 1 日关闭，届时所有的评论数据都将丢失。虽然多说提供了评论数据下载，我也计划将来添加 Disqus 评论系统，也许可以将多说的数据导入进来，但不一定能成功。所以如果在评论系统中有对您重要的信息，请提前复制保存到其他地方。</p>
+]]></content>
+    <summary type="html">
+    <![CDATA[<h5 id="关于停用“多说评论系统”的通知">关于停用“多说评论系统”的通知</h5><p>各位读者，本博客所依赖的“多说评论系统”将于 2017 年 6 月 1 日关闭，届时所有的评论数据都将丢失。虽然多说提供了评论数据下载，我也计划将来添加 Disqus 评论系统，也许可]]>
+    </summary>
+    
+      <category term="test" scheme="http://xiaopingqiu.github.io/tags/test/"/>
+    
+      <category term="test" scheme="http://xiaopingqiu.github.io/categories/test/"/>
+    
+  </entry>
   
   <entry>
     <title><![CDATA[Paraview 脚本一例]]></title>
@@ -867,52 +885,6 @@
 ]]></content>
     <summary type="html">
     <![CDATA[<p>这篇来看看计算湍动能 $k$ 的壁面函数。</p>]]>
-    
-    </summary>
-    
-      <category term="Code Explained" scheme="http://xiaopingqiu.github.io/tags/Code-Explained/"/>
-    
-      <category term="wall functions" scheme="http://xiaopingqiu.github.io/tags/wall-functions/"/>
-    
-      <category term="OpenFOAM" scheme="http://xiaopingqiu.github.io/categories/OpenFOAM/"/>
-    
-  </entry>
-  
-  <entry>
-    <title><![CDATA[OpenFOAM 中的壁面函数（一）]]></title>
-    <link href="http://xiaopingqiu.github.io/2016/04/25/wallFunctions1/"/>
-    <id>http://xiaopingqiu.github.io/2016/04/25/wallFunctions1/</id>
-    <published>2016-04-24T16:36:27.000Z</published>
-    <updated>2016-04-26T15:12:44.864Z</updated>
-    <content type="html"><![CDATA[<p>本系列来看看 OpenFOAM 中的壁面函数。壁面函数的本质，是边界条件。这里主要来看看壁面函数的基本原理，OpenFOAM 中实现了的壁面函数，以及选择壁面函数的一些参考依据。</p>
-<a id="more"></a>
-<h5 id="1-_壁面函数的基本原理">1. 壁面函数的基本原理</h5><p>湍流模拟中，需要对近壁区域进行处理。一般来讲，壁面处理方法包含两类，一类是使用很细的网格，使靠近壁面的第一层网格在粘性层内（$y^+ <1$），然后里可以直接解析到粘性层的低雷诺湍流模型；另一类，不直接解析粘性层，而是将第一层网格设置在对数区（$y^+> 30$），然后用经验公式来将粘性层和对数区关联起来。下图是一个典型的壁面附近的 $U^+ \text{-} y^+$ 关系图。<br><img src="/image/wallFunctions/Law_of_the_wall.png" alt="壁面律"><br>图片来自 <a href="https://en.wikipedia.org/wiki/Law_of_the_wall" target="_blank" rel="external">Wikipedia:Law of the wall </a>。<br>在粘性层，满足如下关系<br>$$<br>u^+ = y^+<br>$$<br>而在对数区，则满足<br>$$<br>U^+ = \frac{1}{\kappa}\ln(Ey^+)<br>$$<br>其中 $U^+ = U/u_\tau$， $y^+ = yu_\tau/\nu$， $u_\tau = \sqrt{\tau_w/\rho}$，$\kappa\approx 0.41$，$E \approx 9.8$，$y$ 表示与壁面的距离。</1$），然后里可以直接解析到粘性层的低雷诺湍流模型；另一类，不直接解析粘性层，而是将第一层网格设置在对数区（$y^+></p>
-<p>本篇以标准壁面函数法来讨论一下壁面函数方法的基本原理，以及壁面函数在 OpenFOAM 中的实现。下面的讨论，先局限在 $k-\varepsilon$ 模型，且第一层网格在对数区的情形。<br>先来看一下壁面函数方法需要解决什么问题。<br>有限体积方法中，扩散项的离散可以表示如下：<br>$$<br>\nabla \cdot (\nu \nabla U) = \sum_f \left [\nu_f \cdot (\nabla U)_f \right]<br>$$<br>当 $f$ 表示的是壁面边界单元时，这时就需要知道在壁面上的速度梯度 $(\nabla U)_f$。壁面上一般对速度 $U$ 采用无滑移条件，如何得到正确的壁面速度梯度，这就是一个问题。这个问题有两个解决思路，一是通过实验或者 DNS 模拟等，得到一条连续的 $U-y$ 曲线，然后从这个曲线求壁面上的导数 $dU/dy$ 来得到壁面上的速度梯度；还有一种思路是，由于最终需要得到的是正确的 $\nu_f \cdot (\nabla U)_f$ ，即壁面上的剪应力，虽然<br>$$<br>\tau_w = \nu \cdot \frac{\partial U}{\partial n}\left. \right|_w \neq \nu \frac{U_p-U_w}{y}<br>$$<br>其中 $U_p$ 表示第一层网格中心的速度，$U_w$ 表示壁面上的速度。<br>但是，可以构造一个壁面上的有效粘度 $\nu_{eff}$，以使下式成立<br>$$<br>\tau_w = \nu \cdot  \frac{\partial U}{\partial n} \left. \right |_w = \nu_{eff} \frac{U_p-U_w}{y} = (\nu + \nu_t ) \cdot \frac{U_p-U_w}{y}<br>$$</p>
-<p>后一种解决方法的好处是，不需要修改动量方程，直接使用 $\frac{U_p-U_w}{y}$ 来代替 $\frac{\partial U}{\partial n} \left. \right |_w  $，然后通过设置合适的湍流粘度 $\nu_t$ 的边界条件来修正壁面应力 $\tau_w$。</p>
-<p>另一方面，在对数区，$k^+$ 是常数<br>$$<br>k^+ = \frac{1}{\sqrt{C_\mu}} \\<br>$$<br>其中 $k^+ = k/u_\tau^2$。<br>由<br>$$<br>k^+ = \frac{1}{\sqrt{C_\mu}} = k/u_\tau^2<br>$$<br>得<br>$$<br>u_\tau = C_\mu^{1/4}k^{1/2}<br>$$<br>于是<br>$$<br>\tau_w = \rho u_\tau^2 = \rho u_\tau \cdot \frac{U}{U^+} = \frac{\rho u_\tau (U_p-U_w)}{\frac{1}{\kappa}\ln(Ey^+)}<br>$$<br>若令<br>$$<br>\nu_{eff} = \frac{u_\tau y}{\frac{1}{\kappa}\ln(Ey^+)}<br>$$<br>则<br>$$<br>\tau_w = \rho \nu_{eff}\cdot \frac{U_p-U_w}{y}<br>$$<br>这正是上文提到的第二种解决壁面速度问题的形式。<br>而<br>$$<br>\nu_{eff} = \frac{ u_\tau y}{\frac{1}{\kappa}\ln(Ey^+)} = \frac{ y^+ \nu}{\frac{1}{\kappa}\ln(Ey^+)} = \nu + \nu_{tw}<br>$$<br>于是得到壁面上的湍流粘度为<br>$$<br>\nu_{tw} = \nu \cdot \left(\frac{\kappa y^+}{\ln(Ey^+)} -1 \right)<br>$$</p>
-<p>$y^+$ 可以通过不同的方式来得到，具体的计算方法，见后文的 <code>nutWallFunctions</code> 部分。</p>
-<p>除了得到壁面上的等效湍流粘度，还需要计算靠近壁面第一层网格的湍动能生成和湍动能耗散项。</p>
-<p>湍动能生成项计算如下：<br>$$<br>G \approx \tau_w\cdot \frac{\partial (U_p -U_w)}{\partial y}<br>$$<br>由速度的壁面律<br>$$<br>U^+ = \frac{U_p - U_w}{u_\tau} = \frac{1}{\kappa}\ln(Ey^+) = \frac{1}{\kappa} \ln(E\frac{yu_\tau}{\nu})<br>$$<br>注意，$G$ 求的是第一层网格内的值，所以，由<br>$$<br>U_p -U_w = \frac{u_\tau}{\kappa} \ln(E\frac{yu_\tau}{\nu})<br>$$<br>可以求得第一层网格内的梯度<br>$$<br>\frac{\partial (U_p -U_w)}{\partial y} \left. \right|_p = \frac{u_\tau}{\kappa y_p}<br>$$<br>于是<br>$$<br>G = \tau_w \cdot \frac{u_\tau}{\kappa y_p}<br>$$<br>注意，这里的 $\frac{U_p-U_w}{d}$，其实是速度在壁面法向方向的梯度的近似值，这一点见上文 $\nu_t$ 的边界条件部分。</p>
-<p>再来看 $\varepsilon$，$\varepsilon$ 的计算基于第一层网格内的湍动生成与湍动能耗散项守恒的假设，即<br>$$<br> \rho \varepsilon_p = G = \tau_w \cdot \frac{u_\tau}{\kappa y_p} =\rho\cdot \frac{u_\tau^3}{\kappa y_p}<br>$$<br>于是得<br>$$<br>\varepsilon_p = \frac{u_\tau^3}{\kappa y_p} = \frac{C_\mu^{3/4}k_p^{3/2}}{\kappa y_p}<br>$$</p>
-<p>至于 $k$，一般认为当第一层网格位于对数区时，不需要在壁面上对 $k$ 加任何限制，用零梯度边界条件即可。</p>
-<h5 id="2-_在_OpenFOAM_中的实现">2. 在 OpenFOAM 中的实现</h5><p>在 OpenFOAM 中，$k$，$\varepsilon$ 和 $\nu_t$ 分别有对应的边界条件可以选择，壁面函数的实现是在这些边界条件里进行的。具体地说， <code>k***WallFunction</code> 用于指定 $k$ 的边界条件， <code>epsilon***WallFunction</code> 用于计算 $\varepsilon$ 和 $G$ 在第一层网格内的值， <code>nut***WallFunction</code> 用来计算 $\nu_t$ 在壁面上的值。 还有就是一个要关心的问题是这些边界条件的调用顺序，这需要通过湍流模型的一段代码来说明，以 <code>kEpsilon</code> 为例：<br><figure class="highlight aspectj"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">void</span> kEpsilon::correct()</span><br><span class="line">&#123;</span><br><span class="line">    RASModel::correct();</span><br><span class="line">    <span class="keyword">if</span> (!turbulence_)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    volScalarField G(GName(), nut_*<span class="number">2</span>*magSqr(symm(fvc::grad(U_))));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Update epsilon and G at the wall</span></span><br><span class="line">    epsilon_.boundaryField().updateCoeffs();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Dissipation equation</span></span><br><span class="line">    tmp&lt;fvScalarMatrix&gt; epsEqn</span><br><span class="line">    (</span><br><span class="line">        fvm::ddt(epsilon_)</span><br><span class="line">      + fvm::div(phi_, epsilon_)</span><br><span class="line">      - fvm::laplacian(DepsilonEff(), epsilon_)</span><br><span class="line">     ==</span><br><span class="line">        C1_*G*epsilon_/k_</span><br><span class="line">      - fvm::Sp(C2_*epsilon_/k_, epsilon_)</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    epsEqn().relax();</span><br><span class="line">    epsEqn().boundaryManipulate(epsilon_.boundaryField());</span><br><span class="line"></span><br><span class="line">    solve(epsEqn);</span><br><span class="line">    bound(epsilon_, epsilonMin_);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Turbulent kinetic energy equation</span></span><br><span class="line">    tmp&lt;fvScalarMatrix&gt; kEqn</span><br><span class="line">    (</span><br><span class="line">        fvm::ddt(k_)</span><br><span class="line">      + fvm::div(phi_, k_)</span><br><span class="line">      - fvm::laplacian(DkEff(), k_)</span><br><span class="line">     ==</span><br><span class="line">        G</span><br><span class="line">      - fvm::Sp(epsilon_/k_, k_)</span><br><span class="line">    );</span><br><span class="line">    kEqn().relax();</span><br><span class="line">    solve(kEqn);</span><br><span class="line">    bound(k_, kMin_);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Re-calculate viscosity</span></span><br><span class="line">    nut_ = Cmu_*sqr(k_)/epsilon_;</span><br><span class="line">    nut_.correctBoundaryConditions();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>从上述代码，可以将湍流模型的具体计算过程归纳如下：</p>
-<ol>
-<li>计算湍动能生成项 $G$，并修正 $G$ 在第一层网格的值。修正是通过 <code>epsilon_.boundaryField().updateCoeffs();</code> 来实现的，这里调用 <code>epsilon</code> 的边界条件的 <code>updateCoeffs</code> 函数，实现的操作是修正 $G$ 和 $\varepsilon$ 在第一层网格的值。</li>
-<li>利用更新的 $G$ 构建 <code>epsEqn</code>，然后修改 <code>epsEqn</code>（ <code>epsEqn().boundaryManipulate(epsilon_.boundaryField());</code> ），这样做的目的是保证在下一步 <code>solve(epsEqn)</code>的时候，<code>epsilonWallFunction</code> 类型的边界所属的网格的值不会变化，而是保持在 <code>epsilon_.boundaryField().updateCoeffs();</code> 这一步里设置的值（参考 <a href="http://www.cfd-online.com/Forums/openfoam-solving/132703-boundarymanipulate.html" target="_blank" rel="external">cfd-online 的这个帖子</a>）。</li>
-<li>求解 <code>epsEqn</code>，得到更新的 $\varepsilon$ 场。</li>
-<li>利用更新的 $\varepsilon$ 场构建并求解 <code>kEqn</code>，得到更新的 $k$ 场。</li>
-<li>计算 $\nu_t$，并更新 $\nu_t$ 在边界上的值（<code>nut_.correctBoundaryConditions()</code>） </li>
-</ol>
-<p>至于具体的 $k$，$\varepsilon$，以及 $\nu_t$ 的边界条件的实现，见后文。 </p>
-<p><strong>参考</strong></p>
-<ol>
-<li>The Finite Volume Method in Computational Fluid Dynamics An Advanced Introduction with OpenFOAM® and Matlab®</li>
-<li><a href="http://www.slideshare.net/fumiyanozaki96/openfoam-36426892" target="_blank" rel="external">http://www.slideshare.net/fumiyanozaki96/openfoam-36426892</a></li>
-</ol>
-]]></content>
-    <summary type="html">
-    <![CDATA[<p>本系列来看看 OpenFOAM 中的壁面函数。壁面函数的本质，是边界条件。这里主要来看看壁面函数的基本原理，OpenFOAM 中实现了的壁面函数，以及选择壁面函数的一些参考依据。</p>]]>
     
     </summary>
     
