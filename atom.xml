@@ -4,7 +4,7 @@
   <subtitle><![CDATA[CFD and Scientific Computing]]></subtitle>
   <link href="/atom.xml" rel="self"/>
   <link href="http://xiaopingqiu.github.io/"/>
-  <updated>2017-05-12T03:43:50.118Z</updated>
+  <updated>2017-05-12T03:49:10.618Z</updated>
   <id>http://xiaopingqiu.github.io/</id>
   
   <author>
@@ -19,11 +19,11 @@
     <link href="http://xiaopingqiu.github.io/2017/05/12/duoshuoAnnouncement/"/>
     <id>http://xiaopingqiu.github.io/2017/05/12/duoshuoAnnouncement/</id>
     <published>2017-05-12T03:36:26.000Z</published>
-    <updated>2017-05-12T03:43:50.118Z</updated>
-    <content type="html"><![CDATA[<h5 id="关于停用“多说评论系统”的通知">关于停用“多说评论系统”的通知</h5><p>各位读者，本博客所依赖的“多说评论系统”将于 2017 年 6 月 1 日关闭，届时所有的评论数据都将丢失。虽然多说提供了评论数据下载，我也计划将来添加 Disqus 评论系统，也许可以将多说的数据导入进来，但不一定能成功。所以如果在评论系统中有对您重要的信息，请提前复制保存到其他地方。</p>
+    <updated>2017-05-12T03:49:10.618Z</updated>
+    <content type="html"><![CDATA[<p>各位读者，本博客所依赖的“多说评论系统”将于 2017 年 6 月 1 日关闭，届时所有的评论数据都将丢失。虽然多说提供了评论数据下载，我也计划将来添加 Disqus 评论系统，也许可以将多说的数据导入进来，但不一定能成功。所以如果在评论系统中有对您重要的信息，请提前复制保存到其他地方。</p>
 ]]></content>
     <summary type="html">
-    <![CDATA[<h5 id="关于停用“多说评论系统”的通知">关于停用“多说评论系统”的通知</h5><p>各位读者，本博客所依赖的“多说评论系统”将于 2017 年 6 月 1 日关闭，届时所有的评论数据都将丢失。虽然多说提供了评论数据下载，我也计划将来添加 Disqus 评论系统，也许可]]>
+    <![CDATA[<p>各位读者，本博客所依赖的“多说评论系统”将于 2017 年 6 月 1 日关闭，届时所有的评论数据都将丢失。虽然多说提供了评论数据下载，我也计划将来添加 Disqus 评论系统，也许可以将多说的数据导入进来，但不一定能成功。所以如果在评论系统中有对您重要的信息，请提前复制保]]>
     </summary>
     
       <category term="test" scheme="http://xiaopingqiu.github.io/tags/test/"/>
